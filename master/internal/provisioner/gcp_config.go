@@ -36,6 +36,8 @@ type GCPClusterConfig struct {
 	LabelValue string `json:"label_value"`
 	NamePrefix string `json:"name_prefix"`
 
+	ExtraLabels map[string]string `json:"extra_labels"`
+
 	NetworkInterface gceNetworkInterface `json:"network_interface"`
 	NetworkTags      []string            `json:"network_tags"`
 	ServiceAccount   gceServiceAccount   `json:"service_account"`
@@ -158,11 +160,14 @@ func (c *GCPClusterConfig) merge() *compute.Instance {
 		}, rb.Disks...)
 	}
 
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
+	}
 	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
 		rb.Labels[c.LabelKey] = c.LabelValue
+	}
+	for key, value := range c.ExtraLabels {
+		rb.Labels[key] = value
 	}
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {

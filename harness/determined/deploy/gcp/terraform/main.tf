@@ -161,6 +161,7 @@ module "compute" {
   min_cpu_platform_agent = var.min_cpu_platform_agent
   preemptible = var.preemptible
   operation_timeout_period = var.operation_timeout_period
+  environment_label = "test"
   db_username = var.db_username
   db_password = var.db_password
   scheduler_type = var.scheduler_type

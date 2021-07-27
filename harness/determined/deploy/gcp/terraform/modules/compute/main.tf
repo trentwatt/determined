@@ -85,6 +85,15 @@ resource "google_compute_instance" "master_instance" {
           name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
           label_key: managed-by
           label_value: det-master-${var.unique_id}-${var.det_version_key}
+          extra_labels:
+    EOF
+
+    if [ -n "${var.environment_label}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+            environment: "${var.environment_label}"
+      EOF
+    fi
+    cat << EOF >> /usr/local/determined/etc/master.yaml
           network_interface:
             network: projects/${var.project_id}/global/networks/${var.network_name}
             subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
@@ -131,6 +140,15 @@ resource "google_compute_instance" "master_instance" {
           name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
           label_key: managed-by
           label_value: det-master-${var.unique_id}-${var.det_version_key}
+          extra_labels:
+    EOF
+
+    if [ -n "${var.environment_label}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+            environment: "${var.environment_label}"
+      EOF
+    fi
+    cat << EOF >> /usr/local/determined/etc/master.yaml
           network_interface:
             network: projects/${var.project_id}/global/networks/${var.network_name}
             subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
