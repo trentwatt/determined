@@ -13,7 +13,12 @@ import tensorflow as tf
 from packaging import version
 from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
-from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
+
+if version.parse(tf.__version__) >= version.parse("2.6.0"):
+    from keras.callbacks import CallbackList, make_logs, set_callback_parameters
+else:
+    from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
+
 from tensorflow.python.keras.saving.hdf5_format import (
     load_optimizer_weights_from_hdf5_group,
     save_optimizer_weights_to_hdf5_group,
