@@ -18,7 +18,7 @@ DEFAULT_TF2_CPU_IMAGE = (
 )
 DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-2409e48"
 DEFAULT_TF2_GPU_IMAGE = (
-    "determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a"
+    "determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772"
 )
 
 TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE

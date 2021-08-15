@@ -628,7 +628,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
+        default: determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
         type: string
     steps:
       - set-cluster-id:
@@ -1653,7 +1653,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
+        default: determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -2125,9 +2125,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.5-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.6-gpu-b72299a
+                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.6-gpu-04a3772
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2146,9 +2146,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.5-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.6-gpu-b72299a
+                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.6-gpu-04a3772
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2291,9 +2291,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.5-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.6-gpu-b72299a
+                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.6-gpu-04a3772
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2308,9 +2308,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.5-gpu-b72299a
-                - determinedilia/environments:cuda-11.2-pytorch-1.9-lightning-1.3-tf-2.6-gpu-b72299a
+                - determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-04a3772
+                - determinedilia/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.6-gpu-04a3772
 
   release:
     jobs:
