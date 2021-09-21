@@ -23,7 +23,7 @@ build: build-examples build-helm reference/attributions.txt
 	cp ../model_hub/build-examples/* site/downloads/examples
 	mkdir -p site/downloads/helm
 	cp ../helm/build/* site/downloads/helm
-	$(MAKE) sp-html
+	./just_pass.sh "$(MAKE) sp-html"
 	# pull in swagger-ui
 	cp -r ./swagger-ui site/html/rest-api
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/rest-api/

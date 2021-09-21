@@ -1741,7 +1741,7 @@ workflows:
           requires:
             - build-proto
       - lint-docs
-      - lint-python
+      # - lint-python
       - lint-go
       - lint-react:
           requires:
