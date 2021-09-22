@@ -25,7 +25,7 @@ const (
 
 // Default task environment docker image names.
 const (
-	CPUImage = "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-6509fcf"
+	CPUImage = "determinedilia/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-6509fcf"
 	GPUImage = "determinedilia/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-6509fcf"
 )
 
