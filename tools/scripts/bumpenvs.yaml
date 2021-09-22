@@ -101,8 +101,8 @@ tf26_gpu_versioned:
   old: determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.0
   new: determinedilia/environments:cuda-11.2-tf-2.6-gpu-0.17.0
 tf2_cpu_hashed:
-  old: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0ca3d22
-  new: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-6509fcf
+  old: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-6509fcf
+  new: determinedilia/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-6509fcf
 tf2_cpu_versioned:
   old: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.0
   new: determinedilia/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.0
