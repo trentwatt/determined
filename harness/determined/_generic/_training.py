@@ -135,7 +135,9 @@ class Training:
             data=det.util.json_encode(body),
         )
         if r.status_code == 400:
-            logger.warn("early exit has already been reported for this trial, ignoring new value")
+            logger.warning(
+                "early exit has already been reported for this trial, ignoring new value"
+            )
 
     def get_experiment_best_validation(self) -> Optional[float]:
         logger.debug("get_experiment_best_validation()")

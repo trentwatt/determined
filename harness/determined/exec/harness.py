@@ -1,5 +1,6 @@
 import faulthandler
 import logging
+import os
 import sys
 
 import determined as det
@@ -21,6 +22,10 @@ def main() -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
+
+    rank = os.environ.get("HOROVOD_RANK")
+    if rank is None:
+        rank = os.environ.get("RANK")
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
@@ -95,8 +100,9 @@ def main() -> int:
                 None,
                 None,
             )
-            training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
-            logging.info("InvalidHP detected during Trial init, worker is exiting")
+            if rank == "0":
+                training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+                logging.info("InvalidHP detected during Trial init, worker is exiting")
             return 0
 
         try:
