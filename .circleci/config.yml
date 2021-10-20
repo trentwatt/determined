@@ -1763,7 +1763,7 @@ jobs:
           executor: ubuntu-2004:202101-01
           extras-requires: anchorecli
       - run: snap install yq
-      - run apt-get install -y jq
+      - run: apt-get install -y jq
       - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
 
 workflows:
