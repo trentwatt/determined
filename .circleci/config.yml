@@ -2461,7 +2461,7 @@ workflows:
               only:
                 - master
     jobs:
-      - scan-docker-images:
+      - scan-docker-images
 
   release:
     jobs:
