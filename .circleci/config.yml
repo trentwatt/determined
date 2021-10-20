@@ -1756,7 +1756,7 @@ jobs:
 
   scan-docker-images:
     machine:
-      - image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202101-01
     steps:
       - checkout
       - setup-python-venv:
