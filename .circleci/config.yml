@@ -1755,10 +1755,13 @@ jobs:
           det-version: <<parameters.det-version>>
 
   scan-docker-images:
-    docker:
-      - image: ubuntu:20.04
+    machine:
+      - image: ubuntu-2004:202101-01
     steps:
       - checkout
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
+          extras-requires: anchorecli
       - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
 
 workflows:
