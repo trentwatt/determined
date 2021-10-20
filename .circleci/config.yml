@@ -1754,6 +1754,13 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
+  scan-docker-images:
+    docker:
+      - image: ubuntu:20.04
+    steps:
+      - checkout
+      - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
+
 workflows:
   lint:
     jobs:
@@ -2444,6 +2451,17 @@ workflows:
               environment-image:
                 - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
                 - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+
+  weekly-vuln-scan:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 7"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - scan-docker-images:
 
   release:
     jobs:
