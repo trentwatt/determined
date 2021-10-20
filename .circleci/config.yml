@@ -1776,6 +1776,7 @@ workflows:
             - build-bindings
       - lint-webui-tests
       - lint-secrets
+      - scan-docker-images
 
   test-cli:
     jobs:
