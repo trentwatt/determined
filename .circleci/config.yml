@@ -1759,12 +1759,18 @@ jobs:
       image: ubuntu-2004:202101-01
     steps:
       - checkout
+      - set-slack-user-id
       - setup-python-venv:
           executor: ubuntu-2004:202101-01
           extras-requires: anchorecli
       - run: sudo snap install yq
       - run: sudo apt-get install -y jq
       - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
+      - slack/status:
+          fail_only: True
+          only_for_branches: master
+          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          channel: ["devops-ag"]
 
 workflows:
   lint:
@@ -1781,7 +1787,6 @@ workflows:
             - build-bindings
       - lint-webui-tests
       - lint-secrets
-      - scan-docker-images
 
   test-cli:
     jobs:
@@ -2458,16 +2463,16 @@ workflows:
                 - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
                 - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
 
-#  weekly-vuln-scan:
-#    triggers:
-#      - schedule:
-#          cron: "0 0 * * 7"
-#          filters:
-#            branches:
-#              only:
-#                - master
-#    jobs:
-#      - scan-docker-images
+  weekly-vuln-scan:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 7"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - scan-docker-images
 
   release:
     jobs:
