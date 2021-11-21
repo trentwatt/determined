@@ -41,6 +41,9 @@ type Options struct {
 
 	Security SecurityOptions `json:"security"`
 
+	// temporary development flag to allow running the agent on Apple chips.
+	AppleSilicon bool `json:"apple_silicon"`
+
 	Fluent FluentOptions `json:"fluent"`
 }
 

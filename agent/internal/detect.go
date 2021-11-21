@@ -20,6 +20,13 @@ import (
 )
 
 func (a *agent) detect() error {
+	if a.AppleSilicon {
+		brand := fmt.Sprintf("%s x %d physical cores", "Apple Silicoin", 1)
+		a.Devices = []device.Device{{
+			ID: 0, Brand: brand, UUID: uuid.New(), Type: device.CPU,
+		}}
+		return nil
+	}
 	switch {
 	case a.ArtificialSlots > 0:
 		for i := 0; i < a.ArtificialSlots; i++ {
