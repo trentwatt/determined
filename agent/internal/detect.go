@@ -21,9 +21,8 @@ import (
 
 func (a *agent) detect() error {
 	if a.AppleSilicon {
-		brand := fmt.Sprintf("%s x %d physical cores", "Apple Silicoin", 1)
 		a.Devices = []device.Device{{
-			ID: 0, Brand: brand, UUID: uuid.New(), Type: device.CPU,
+			ID: 0, Brand: "Apple", UUID: "MX", Type: device.CPU,
 		}}
 		return nil
 	}
