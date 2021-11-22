@@ -263,9 +263,11 @@ class PyTorchTrialController(det.TrialController):
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
-                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        with self._generic._storage_mgr.store_path(
+                            auto_run_post_store_path=False
+                        ) as (storage_id, path):
                             # Broadcast checkpoint path to all ranks.
-                            self.context.distributed._zmq_broadcast(path)
+                            _ = self.context.distributed._zmq_broadcast((storage_id, path))
                             self._save(pathlib.Path(path))
                             # Wait for save to finish on all ranks and gather all resources to
                             # report to master.
@@ -280,12 +282,14 @@ class PyTorchTrialController(det.TrialController):
                                 "format": "pickle",
                             }
                     else:
-                        path = self.context.distributed._zmq_broadcast(None)
+                        storage_id, path = self.context.distributed._zmq_broadcast(None)
                         self._save(pathlib.Path(path))
                         _ = self.context.distributed._zmq_gather(
                             storage.StorageManager._list_directory(path)
                         )
                         response = {}
+                    if self.context.distributed.get_local_rank() == 0:
+                        self._generic._storage_mgr.post_store_path(storage_id, path)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))

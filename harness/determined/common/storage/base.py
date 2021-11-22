@@ -37,7 +37,9 @@ class StorageManager:
         pass
 
     @contextlib.contextmanager
-    def store_path(self, storage_id: str = "") -> Iterator[Tuple[str, str]]:
+    def store_path(
+        self, storage_id: str = "", auto_run_post_store_path: bool = True
+    ) -> Iterator[Tuple[str, str]]:
         """
         Prepare a local directory that will become a checkpoint.
 
@@ -64,7 +66,8 @@ class StorageManager:
         yield (storage_id, storage_dir)
         check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
 
-        self.post_store_path(storage_id, storage_dir)
+        if auto_run_post_store_path:
+            self.post_store_path(storage_id, storage_dir)
 
     @abc.abstractmethod
     @contextlib.contextmanager
