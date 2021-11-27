@@ -65,3 +65,4 @@ stages:
         master_host: 127.0.0.1
         master_port: 8080
         container_master_host: $DOCKER_LOCALHOST
+        apple_silicon: true
