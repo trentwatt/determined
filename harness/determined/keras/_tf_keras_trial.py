@@ -881,8 +881,8 @@ class TFKerasTrialController(det.TrialController):
 
         if self.train_response_func is None:
             raise AssertionError(
-                "Callback should avoid calling model.predict(), "
-                "as this will affect Determined training behavior",
+                "train_response_func is not set.  This should not be possible; please file an "
+                "issue at github.com/determined-ai/determined so we can fix this bug."
             )
 
         if self.context.distributed.size > 1:
@@ -969,7 +969,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.4``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
@@ -1093,9 +1093,6 @@ class TFKerasTrial(det.Trial):
         """
         Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
         training.
-
-        Callbacks should avoid calling ``model.predict()``, as this will affect Determined training
-        behavior.
 
         .. note:
            Note that :class:`determined.keras.callbacks.Callback` is a subclass of
