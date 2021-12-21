@@ -1449,6 +1449,7 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
+      - run: sudo apt-get update && sudo apt-get install -y gcc
       - run: python --version
       - run: pip install --upgrade --user pip
       - run: pip --version
