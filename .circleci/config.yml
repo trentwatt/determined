@@ -1855,7 +1855,7 @@ jobs:
   scan-docker-images:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: 2xlarge
     steps:
       - checkout
       - set-slack-user-id
