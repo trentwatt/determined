@@ -1929,6 +1929,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go
+      - scan-docker-images
       - package-and-push-system-local:
           requires:
             - build-react
