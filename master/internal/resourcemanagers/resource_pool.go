@@ -235,6 +235,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
+		job.SetGroupOrder,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
@@ -242,10 +245,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case
 		job.GetJobQ,
-		job.GetJobQStats,
-		job.SetGroupWeight,
-		job.SetGroupPriority,
-		job.SetGroupOrder:
+		job.GetJobQStats:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -351,11 +351,25 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+	switch ctx.Message().(type) {
 	case job.GetJobQStats:
 		ctx.Respond(*jobStats(rp.taskList))
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case groupActorStopped:
+		delete(rp.groups, msg.Ref)
+
+	case sproto.SetGroupMaxSlots:
+		rp.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
+
 	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
@@ -375,19 +389,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		if msg.QPosition != 0 {
 			group.qPosition = msg.QPosition
 		}
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case groupActorStopped:
-		delete(rp.groups, msg.Ref)
-
-	case sproto.SetGroupMaxSlots:
-		rp.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
 	case sproto.SetTaskName:
 		rp.receiveSetTaskName(ctx, msg)
