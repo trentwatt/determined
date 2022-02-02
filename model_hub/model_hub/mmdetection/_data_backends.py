@@ -132,7 +132,7 @@ def sub_backend(
     """
     if type(cfg) in [mmcv.utils.config.Config, mmcv.utils.config.ConfigDict]:
         cfg = cast(Union[mmcv.utils.config.Config, mmcv.utils.config.ConfigDict], cfg)
-        if "type" in cfg and cfg["type"] == "LoadImageFromFile":
+        if "type" in cfg and cfg["type"] in ["LoadImageFromFile", "LoadPanopticAnnotations"]:
             cfg["file_client_args"] = file_client_args
         else:
             for k in cfg:
