@@ -82,6 +82,6 @@ class LitMNIST(pl.LightningModule):
 
 if __name__ == '__main__':
     model = LitMNIST()
-    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning')
+    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning', devices="auto", accelerator="auto")
     dm = data.MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
     trainer.fit(model, datamodule=dm)
