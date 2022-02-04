@@ -18,9 +18,9 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+import torchmetrics
 from torchvision import transforms
 import pytorch_lightning as pl
-from pytorch_lightning.metrics.functional import accuracy
 
 import data
 
@@ -33,6 +33,9 @@ class LitMNIST(pl.LightningModule):
         # Set our init args as class attributes
         self.hidden_size = hidden_size
         self.learning_rate = learning_rate
+
+        # Initialize PyTorch Lightning accuracy function
+        self.accuracy = torchmetrics.Accuracy()
 
         # Hardcode some dataset specific attributes
         self.num_classes = 10
@@ -71,7 +74,7 @@ class LitMNIST(pl.LightningModule):
         logits = self(x)
         loss = F.nll_loss(logits, y)
         preds = torch.argmax(logits, dim=1)
-        acc = accuracy(preds, y)
+        acc = self.accuracy(preds, y)
 
         return {'val_loss': loss, 'accuracy': acc}
 
@@ -82,6 +85,6 @@ class LitMNIST(pl.LightningModule):
 
 if __name__ == '__main__':
     model = LitMNIST()
-    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning', devices="auto", accelerator="auto")
+    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning')
     dm = data.MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
     trainer.fit(model, datamodule=dm)
