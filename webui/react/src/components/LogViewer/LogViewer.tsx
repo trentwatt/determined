@@ -130,7 +130,12 @@ const LogViewer: React.FC<Props> = ({
     return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
   }, [ charMeasures, maxCharPerLine, logs ]);
 
-  const resizeLogs = useCallback(() => listRef.current?.resetAfterIndex(0), []);
+  
+  const resizeLogs = useCallback(() => {
+    listRef.current?.resetAfterIndex(0, false)
+    if (isNewestFirst) listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
+  }, [ isNewestFirst]);
+
 
   const processLogs = useCallback((newLogs: Log[]) => {
     const map = local.current.idMap;
