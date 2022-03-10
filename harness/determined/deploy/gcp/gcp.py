@@ -333,7 +333,7 @@ def validate_gcp_credentials(configs: Dict) -> None:
             % colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow"),
             "and re-run the application. ",
             "For more information, please see",
-            "https://docs.determined.ai/latest/how-to/installation/gcp.html#credentials",
+            "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credentials",
             "and",
             "https://cloud.google.com/docs/authentication/getting-started",
         )
