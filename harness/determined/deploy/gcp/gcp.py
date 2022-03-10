@@ -76,7 +76,9 @@ def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> str:
     # Add GCP-friendly version key to configs. We persist this since it's used
     # across the cluster lifecycle: to name resources on provisioning, and to
     # filter for the master and dynamic agents on deprovisioning.
-    configs["det_version_key"] = det_version.replace(".", "-")[0:8]
+    # do 12 chars
+    # 
+    configs["det_version_key"] = det_version.replace(".", "-")[:12].rstrip("-")
 
     # Track the default zone in configuration variables. This is needed
     # during deprovisioning.
