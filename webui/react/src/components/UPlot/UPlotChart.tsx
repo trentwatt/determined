@@ -144,14 +144,14 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       plotChart.destroy();
       chartRef.current = undefined;
     };
-  }, [ chartDivRef, hasData, normalizedData, options ]);
+  }, [ chartDivRef, hasData, JSON.stringify(options) ]);
 
   /*
    * Chart data when data changes.
    */
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
-    chartRef.current.setData(normalizedData, isZoomed.current);
+    chartRef.current.setData(normalizedData, true);
   }, [ normalizedData ]);
 
   /*
