@@ -14,6 +14,7 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
 interface Props {
   data?: AlignedData | FacetedData;
   focusIndex?: number;
+  noDataMessage?: string;
   options?: Partial<Options>;
   style?: React.CSSProperties;
 }
@@ -48,6 +49,8 @@ const shouldUpdate = (
   if (chart?.series?.length !== next.series?.length) {
     return true;
   }
+
+  if (prev.scales?.y?.distr !== next.scales?.y?.distr) return true;
 
   const someSeriesHasChanged =
     chart.series.some((chartSerie, seriesIdx) => {
@@ -90,7 +93,7 @@ const getNormalizedData = (
 };
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props) => {
+const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataMessage }: Props) => {
   const chartRef = useRef<uPlot>();
   const [ chartIsMounted, setChartIsMounted ] = useState(false);
   const chartDivRef = useRef<HTMLDivElement>(null);
@@ -144,6 +147,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       setChartIsMounted(true);
     }
     return () => {
+      console.log('uplot out');
       chartRef?.current?.destroy();
       chartRef.current = undefined;
       setChartIsMounted(false);
@@ -161,6 +165,8 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
        * may also want to preserve other user interactions with the chart
        * by taking some things from chartRef.current and putting them in newOptions
        */
+      const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
+      if (!isZoomed) optionsRef.current.scales = undefined;
       newOptions = uPlot.assign(
         optionsRef.current,
         newOptions || {},
@@ -199,6 +205,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
      * on what are the possible way that
      * the data can change
      */
+    console.log(isZoomed);
     chartRef.current.setData(normalizedData as AlignedData, !isZoomed);
   }, [ hasData, normalizedData, chartIsMounted ]);
   /*
@@ -249,7 +256,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
-          title="No data to plot."
+          title={noDataMessage ?? 'No data to plot.'}
           type={MessageType.Empty}
         />
       )}

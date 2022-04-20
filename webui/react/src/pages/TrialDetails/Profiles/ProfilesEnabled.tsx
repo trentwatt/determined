@@ -1,10 +1,8 @@
-import { Alert } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
@@ -65,6 +63,9 @@ const seriesMapping = (name: string, index: number) => ({
 const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false });
 
 const ProfilesEnabled: React.FC = () => {
+  useEffect(() => {
+    return () => console.log('profiler out');
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
@@ -197,18 +198,11 @@ const ProfilesEnabled: React.FC = () => {
     return uPlotData;
   }, [ metrics ]);
 
-  if (isLoading) {
-    return <Spinner spinning tip="Waiting for profiler data..." />;
-  } else if (isEmpty) {
-    return <Alert message="No data available." type="warning" />;
-  }
-
   return (
     <div ref={containerRef}>
       <Section
         bodyBorder
         bodyNoPadding
-        loading={metrics[MetricType.Throughput].isLoading}
         title="Throughput">
         <UPlotChart
           data={chartData[MetricType.Throughput]}
@@ -217,29 +211,19 @@ const ProfilesEnabled: React.FC = () => {
         />
       </Section>
       <Section
-        bodyBorder={!metrics[MetricType.Timing].isEmpty}
         bodyNoPadding
-        loading={metrics[MetricType.Timing].isLoading}
         title="Timing Metrics">
-        {metrics[MetricType.Timing].isEmpty ? (
-          <Alert
-            description="Timing metrics may not be available for your framework."
-            message="No data found."
-            type="warning"
-          />
-        ) : (
-          <UPlotChart
-            data={chartData[MetricType.Timing]}
-            options={chartOptions[MetricType.Timing]}
-            style={CHART_STYLE}
-          />
-        )}
+        <UPlotChart
+          data={chartData[MetricType.Timing]}
+          noDataMessage="No data found. Timing metrics may not be available for your framework."
+          options={chartOptions[MetricType.Timing]}
+          style={CHART_STYLE}
+        />
       </Section>
       <Section
         bodyBorder
         bodyNoPadding
         filters={<SystemMetricFilter />}
-        loading={metrics[MetricType.System].isLoading}
         title="System Metrics">
         <UPlotChart
           data={chartData[MetricType.System]}

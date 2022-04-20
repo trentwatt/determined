@@ -105,7 +105,14 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     , [ tickThrottle,
       settings.name,
       settings.agentId,
-      settings.gpuUuid ],
+      settings.gpuUuid,
+      systemMetrics.isLoading,
+      throughputMetrics.isLoading,
+      timingMetrics.isLoading,
+      systemMetrics.isEmpty,
+      throughputMetrics.isEmpty,
+      timingMetrics.isEmpty,
+    ],
   );
 
   return (
