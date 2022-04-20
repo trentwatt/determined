@@ -70,17 +70,6 @@ const ProfilesEnabled: React.FC = () => {
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
 
-  const isLoading = (
-    metrics[MetricType.System].isLoading ||
-    metrics[MetricType.Throughput].isLoading ||
-    metrics[MetricType.Timing].isLoading
-  );
-  const isEmpty = (
-    metrics[MetricType.System].isEmpty &&
-    metrics[MetricType.Throughput].isEmpty &&
-    metrics[MetricType.Timing].isEmpty
-  );
-
   const chartOptions = useMemo(() => {
     /**
      * TODO: metrics is a big object with all the data, but
@@ -211,6 +200,7 @@ const ProfilesEnabled: React.FC = () => {
         />
       </Section>
       <Section
+        bodyBorder
         bodyNoPadding
         title="Timing Metrics">
         <UPlotChart
