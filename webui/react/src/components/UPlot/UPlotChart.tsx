@@ -93,46 +93,58 @@ const getNormalizedData = (
 };
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataMessage }: Props) => {
+const UPlotChart: React.FC<Props> = ({
+  data,
+  focusIndex,
+  options,
+  style,
+  noDataMessage,
+}: Props) => {
   const chartRef = useRef<uPlot>();
   const [ chartIsMounted, setChartIsMounted ] = useState(false);
   const chartDivRef = useRef<HTMLDivElement>(null);
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
 
-  const getAugmentedOptions = (options: Partial<uPlot.Options> | undefined)
-  : uPlot.Options => uPlot.assign(
-    {
-      hooks: {
-        setScale: [ (uPlot: uPlot, scaleKey: string) => {
-          if (![ 'x', 'y' ].includes(scaleKey)) return;
+  const getAugmentedOptions = (options: Partial<uPlot.Options> | undefined): uPlot.Options =>
+    uPlot.assign(
+      {
+        hooks: {
+          setScale: [
+            (uPlot: uPlot, scaleKey: string) => {
+              if (![ 'x', 'y' ].includes(scaleKey)) return;
 
-          const currentMax: number|undefined =
-            uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
-          const currentMin: number|undefined =
-            uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
-          let max: number|undefined = scalesZoomData.current[scaleKey]?.max;
-          let min: number|undefined = scalesZoomData.current[scaleKey]?.min;
+              const currentMax: number | undefined = uPlot.posToVal(
+                scaleKey === 'x' ? uPlot.bbox.width : 0,
+                scaleKey,
+              );
+              const currentMin: number | undefined = uPlot.posToVal(
+                scaleKey === 'x' ? 0 : uPlot.bbox.height,
+                scaleKey,
+              );
+              let max: number | undefined = scalesZoomData.current[scaleKey]?.max;
+              let min: number | undefined = scalesZoomData.current[scaleKey]?.min;
 
-          if (max == null || currentMax > max) max = currentMax;
-          if (min == null || currentMin < min) min = currentMin;
+              if (max == null || currentMax > max) max = currentMax;
+              if (min == null || currentMin < min) min = currentMin;
 
-          scalesZoomData.current[scaleKey] = {
-            isZoomed: currentMax < max || currentMin > min,
-            max,
-            min,
-          };
-        } ],
+              scalesZoomData.current[scaleKey] = {
+                isZoomed: currentMax < max || currentMin > min,
+                max,
+                min,
+              };
+            },
+          ],
+        },
+        width: chartDivRef.current?.offsetWidth,
       },
-      width: chartDivRef.current?.offsetWidth,
-    },
-    options || {},
-  ) as uPlot.Options;
+      options || {},
+    ) as uPlot.Options;
 
   const optionsRef = useRef<uPlot.Options>(getAugmentedOptions(options));
 
   const [ hasData, normalizedData ] = useMemo(
-    () => getNormalizedData(data, optionsRef.current?.mode)
-    , [ data ],
+    () => getNormalizedData(data, optionsRef.current?.mode),
+    [ data ],
   );
 
   /*
@@ -141,18 +153,18 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
   useEffect(() => {
     if (!chartDivRef.current) return;
     scalesZoomData.current = {};
-    const data = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
+    const data = ([ [], [ [] ] ] as unknown) as uPlot.AlignedData;
     if (!chartRef?.current) {
       chartRef.current = new uPlot(optionsRef.current, data, chartDivRef.current);
       setChartIsMounted(true);
     }
     return () => {
-      console.log('uplot out');
+      // console.log('uplot out');
       chartRef?.current?.destroy();
       chartRef.current = undefined;
       setChartIsMounted(false);
     };
-  }, [ ]);
+  }, []);
 
   useEffect(() => {
     if (!chartDivRef.current) return;
@@ -165,13 +177,15 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
        * may also want to preserve other user interactions with the chart
        * by taking some things from chartRef.current and putting them in newOptions
        */
-      const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
-      if (!isZoomed) optionsRef.current.scales = undefined;
-      newOptions = uPlot.assign(
-        optionsRef.current,
-        newOptions || {},
-        // { scales: scalesZoomData.current }, // not what we want
-      ) as uPlot.Options;
+      const isZoomed = Object.values(scalesZoomData.current).some((i) => i.isZoomed === true);
+      if (!isZoomed) {
+        optionsRef.current.scales = undefined;
+        scalesZoomData.current = {};
+      } else {
+        // Object.values(scalesZoomData.current).forEach(data => data.max = data.min = undefined);
+        // console.log(scalesZoomData);
+      }
+      newOptions = uPlot.assign(optionsRef.current, newOptions || {}) as uPlot.Options;
       chartRef.current = new uPlot(newOptions, normalizedData as AlignedData, chartDivRef.current);
     } else {
       /**
@@ -182,12 +196,11 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
        * or remount, etc.
        * depending on the action returned
        */
-      // chartRef.current?.redraw();
+      chartRef.current?.redraw();
     }
     return () => {
       if (options) optionsRef.current = newOptions as uPlot.Options;
     };
-
   }, [ options, normalizedData ]);
 
   /*
@@ -195,7 +208,15 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
    */
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
-    const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
+    /**
+     * its not a reliable indicator of zoom always
+     * when the series is changed and the data is cleared,
+     * the data range can be smaller than the zoom range
+     * and the setScale hook interprets that situation as
+     * notZoomed. Therefore scales can get reset badly.
+     */
+    const isZoomed = Object.values(scalesZoomData.current).some((i) => i.isZoomed === true);
+    // const isZoomed = true;
     /**
      * TODO: possible perf improvement
      * possibly condition on some aspect
@@ -205,7 +226,6 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
      * on what are the possible way that
      * the data can change
      */
-    console.log(isZoomed);
     chartRef.current.setData(normalizedData as AlignedData, !isZoomed);
   }, [ hasData, normalizedData, chartIsMounted ]);
   /*
@@ -214,7 +234,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style, noDataM
   useEffect(() => {
     if (!chartRef.current) return;
     const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+    chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
   }, [ focusIndex ]);
 
   /*

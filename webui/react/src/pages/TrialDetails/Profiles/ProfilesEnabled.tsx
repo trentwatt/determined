@@ -64,7 +64,7 @@ const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false 
 
 const ProfilesEnabled: React.FC = () => {
   useEffect(() => {
-    return () => console.log('profiler out');
+    // return () => console.log('profiler out');
   }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
