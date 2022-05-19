@@ -261,7 +261,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           )
             : (
               <header>{`${isAux ?
-                `${footer .
+                `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
                 `${resourceStates.length}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
               </header>
