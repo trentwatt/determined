@@ -23,8 +23,6 @@ interface Props {
   workloads?: WorkloadGroup[];
 }
 
-const A_REASONABLY_SMALL_NUMBER = 0.0001;
-
 const getChartMetricLabel = (metric: MetricName): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
@@ -73,35 +71,22 @@ const TrialChart: React.FC<Props> = ({
     return [ xValues, ...yValuesArray ];
   }, [ metrics, workloads ]);
 
+  const singleBatch = chartData[0]?.length === 1 ? chartData[0][0] : undefined;
+
   const chartOptions: Options = useMemo(() => {
-
-    const onlyOneXValue = chartData[0]?.length === 1;
-
-    const scales = onlyOneXValue
-      ? {
-        x: {
-          max: chartData[0][0] + A_REASONABLY_SMALL_NUMBER,
-          min: chartData[0][0] - A_REASONABLY_SMALL_NUMBER,
-          time: false,
-        },
-        y: {
-          distr: scale === Scale.Log ? 3 : 1,
-          max: (chartData?.[1][0] ?? 0) + A_REASONABLY_SMALL_NUMBER,
-          min: (chartData?.[1][0] ?? 0) - A_REASONABLY_SMALL_NUMBER,
-        },
-      }
-      : { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } };
-
     return {
       axes: [
         { label: 'Batches' },
         { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
-      key: trialId,
+      key: `trialId_${singleBatch}`,
       legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales,
+      scales: {
+        x: singleBatch ? { max: 2 * singleBatch, min: 0, time: false } : { time: false },
+        y: { distr: scale === Scale.Log ? 3 : 1 },
+      },
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
@@ -112,7 +97,7 @@ const TrialChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ metrics, scale, chartData, trialId ]);
+  }, [ metrics, scale, singleBatch, trialId ]);
 
   const options = (
     <ResponsiveFilters>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
@@ -12,7 +13,7 @@ import handleError from 'utils/error';
 import { FacetedData } from './types';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
-  key?: number;
+  key?: string;
   width?: number;
 }
 
@@ -156,6 +157,8 @@ const UPlotChart: React.FC<Props> = ({
   const [ isReady, setIsReady ] = useState(false);
   const { theme } = useTheme();
 
+  window.chart = chartRef.current;
+
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
   const extendedOptions = useMemo(() => {
@@ -250,7 +253,7 @@ const UPlotChart: React.FC<Props> = ({
       try {
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, resetScales);
-          if (onlyOneXValue) chartRef.current.redraw(true, false);
+          if (onlyOneXValue) chartRef.current.redraw(true, true);
         }
 
       } catch(e) {

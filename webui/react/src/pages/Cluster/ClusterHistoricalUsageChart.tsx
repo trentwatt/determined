@@ -92,7 +92,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         { label: label ? label : 'GPU Hours' },
       ],
       height,
-      key: chartKey,
+      key: `${chartKey}`,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
