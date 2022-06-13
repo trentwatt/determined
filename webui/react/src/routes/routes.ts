@@ -34,7 +34,7 @@ const routes: RouteConfig[] = [
   {
     id: 'experimentComparison',
     needAuth: true,
-    path: '/experiment-compare/:tab',
+    path: '/experiment-compare',
     title: 'Experiment',
   },
   {
