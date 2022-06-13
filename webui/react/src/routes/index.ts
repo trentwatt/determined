@@ -1,3 +1,4 @@
+import ExperimentComparison from 'pages/ExperimentComparison';
 import { FC } from 'react';
 
 import Cluster from 'pages/Cluster';
@@ -29,6 +30,7 @@ const routeComponentMap: Record<string, FC> = {
   clusterLogs: ClusterLogs,
   clusters: Clusters,
   dashboard: Dashboard,
+  experimentComparison: ExperimentComparison,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
   interactive: InteractiveTask,

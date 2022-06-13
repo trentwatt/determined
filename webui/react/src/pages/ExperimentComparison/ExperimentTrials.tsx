@@ -37,7 +37,6 @@ import { validateDetApiEnum, validateDetApiEnumList } from '../../shared/utils/s
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
-import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
@@ -362,15 +361,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onChange={handleTableChange}
         />
       </Section>
-      {settings.compare && (
-        <TrialsComparisonModal
-          experiment={experiment}
-          trials={settings.row ?? []}
-          visible={settings.compare}
-          onCancel={handleTrialCompareCancel}
-          onUnselect={handleTrialUnselect}
-        />
-      )}
+
     </div>
   );
 };

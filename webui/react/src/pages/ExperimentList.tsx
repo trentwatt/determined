@@ -41,6 +41,7 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';
@@ -99,6 +100,7 @@ const ExperimentList: React.FC = () => {
     hasActivatable,
     hasArchivable,
     hasCancelable,
+    hasComparable,
     hasDeletable,
     hasKillable,
     hasPausable,
@@ -108,6 +110,7 @@ const ExperimentList: React.FC = () => {
       hasActivatable: false,
       hasArchivable: false,
       hasCancelable: false,
+      hasComparable: (settings.row?.length ?? 0) > 1,
       hasDeletable: false,
       hasKillable: false,
       hasPausable: false,
@@ -521,9 +524,13 @@ const ExperimentList: React.FC = () => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [ columns ]);
 
-  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+  const sendBatchActions = useCallback((action: Action): any => {
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorBoard({ experimentIds: settings.row });
+    }
+    if (action === Action.CompareExperiments) {
+      if (settings.row?.length)
+        return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
     }
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {

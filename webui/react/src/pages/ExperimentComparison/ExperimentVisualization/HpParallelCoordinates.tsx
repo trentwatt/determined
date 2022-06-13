@@ -27,7 +27,6 @@ import { openCommand } from 'wait';
 
 import { Primitive, Range } from '../../../shared/types';
 import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -347,15 +346,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
-      {showCompareTrials && (
-        <TrialsComparisonModal
-          experiment={experiment}
-          trials={selectedRowKeys}
-          visible={showCompareTrials}
-          onCancel={() => setShowCompareTrials(false)}
-          onUnselect={handleTrialUnselect}
-        />
-      )}
+
     </div>
   );
 };

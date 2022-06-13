@@ -23,7 +23,6 @@ import { openCommand } from 'wait';
 
 import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from '../../../shared/utils/routes';
-import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';
@@ -261,15 +260,7 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-      {showCompareTrials && (
-        <TrialsComparisonModal
-          experiment={experiment}
-          trials={selectedRowKeys}
-          visible={showCompareTrials}
-          onCancel={() => setShowCompareTrials(false)}
-          onUnselect={handleTrialUnselect}
-        />
-      )}
+
     </div>
   );
 };

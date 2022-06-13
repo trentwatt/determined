@@ -85,6 +85,9 @@ export const paths = {
   docs: (suffix?: string): string => {
     return `/docs${suffix || ''}`;
   },
+  experimentComparison: (experimentIds: string[]): string => {
+    return `/experiment-compare/ids?${encodeURIComponent(experimentIds.join(' '))}`;
+  },
   experimentDetails: (experimentId: number | string): string => {
     return `/experiments/${experimentId}`;
   },
