@@ -745,7 +745,7 @@ const ExperimentList: React.FC = () => {
       title="Experiments">
       <TableBatch
         actions={[
-          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+          { disabled: !hasComparable, label: Action.CompareExperiments, value: Action.CompareExperiments },
           { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
           { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
           { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
@@ -753,6 +753,7 @@ const ExperimentList: React.FC = () => {
           { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
           { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
           { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
+          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
         ]}
         selectedRowCount={(settings.row ?? []).length}
         onAction={handleBatchAction}
