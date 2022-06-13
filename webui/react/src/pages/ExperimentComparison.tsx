@@ -24,7 +24,7 @@ interface Params {
   experimentId: string;
 }
 
-const ExperimentDetails: React.FC = () => {
+const ExperimentComparison: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const { auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
@@ -118,4 +118,4 @@ const ExperimentDetails: React.FC = () => {
   );
 };
 
-export default ExperimentDetails;
+export default ExperimentComparison;
