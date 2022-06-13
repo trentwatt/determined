@@ -93,18 +93,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       <TabPane key="trials" tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="configuration" tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-          <ExperimentConfiguration experiment={experiment} />
-        </React.Suspense>
-      </TabPane>
-      <TabPane key="notes" tab="Notes">
-        <NotesCard
-          notes={experiment.notes ?? ''}
-          style={{ border: 0 }}
-          onSave={handleNotesUpdate}
-        />
-      </TabPane>
+
     </Tabs>
   );
 };
