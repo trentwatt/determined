@@ -45,16 +45,13 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
   return (
     <Tabs className="no-padding" defaultActiveKey="visualization">
       <TabPane key="visualization" tab="Visualization">
-        {/* <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+        <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath="experiment-comparison"
-            experiment={experiment}
+            experiments={experiments}
             type={viz}
           />
-        </React.Suspense> */}
-      </TabPane>
-      <TabPane key="trials" tab="Trials">
-        {/* <ExperimentTrials experiment={experiment} pageRef={pageRef} /> */}
+        </React.Suspense>
       </TabPane>
 
     </Tabs>

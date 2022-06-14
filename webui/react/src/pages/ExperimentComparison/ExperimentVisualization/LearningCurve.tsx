@@ -28,7 +28,7 @@ import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';
 
 interface Props {
-  experiment: ExperimentBase;
+  experiments: ExperimentBase[];
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
@@ -38,7 +38,7 @@ interface Props {
 const MAX_DATAPOINTS = 5000;
 
 const LearningCurve: React.FC<Props> = ({
-  experiment,
+  experiments,
   filters,
   fullHParams,
   selectedMaxTrial,
@@ -56,20 +56,17 @@ const LearningCurve: React.FC<Props> = ({
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
-  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+  // const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.hyperparameters[key];
+      acc[key] = experiments[0].hyperparameters[key];
       return acc;
     }, {} as Record<string, Hyperparameter>);
-  }, [ experiment.hyperparameters, fullHParams ]);
+  }, [ experiments[0].hyperparameters, fullHParams ]);
 
-  const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
-    const href = paths.trialDetails(trialId, experiment.id);
-    if (isNewTabClickEvent(event)) openBlank(href);
-    else routeToReactUrl(href);
-  }, [ experiment.id ]);
+
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);
@@ -101,7 +98,7 @@ const LearningCurve: React.FC<Props> = ({
 
     readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.trialsSample(
-        experiment.id,
+        experiments[0].id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         selectedMaxTrial,
@@ -169,7 +166,7 @@ const LearningCurve: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden ]);
+  }, [ experiments, selectedMaxTrial, selectedMetric, ui.isPageHidden ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
@@ -207,9 +204,7 @@ const LearningCurve: React.FC<Props> = ({
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !hasTrials) {
-    return isExperimentTerminal ? (
-      <Message title="No learning curve data to show." type={MessageType.Empty} />
-    ) : (
+    return (
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
@@ -232,7 +227,6 @@ const LearningCurve: React.FC<Props> = ({
               selectedTrialIds={selectedRowKeys}
               trialIds={trialIds}
               xValues={batches}
-              onTrialClick={handleTrialClick}
               onTrialFocus={handleTrialFocus}
             />
           </div>
@@ -246,10 +240,9 @@ const LearningCurve: React.FC<Props> = ({
             onClear={clearSelected}
           />
           <HpTrialTable
-            experimentId={experiment.id}
             handleTableRowSelect={handleTableRowSelect}
             highlightedTrialId={highlightedTrialId}
-            hyperparameters={hyperparameters}
+            // hyperparameters={hyperparameters}
             metric={selectedMetric}
             selectedRowKeys={selectedRowKeys}
             selection={true}

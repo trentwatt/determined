@@ -25,7 +25,7 @@ import { Primitive } from '../../../shared/types';
 import css from './HpScatterPlots.module.scss';
 
 interface Props {
-  experiment: ExperimentBase;
+  experiments: ExperimentBase[];
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedBatch: number;
@@ -43,7 +43,7 @@ interface HpMetricData {
 }
 
 const ScatterPlots: React.FC<Props> = ({
-  experiment,
+  experiments,
   filters,
   fullHParams,
   selectedBatch,
@@ -60,7 +60,7 @@ const ScatterPlots: React.FC<Props> = ({
   const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
 
   const resize = useResize(baseRef);
-  const isExperimentTerminal = terminalRunStates.has(experiment.state);
+  const isExperimentTerminal = terminalRunStates.has(experiments[0].state);
 
   const chartProps = useMemo(() => {
     if (!chartData) return undefined;
@@ -141,7 +141,7 @@ const ScatterPlots: React.FC<Props> = ({
 
     readStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.trialsSnapshot(
-        experiment.id,
+        experiments[0].id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         selectedBatch,
@@ -178,7 +178,7 @@ const ScatterPlots: React.FC<Props> = ({
         });
 
         fullHParams.forEach(hParam => {
-          const hp = (experiment.hyperparameters || {})[hParam];
+          const hp = (experiments[0].hyperparameters || {})[hParam];
           if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam] = true;
 
           hpMetricMap[hParam] = [];
@@ -220,7 +220,7 @@ const ScatterPlots: React.FC<Props> = ({
 
     return () => canceler.abort();
   }, [
-    experiment,
+    experiments[0],
     fullHParams,
     selectedBatch,
     selectedBatchMargin,

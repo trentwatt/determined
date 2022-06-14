@@ -319,7 +319,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               onAction={action => submitBatchAction(action as Action)}
               onClear={clearSelected}
             />
-            <HpTrialTable
+            {/* <HpTrialTable
               colorScale={colorScale}
               experimentId={experiment.id}
               filteredTrialIdMap={filteredTrialIdMap}
@@ -330,7 +330,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               selection={true}
               trialHps={trialHps}
               trialIds={chartData?.trialIds || []}
-            />
+            /> */}
           </div>
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>

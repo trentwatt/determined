@@ -33,7 +33,7 @@ import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 interface Props {
   basePath: string;
-  experiment: ExperimentBase;
+  experiments: ExperimentBase[];
   type?: ExperimentVisualizationType;
 }
 
@@ -71,21 +71,21 @@ const getHpImportanceMap = (
 
 const ExperimentVisualization: React.FC<Props> = ({
   basePath,
-  experiment,
+  experiments,
   type,
 }: Props) => {
   const { ui } = useStore();
   const history = useHistory();
   const location = useLocation();
-  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
+  //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
-    name: experiment.config.searcher.metric,
+    name: experiments[0].config.searcher.metric,
     type: MetricType.Validation,
   });
   const fullHParams = useRef<string[]>(
-    (Object.keys(experiment.hyperparameters || {}).filter(key => {
+    (Object.keys(experiments[0].hyperparameters || {}).filter(key => {
       // Constant hyperparameters are not useful for visualizations.
-      return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
+      return experiments[0].hyperparameters[key].type !== HyperparameterType.Constant;
     })),
   );
   const defaultFilters: VisualizationFilters = {
@@ -96,10 +96,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     metric: searcherMetric.current,
     view: DEFAULT_VIEW,
   };
-  const initFilters = storage.getWithDefault<VisualizationFilters>(
-    STORAGE_FILTERS_KEY,
-    defaultFilters,
-  );
+  const initFilters = defaultFilters
+
   const [ typeKey, setTypeKey ] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
@@ -110,17 +108,16 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
-  const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
+  const { hasData, hasLoaded,  isSupported } = useMemo(() => {
     return {
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
       hasLoaded: batches && metrics,
-      isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![
         ExperimentSearcherName.Single,
         ExperimentSearcherName.Pbt,
-      ].includes(experiment.config.searcher.name),
+      ].includes(experiments[0].config.searcher.name),
     };
-  }, [ batches, experiment, metrics ]);
+  }, [ batches, experiments[0], metrics ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -129,12 +126,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
-    storage.set(STORAGE_FILTERS_KEY, filters);
-  }, [ storage ]);
-
-  const handleFiltersReset = useCallback(() => {
-    storage.remove(STORAGE_FILTERS_KEY);
-  }, [ storage ]);
+  }, [ ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setActiveMetric(metric);
@@ -164,7 +156,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.metricNames(
-        experiment.id,
+        experiments[0].id,
         undefined,
         { signal: canceler.signal },
       ),
@@ -191,7 +183,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1GetHPImportanceResponse>(
       detApi.StreamingInternal.getHPImportance(
-        experiment.id,
+        experiments[0].id,
         undefined,
         { signal: canceler.signal },
       ),
@@ -207,7 +199,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters?.metric, isSupported, ui.isPageHidden ]);
+  }, [ experiments[0].id, filters?.metric, isSupported, ui.isPageHidden ]);
 
   // Stream available batches.
   useEffect(() => {
@@ -220,7 +212,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
-        experiment.id,
+        experiments[0].id,
         activeMetric.name,
         metricTypeParam,
         undefined,
@@ -237,7 +229,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden ]);
+  }, [ activeMetric, experiments[0].id, filters.batch, isSupported, ui.isPageHidden ]);
 
   // Set the default filter batch.
   useEffect(() => {
@@ -297,12 +289,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     );
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
-  } else if (!hasLoaded && experiment.state !== RunState.Paused) {
-    return <Spinner tip="Fetching metrics..." />;
   } else if (!hasData) {
-    return (isExperimentTerminal || experiment.state === RunState.Paused) ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
-    ) : (
+    return  (
       <div className={css.alert}>
         <Alert
           description="Please wait until the experiment is further along."
@@ -323,7 +311,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       type={typeKey}
       onChange={handleFiltersChange}
       onMetricChange={handleMetricChange}
-      onReset={handleFiltersReset}
+      // onReset={handleFiltersReset}
     />
   );
 
@@ -338,18 +326,18 @@ const ExperimentVisualization: React.FC<Props> = ({
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
           <LearningCurve
-            experiment={experiment}
+            experiments={experiments}
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
             selectedMetric={filters.metric}
           />
         </Tabs.TabPane>
-        <Tabs.TabPane
+        {/* <Tabs.TabPane
           key={ExperimentVisualizationType.HpParallelCoordinates}
           tab="HP Parallel Coordinates">
           <HpParallelCoordinates
-            experiment={experiment}
+            experiments={experiments}
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
@@ -357,12 +345,12 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
           />
-        </Tabs.TabPane>
-        <Tabs.TabPane
+        </Tabs.TabPane> */}
+        {/* <Tabs.TabPane
           key={ExperimentVisualizationType.HpScatterPlots}
           tab="HP Scatter Plots">
           <HpScatterPlots
-            experiment={experiment}
+            experiments={experiments}
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
@@ -370,12 +358,12 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
           />
-        </Tabs.TabPane>
-        <Tabs.TabPane
+        </Tabs.TabPane> */}
+        {/* <Tabs.TabPane
           key={ExperimentVisualizationType.HpHeatMap}
           tab="HP Heat Map">
           <HpHeatMaps
-            experiment={experiment}
+            experiments={experiments}
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
@@ -384,7 +372,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedMetric={filters.metric}
             selectedView={filters.view}
           />
-        </Tabs.TabPane>
+        </Tabs.TabPane> */}
       </Tabs>
     </div>
   );
