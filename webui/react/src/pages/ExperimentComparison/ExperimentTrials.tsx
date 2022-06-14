@@ -331,7 +331,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         <TableBatch
           actions={[
             { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-            { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
           selectedRowCount={(settings.row ?? []).length}
           onAction={action => submitBatchAction(action as Action)}
