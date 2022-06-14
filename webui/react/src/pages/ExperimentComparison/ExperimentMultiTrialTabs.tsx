@@ -32,29 +32,29 @@ const ExperimentVisualization = React.lazy(() => {
 });
 
 export interface Props {
-  experiment: ExperimentBase;
+  experiments: ExperimentBase[];
   fetchExperimentDetails: () => void;
   pageRef: React.RefObject<HTMLElement>;
 }
 
 const ExperimentMultiTrialTabs: React.FC<Props> = (
-  { experiment, pageRef }: Props,
+  { experiments, pageRef }: Props,
 ) => {
   const { viz, ids } = useParams<Params>();
 
   return (
     <Tabs className="no-padding" defaultActiveKey="visualization">
       <TabPane key="visualization" tab="Visualization">
-        <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+        {/* <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath="experiment-comparison"
             experiment={experiment}
             type={viz}
           />
-        </React.Suspense>
+        </React.Suspense> */}
       </TabPane>
       <TabPane key="trials" tab="Trials">
-        <ExperimentTrials experiment={experiment} pageRef={pageRef} />
+        {/* <ExperimentTrials experiment={experiment} pageRef={pageRef} /> */}
       </TabPane>
 
     </Tabs>

@@ -17,7 +17,7 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 
 import { isAborted } from '../shared/utils/service';
 
-import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
+import ExperimentMultiTrialTabs from './ExperimentComparison/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
 
 interface Query {
@@ -31,7 +31,7 @@ const ExperimentComparison: React.FC = () => {
   
   const { auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
-  const [ experiment, setExperiment ] = useState<ExperimentBase>();
+  const [ experiments, setExperiments ] = useState<ExperimentBase[]>([]);
   const [ trial, setTrial ] = useState<TrialDetails>();
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
@@ -40,15 +40,15 @@ const ExperimentComparison: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const [ experimentData ] = await Promise.all(
+      const experimentsData = await Promise.all(
         experimentIds.map(id => getExperimentDetails({id: parseInt(id)}, { signal: canceler.signal }))
       );
-      if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
+      if (!isEqual(experimentsData, experiments)) setExperiments(experimentsData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
   }, [
-    experiment,
+    experiments,
     experimentIds,
     canceler.signal,
     pageError,
@@ -61,11 +61,11 @@ const ExperimentComparison: React.FC = () => {
     setTrial(trial);
   }, []);
 
-  useEffect(() => {
-    if (experiment && terminalRunStates.has(experiment.state)) {
-      stopPolling();
-    }
-  }, [ experiment, stopPolling ]);
+  // useEffect(() => {
+  //   if (experiment && terminalRunStates.has(experiment.state)) {
+  //     stopPolling();
+  //   }
+  // }, [ experiment, stopPolling ]);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -91,11 +91,11 @@ const ExperimentComparison: React.FC = () => {
       // )}
       stickyHeader
       title="Compare Experiments">
-        {/* <ExperimentMultiTrialTabs
-          experiment={experiment}
+        <ExperimentMultiTrialTabs
+          experiments={experiments}
           fetchExperimentDetails={fetchExperimentDetails}
           pageRef={pageRef}
-        /> */}
+        />
     </Page>
   );
 };
