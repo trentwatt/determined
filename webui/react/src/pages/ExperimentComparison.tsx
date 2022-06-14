@@ -1,6 +1,7 @@
 // import React, { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
-import { useParams } from 'react-router';
+import { useLocation } from 'react-router';
+import queryString from 'query-string';
 
 import Message from 'shared/components/Message';
 // import Page from 'components/Page';
@@ -22,12 +23,15 @@ import Message from 'shared/components/Message';
 // import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 // import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
 
-interface Params {
-  id: string;
+interface Query {
+  id?: string[];
 }
 
 const ExperimentComparison: React.FC = () => {
-  const { id } = useParams<Params>();
+  const location = useLocation();
+  const query: Query = queryString.parse(location.search);
+  const experimentIds = query.id;
+  
   // const { auth: { user } } = useStore();
   // const [ canceler ] = useState(new AbortController());
   // const [ experiment, setExperiment ] = useState<ExperimentBase>();
@@ -88,7 +92,7 @@ const ExperimentComparison: React.FC = () => {
   //   return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   // }
 
-  return <Message title={`Showing Experiment Ids ${id}`} />;
+  return <Message title={`Showing Experiment Ids ${experimentIds}`} />;
 
   // return (
   //   <Page
