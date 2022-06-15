@@ -9,7 +9,7 @@ import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
 import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
 
-import css from './ExperimentVisualizationFilters.module.scss';
+import css from './CompareFilters.module.scss';
 
 const { Option } = Select;
 

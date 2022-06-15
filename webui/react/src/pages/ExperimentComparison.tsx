@@ -1,47 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
 import queryString from 'query-string';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
+
 import Page from 'components/Page';
-import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
-import usePolling from 'hooks/usePolling';
-import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import {
-  getExperimentDetails, getExpValidationHistory, isNotFound,
+  getExperimentDetails,
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
-import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
-import { isSingleTrialExperiment } from 'utils/experiment';
+import { ExperimentBase } from 'types';
 
 import { isAborted } from '../shared/utils/service';
 
-import ExperimentMultiTrialTabs from './ExperimentComparison/ExperimentMultiTrialTabs';
-import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
-
+import ComparisonHeader from './ExperimentComparison/CompareHeader';
+import ComparisonTabs from './ExperimentComparison/CompareTabs';
 interface Query {
   id?: string[];
 }
 
 const ExperimentComparison: React.FC = () => {
   const location = useLocation();
-  const query: Query = queryString.parse(location.search);
-  const experimentIds = query.id ? query.id : [];
-  
-  const { auth: { user } } = useStore();
+
+  const experimentIds = useMemo(() => {
+    const query: Query = queryString.parse(location.search);
+
+    return query.id ?? [];
+  }, [ location.search ]);
+
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentBase[]>([]);
-  const [ trial, setTrial ] = useState<TrialDetails>();
-  const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
       const experimentsData = await Promise.all(
-        experimentIds.map(id => getExperimentDetails({id: parseInt(id)}, { signal: canceler.signal }))
+        experimentIds.map((id) =>
+          getExperimentDetails({ id: parseInt(id) }, { signal: canceler.signal })),
       );
       if (!isEqual(experimentsData, experiments)) setExperiments(experimentsData);
     } catch (e) {
@@ -52,50 +47,32 @@ const ExperimentComparison: React.FC = () => {
     experimentIds,
     canceler.signal,
     pageError,
-    valHistory,
   ]);
-
-  const { stopPolling } = usePolling(fetchExperimentDetails);
-
-  const handleSingleTrialUpdate = useCallback((trial: TrialDetails) => {
-    setTrial(trial);
-  }, []);
-
-  // useEffect(() => {
-  //   if (experiment && terminalRunStates.has(experiment.state)) {
-  //     stopPolling();
-  //   }
-  // }, [ experiment, stopPolling ]);
 
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 
   if (!experimentIds) {
-    return <Message title='No Experiments chosen for comparison'/>;
+    return <Message title="No Experiments chosen for comparison" />;
   } else if (pageError) {
     return <Message title="Unable to compare experiments" type={MessageType.Warning} />;
-  } 
+  }
 
   return (
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      // headerComponent={(
-      //   <ExperimentDetailsHeader
-      //     curUser={user}
-      //     experiment={experiment}
-      //     fetchExperimentDetails={fetchExperimentDetails}
-      //     trial={trial}
-      //   />
-      // )}
+      headerComponent={(
+        <ComparisonHeader />
+      )}
       stickyHeader
       title="Compare Experiments">
-        <ExperimentMultiTrialTabs
-          experiments={experiments}
-          fetchExperimentDetails={fetchExperimentDetails}
-          pageRef={pageRef}
-        />
+      <ComparisonTabs
+        experiments={experiments}
+        fetchExperimentDetails={fetchExperimentDetails}
+        pageRef={pageRef}
+      />
     </Page>
   );
 };

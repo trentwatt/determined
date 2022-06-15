@@ -4,28 +4,25 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
-import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/Message';
+import Message from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { flattenObject } from 'shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
-  metricTypeParamMap, RunState,
+  metricTypeParamMap,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
 import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from '../../../shared/utils/routes';
 
-import HpTrialTable, { TrialHParams } from './HpTrialTable';
-import css from './LearningCurve.module.scss';
+import css from './CompareCurve.module.scss';
+import HpTrialTable, { TrialHParams } from './CompareTable';
 
 interface Props {
   experiments: ExperimentBase[];
@@ -53,20 +50,16 @@ const LearningCurve: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<Error>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
-  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
   // const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
-
-  const hyperparameters = useMemo(() => {
-    return fullHParams.reduce((acc, key) => {
-      acc[key] = experiments[0].hyperparameters[key];
-      return acc;
-    }, {} as Record<string, Hyperparameter>);
-  }, [ experiments[0].hyperparameters, fullHParams ]);
-
-
+  // const hyperparameters = useMemo(() => {
+  //   return fullHParams.reduce((acc, key) => {
+  //     acc[key] = experiments?.[0]?.hyperparameters[key];
+  //     return acc;
+  //   }, {} as Record<string, Hyperparameter>);
+  // }, [ experiments, fullHParams ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);
@@ -85,7 +78,7 @@ const LearningCurve: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !experiments?.[0]) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -98,7 +91,7 @@ const LearningCurve: React.FC<Props> = ({
 
     readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.trialsSample(
-        experiments[0].id,
+        experiments?.[0].id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         selectedMaxTrial,
@@ -171,8 +164,6 @@ const LearningCurve: React.FC<Props> = ({
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
       return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
-    } else if (action === Action.CompareTrials) {
-      return setShowCompareTrials(true);
     }
   }, [ selectedRowKeys ]);
 
@@ -197,9 +188,6 @@ const LearningCurve: React.FC<Props> = ({
   }, [ sendBatchActions ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
-
-  const handleTrialUnselect = useCallback((trialId: number) =>
-    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
 
   if (pageError) {
     return <Message title={pageError.message} />;

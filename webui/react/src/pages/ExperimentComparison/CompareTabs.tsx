@@ -1,34 +1,21 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import React from 'react';
+import { useParams } from 'react-router';
 
-import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
-import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
-import handleError from 'utils/error';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 const { TabPane } = Tabs;
-
-enum TabType {
-  Configuration = 'configuration',
-  Trials = 'trials',
-  Visualization = 'visualization',
-  Notes = 'notes',
-}
-
 interface Params {
   ids: string;
   viz?: ExperimentVisualizationType;
 }
 
-const TAB_KEYS = Object.values(TabType);
-const DEFAULT_TAB_KEY = TabType.Visualization;
+// const TAB_KEYS = Object.values(TabType);
+// const DEFAULT_TAB_KEY = TabType.Visualization;
 
 const ExperimentVisualization = React.lazy(() => {
-  return import('./ExperimentVisualization');
+  return import('./CompareVisualization');
 });
 
 export interface Props {
@@ -38,9 +25,9 @@ export interface Props {
 }
 
 const ExperimentMultiTrialTabs: React.FC<Props> = (
-  { experiments, pageRef }: Props,
+  { experiments }: Props,
 ) => {
-  const { viz, ids } = useParams<Params>();
+  const { viz } = useParams<Params>();
 
   return (
     <Tabs className="no-padding" defaultActiveKey="visualization">
@@ -53,7 +40,6 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
           />
         </React.Suspense>
       </TabPane>
-
     </Tabs>
   );
 };

@@ -3,9 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom';
 
 import Link from 'components/Link';
-import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import {
   GetHPImportanceResponseMetricHPImportance,
@@ -18,18 +16,15 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
-  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
+  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType,
 } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
 
-import css from './ExperimentVisualization.module.scss';
+import css from './CompareVisualization.module.scss';
+import LearningCurve from './CompareVisualization/CompareCurve';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
-} from './ExperimentVisualization/ExperimentVisualizationFilters';
-import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
-import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
-import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
-import LearningCurve from './ExperimentVisualization/LearningCurve';
+} from './CompareVisualization/CompareFilters';
 
 interface Props {
   basePath: string;
@@ -43,8 +38,6 @@ enum PageError {
   MetricNames,
 }
 
-const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_FILTERS_KEY = 'filters';
 const TYPE_KEYS = Object.values(ExperimentVisualizationType);
 const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
@@ -79,13 +72,13 @@ const ExperimentVisualization: React.FC<Props> = ({
   const location = useLocation();
   //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
-    name: experiments[0].config.searcher.metric,
+    name: experiments?.[0]?.config?.searcher?.metric,
     type: MetricType.Validation,
   });
   const fullHParams = useRef<string[]>(
-    (Object.keys(experiments[0].hyperparameters || {}).filter(key => {
+    (Object.keys(experiments?.[0]?.hyperparameters || {}).filter(key => {
       // Constant hyperparameters are not useful for visualizations.
-      return experiments[0].hyperparameters[key].type !== HyperparameterType.Constant;
+      return experiments?.[0]?.hyperparameters?.[key]?.type !== HyperparameterType.Constant;
     })),
   );
   const defaultFilters: VisualizationFilters = {
@@ -96,7 +89,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     metric: searcherMetric.current,
     view: DEFAULT_VIEW,
   };
-  const initFilters = defaultFilters
+  const initFilters = defaultFilters;
 
   const [ typeKey, setTypeKey ] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
@@ -108,16 +101,16 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
-  const { hasData, hasLoaded,  isSupported } = useMemo(() => {
+  const { hasData, isSupported } = useMemo(() => {
     return {
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
       hasLoaded: batches && metrics,
       isSupported: ![
         ExperimentSearcherName.Single,
         ExperimentSearcherName.Pbt,
-      ].includes(experiments[0].config.searcher.name),
+      ].includes(experiments?.[0]?.config?.searcher?.name),
     };
-  }, [ batches, experiments[0], metrics ]);
+  }, [ batches, experiments, metrics ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -148,7 +141,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
+    if (!isSupported || ui.isPageHidden || !experiments?.[0]) return;
 
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
@@ -156,7 +149,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.metricNames(
-        experiments[0].id,
+        experiments?.[0].id,
         undefined,
         { signal: canceler.signal },
       ),
@@ -183,7 +176,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1GetHPImportanceResponse>(
       detApi.StreamingInternal.getHPImportance(
-        experiments[0].id,
+        experiments?.[0].id,
         undefined,
         { signal: canceler.signal },
       ),
@@ -199,11 +192,11 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiments[0].id, filters?.metric, isSupported, ui.isPageHidden ]);
+  }, [ experiments, filters?.metric, isSupported, ui.isPageHidden ]);
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
+    if (!isSupported || ui.isPageHidden || !experiments?.[0]) return;
 
     const canceler = new AbortController();
     const metricTypeParam = activeMetric.type === MetricType.Training
@@ -212,7 +205,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
-        experiments[0].id,
+        experiments?.[0].id,
         activeMetric.name,
         metricTypeParam,
         undefined,
@@ -229,7 +222,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, experiments[0].id, filters.batch, isSupported, ui.isPageHidden ]);
+  }, [ activeMetric, experiments, filters.batch, isSupported, ui.isPageHidden ]);
 
   // Set the default filter batch.
   useEffect(() => {
@@ -290,7 +283,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasData) {
-    return  (
+    return (
       <div className={css.alert}>
         <Alert
           description="Please wait until the experiment is further along."

@@ -1,22 +1,20 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
-import { paths } from 'routes/utils';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
   str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import {
-  HyperparametersFlattened, HyperparameterType, MetricName,
+  HyperparameterType, MetricName,
 } from 'types';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
 import { Primitive, RecordKey } from '../../../shared/types';
 
-import css from './HpTrialTable.module.scss';
+import css from './CompareTable.module.scss';
 
 interface Props {
   colorScale?: ColorScale[];
@@ -74,7 +72,7 @@ const HpTrialTable: React.FC<Props> = ({
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
-            <div>{record.id}</div>
+          <div>{record.id}</div>
         </div>
       );
     };
@@ -95,29 +93,29 @@ const HpTrialTable: React.FC<Props> = ({
       title: <MetricBadgeTag metric={metric} />,
     };
 
-    const hpRenderer = (key: string) => {
-      return (_: string, record: TrialHParams) => {
-        const value = record.hparams[key];
-        const type = hyperparameters[key].type;
-        const isValidType = [
-          HyperparameterType.Constant,
-          HyperparameterType.Double,
-          HyperparameterType.Int,
-          HyperparameterType.Log,
-        ].includes(type);
-        if (isNumber(value) && isValidType) {
-          return <HumanReadableNumber num={value} />;
-        }
-        return value + '';
-      };
-    };
-    const hpColumnSorter = (key: string) => {
-      return (recordA: TrialHParams, recordB: TrialHParams): number => {
-        const a = recordA.hparams[key] as Primitive;
-        const b = recordB.hparams[key] as Primitive;
-        return primitiveSorter(a, b);
-      };
-    };
+    // const hpRenderer = (key: string) => {
+    //   return (_: string, record: TrialHParams) => {
+    //     const value = record.hparams[key];
+    //     const type = hyperparameters[key].type;
+    //     const isValidType = [
+    //       HyperparameterType.Constant,
+    //       HyperparameterType.Double,
+    //       HyperparameterType.Int,
+    //       HyperparameterType.Log,
+    //     ].includes(type);
+    //     if (isNumber(value) && isValidType) {
+    //       return <HumanReadableNumber num={value} />;
+    //     }
+    //     return value + '';
+    //   };
+    // };
+    // const hpColumnSorter = (key: string) => {
+    //   return (recordA: TrialHParams, recordB: TrialHParams): number => {
+    //     const a = recordA.hparams[key] as Primitive;
+    //     const b = recordB.hparams[key] as Primitive;
+    //     return primitiveSorter(a, b);
+    //   };
+    // };
     // const hpColumns = Object
     //   .keys(hyperparameters || {})
     //   .map(key => {
@@ -129,8 +127,8 @@ const HpTrialTable: React.FC<Props> = ({
     //     };
     //   });
 
-    return [ idColumn, metricColumn, /* ...hpColumns  */];
-  }, [ colorScale, /* hyperparameters, */ metric, trialIds]);
+    return [ idColumn, metricColumn /* ...hpColumns  */];
+  }, [ colorScale, /* hyperparameters, */ metric, trialIds ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
