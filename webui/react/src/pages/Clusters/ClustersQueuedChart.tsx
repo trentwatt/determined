@@ -13,7 +13,7 @@ import css from './ClustersQueuedChart.module.scss';
 interface Props {
   poolStats: V1RPQueueStat | undefined;
 }
-
+// cluster
 const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
 
   const [ viewDays, setViewDays ] = useState(7);
