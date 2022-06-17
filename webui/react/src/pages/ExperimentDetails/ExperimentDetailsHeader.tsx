@@ -345,8 +345,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 isOnDark
                 maxLength={500}
                 placeholder="Add description..."
-                showSpinner={false}
-
                 style={{ minWidth: 120 }}
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate}
@@ -418,7 +416,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 isOnDark
                 maxLength={128}
                 placeholder="experiment name"
-                showSpinner={false}
                 value={experiment.name}
                 onSave={handleNameUpdate}
               />
