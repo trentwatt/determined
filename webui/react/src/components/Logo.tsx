@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import useTheme from 'hooks/useTheme';
+import { useStore } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import logoDeterminedOnDarkHorizontal from
   'shared/assets/images/logo-determined-on-dark-horizontal.svg';
@@ -12,7 +12,11 @@ import logoDeterminedOnLightVertical from
   'shared/assets/images/logo-determined-on-light-vertical.svg';
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
+<<<<<<< HEAD
 import { BrandingType } from 'types';
+=======
+import { BrandingType, DarkLight } from 'types';
+>>>>>>> 48003e50c (squash)
 
 import { DarkLight } from '../shared/themes';
 import { reactHostAddress } from '../shared/utils/routes';
@@ -53,7 +57,7 @@ const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>
 };
 
 const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
-  const { themeMode } = useTheme();
+  const { ui } = useStore();
   const classes = [ css[branding], css[orientation] ];
 
   const alt = useMemo(() => {
@@ -70,7 +74,7 @@ const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
     <img
       alt={alt}
       className={classes.join(' ')}
-      src={logos[branding][orientation][themeMode]}
+      src={logos[branding][orientation][ui.darkLight]}
     />
   );
 };

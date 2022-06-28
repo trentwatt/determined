@@ -13,7 +13,7 @@ import handleError from 'utils/error';
 
 import { ErrorType } from '../shared/utils/error';
 
-import css from './useCreateModelModal.module.scss';
+import css from './useModalModelCreate.module.scss';
 import useRegisterCheckpointModal from './useRegisterCheckpointModal';
 
 export interface ShowCreateModelProps {
@@ -35,7 +35,7 @@ interface ModalHooks {
   showModal: (props: ShowCreateModelProps) => void;
 }
 
-const useCreateModelModal = (): ModalHooks => {
+const useModalModelCreate = (): ModalHooks => {
   const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const [ modalState, setModalState ] = useState<ModalState>({
@@ -231,4 +231,4 @@ const useCreateModelModal = (): ModalHooks => {
   return { showModal };
 };
 
-export default useCreateModelModal;
+export default useModalModelCreate;

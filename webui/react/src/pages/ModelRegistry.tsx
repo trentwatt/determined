@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -6,7 +6,6 @@ import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import Page from 'components/Page';
@@ -15,9 +14,10 @@ import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig, modelN
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
-import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalModelCreate from 'hooks/useModalModelCreate';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -50,7 +50,7 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
-  const { showModal } = useCreateModelModal();
+  const { showModal } = useModalModelCreate();
   const pageRef = useRef<HTMLElement>(null);
 
   const {
@@ -491,8 +491,11 @@ const ModelRegistry: React.FC = () => {
       loading={isLoading}
       options={(
         <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}

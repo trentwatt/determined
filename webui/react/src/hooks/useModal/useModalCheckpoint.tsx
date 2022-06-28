@@ -5,7 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
-import useCreateModelModal from 'hooks/useCreateModelModal';
+import useModalModelCreate from 'hooks/useModalModelCreate';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -76,7 +76,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
 
-  const { showModal: showCreateModelModal } = useCreateModelModal();
+  const { showModal: showCreateModelModal } = useModalModelCreate();
 
   const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
     if (checkpointUuid) showCreateModelModal({ checkpointUuid });
