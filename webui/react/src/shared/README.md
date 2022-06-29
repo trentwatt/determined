@@ -1,4 +1,4 @@
-# Shared UI
+# WEB UIS OF DETERMINED
 
 We use this directory for shareable code snippets, UI components, etc.
 
