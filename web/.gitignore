@@ -21,3 +21,5 @@ node_modules/
 
 report.*.json
 done.stamp
+
+npm-debug.log
