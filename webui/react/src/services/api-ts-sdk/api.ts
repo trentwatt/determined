@@ -5216,6 +5216,12 @@ export interface V1QueryFilters {
      * @memberof V1QueryFilters
      */
     trainingMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1QueryFilters
+     */
+    hparams?: Array<V1NumberRangeFilter>;
 }
 
 /**
