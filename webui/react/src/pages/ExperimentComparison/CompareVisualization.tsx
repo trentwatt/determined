@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router';
 
 import { useStore } from 'contexts/Store';
-import { getExperimentDetails } from 'services/api';
+import { getExperimentDetails, compareTrials } from 'services/api';
 import {
   V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse,
 } from 'services/api-ts-sdk';
@@ -19,7 +19,7 @@ import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentVisualizationType,
   Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap
 } from 'types';
 import { Scale } from 'types';
 
@@ -28,7 +28,8 @@ import CompareCurve from './CompareVisualization/CompareCurve';
 import CompareFilters, {
   ViewType, VisualizationFilters,
 } from './CompareVisualization/CompareFilters';
-import { TrialHParams } from './CompareVisualization/CompareTable';
+import { TrialHParams, TrialMetrics } from './CompareVisualization/CompareTable';
+import { CompareTrialsParams } from 'services/types';
 
 enum PageError {
   MetricBatches,
@@ -98,6 +99,7 @@ const CompareVisualization: React.FC = () => {
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
+  const [ trialMetrics , setTrialMetrics] = useState<Record<number, TrialMetrics>>({});
 
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
   const [ hpVals, setHpVals ] = useState<HpValsMap>({});
@@ -173,6 +175,7 @@ const CompareVisualization: React.FC = () => {
               hparams: flatHParams,
               id,
               metric: null,
+              metrics: {}
             };
           }
 
@@ -247,6 +250,35 @@ const CompareVisualization: React.FC = () => {
     return () => canceler.abort();
   }, [ trialIds, ui.isPageHidden ]);
 
+  useEffect(() => {
+    const newTrialMetrics:  Record<number, TrialMetrics> = {};
+    const compareTrialsParams: CompareTrialsParams = {
+      trialIds: trialIds,
+      maxDatapoints: 1000,
+      metricNames: metrics,
+      // TODO: set as a hack to return data needto figure this parameter out
+      endBatches: 10000
+    }
+    compareTrials(compareTrialsParams).then(metricData => {
+      metricData.forEach(
+        trialData => {
+          const tData: TrialMetrics = {
+            id: trialData.id,
+            metrics: {}
+          }
+          trialData.metrics.forEach(metricType => {
+            metricType.data.forEach(dataPoint => {
+              tData.metrics[metricType.name] = dataPoint.value;
+            })
+            newTrialMetrics[tData.id] = tData;
+        }
+        )}
+      )
+      setTrialMetrics(newTrialMetrics)}
+    )
+  }, [ trialIds, metrics ]);
+
+
   if (!experimentIds.length) {
     return (
       <div className={css.alert}>
@@ -283,12 +315,14 @@ const CompareVisualization: React.FC = () => {
           tab="Learning Curve">
           {(experimentIds.length > 0 && filters.metric?.name && (
             <CompareCurve
+              trialMetrics={trialMetrics}
               batches={batches}
               chartData={chartData}
               filters={visualizationFilters}
               hasLoaded={hasLoaded}
               hpVals={hpVals}
               hyperparameters={hyperparameters}
+              metrics={metrics || []}
               selectedMaxTrial={filters.maxTrial}
               selectedMetric={filters.metric}
               selectedScale={filters.scale}
