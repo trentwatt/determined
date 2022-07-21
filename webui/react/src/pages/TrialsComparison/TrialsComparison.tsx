@@ -83,7 +83,6 @@ const TrialsComparison: React.FC = () => {
   const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ endBatches, setEndBatches] = useState<number>();
   const [ pageError, setPageError ] = useState<PageError>();
 
   useEffect(() => {
@@ -207,9 +206,6 @@ const TrialsComparison: React.FC = () => {
 
         const newBatches = Object.values(batchesMap);
         const maxBatches = Math.max(...newBatches)
-        if(!endBatches || maxBatches > endBatches){
-          setEndBatches(maxBatches)
-        }
         setBatches(newBatches);
 
         const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
@@ -260,13 +256,12 @@ const TrialsComparison: React.FC = () => {
   }, [ trialIds, ui.isPageHidden ]);
 
   useEffect(() => {
-    if (!trialIds || !metrics.length || !endBatches) return;
+    if (!trialIds || !metrics.length) return;
     const newTrialMetrics:  Record<number, TrialMetrics> = {};
     const compareTrialsParams: CompareTrialsParams = {
       trialIds: trialIds,
       maxDatapoints: 1000,
       metricNames: metrics,
-      endBatches: endBatches
     }
     compareTrials(compareTrialsParams).then(metricData => {
       metricData.forEach(
@@ -285,7 +280,7 @@ const TrialsComparison: React.FC = () => {
       )
       setTrialMetrics(newTrialMetrics)}
     )
-  }, [ trialIds, metrics, endBatches ]);
+  }, [ trialIds, metrics]);
 
   useEffect(() => {
     const newTrialHps: TrialHParams[] = []; 
