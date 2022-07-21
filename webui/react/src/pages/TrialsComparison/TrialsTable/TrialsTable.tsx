@@ -43,7 +43,6 @@ interface Props {
   selection?: boolean;
   trialHps: TrialHParams[];
   trialIds: number[];
-  trialMetrics: Record<number, TrialMetrics>,
   containerRef: MutableRefObject<HTMLElement | null>,
 
 }
@@ -75,7 +74,6 @@ const CompareTable: React.FC<Props> = ({
   selection,
   handleTableRowSelect,
   selectedRowKeys,
-  trialMetrics,
   metrics,
   containerRef
 }: Props) => {
@@ -88,16 +86,8 @@ const CompareTable: React.FC<Props> = ({
 
   const {settings, updateSettings }= useSettings<CompareTableSettings>(settingsConfig)
   const dataSource = useMemo(() => {
-    if (!filteredTrialIdMap){
-      trialHps.forEach((hp) => 
- {
-        if(trialMetrics[hp.id]){
-          hp.metrics = trialMetrics[hp.id].metrics;
-        }
-      })
-      return trialHps;
-    }
-    return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
+    if (!filteredTrialIdMap) return trialHps;
+    return trialHps.filter(trial => filteredTrialIdMap[trial.id]);
   }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {

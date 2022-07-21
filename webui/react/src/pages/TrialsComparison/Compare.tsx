@@ -35,7 +35,6 @@ interface Props {
   selectedScale: Scale;
   trialHps: TrialHParams[];
   trialIds: number[];
-  trialMetrics: Record<number, TrialMetrics>;
   metrics: MetricName[];
 
 }
@@ -52,7 +51,6 @@ const Compare: React.FC<Props> = ({
   batches,
   hyperparameters,
   hasLoaded,
-  trialMetrics,
   metrics
 }: Props) => {
   const containerRef = useRef<HTMLElement>(null);
@@ -149,7 +147,6 @@ const Compare: React.FC<Props> = ({
             hpVals={hpVals}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
-            trialMetrics={trialMetrics}
             selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}

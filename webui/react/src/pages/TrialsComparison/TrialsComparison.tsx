@@ -99,6 +99,7 @@ const TrialsComparison: React.FC = () => {
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
+  const [ trialHpMap, setTrialHpMap ] = useState<Record<number, TrialHParams>>({});
   const [ trialMetrics , setTrialMetrics] = useState<Record<number, TrialMetrics>>({});
 
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
@@ -187,6 +188,9 @@ const TrialsComparison: React.FC = () => {
             metricsMap[id][datapoint.batches] = datapoint.value;
             trialHpMap[id].metric = datapoint.value;
           });
+          if(trialMetrics[id]){
+            trialHpMap[id].metrics = trialMetrics[id].metrics
+          }
         });
 
         Object.keys(hpValsMap).forEach((hpParam) => {
@@ -199,6 +203,7 @@ const TrialsComparison: React.FC = () => {
 
         const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
+        setTrialHpMap(trialHpMap);
 
         const newBatches = Object.values(batchesMap);
         const maxBatches = Math.max(...newBatches)
@@ -282,6 +287,18 @@ const TrialsComparison: React.FC = () => {
     )
   }, [ trialIds, metrics, endBatches ]);
 
+  useEffect(() => {
+    const newTrialHps: TrialHParams[] = []; 
+     Object.keys(trialHpMap).forEach(trialId => {
+      const metricsMapKey = Number(trialId)
+      if(trialMetrics[metricsMapKey]){
+        trialHpMap[metricsMapKey ].metrics =  trialMetrics[metricsMapKey].metrics
+      }
+      newTrialHps.push(trialHpMap[metricsMapKey])
+    })
+    setTrialHps(newTrialHps);
+  },[trialHpMap, trialMetrics])
+
 
   if (!experimentIds.length) {
     return (
@@ -319,7 +336,6 @@ const TrialsComparison: React.FC = () => {
           tab="Learning Curve">
           {(experimentIds.length > 0 && filters.metric?.name && (
             <Compare
-              trialMetrics={trialMetrics}
               batches={batches}
               chartData={chartData}
               filters={visualizationFilters}
