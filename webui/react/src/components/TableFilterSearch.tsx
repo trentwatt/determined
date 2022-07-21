@@ -58,6 +58,7 @@ const TableFilterSearch: React.FC<Props> = ({
           ref={inputRef}
           value={search}
           onChange={handleSearchChange}
+          onPressEnter={handleSearch}
         />
       </div>
       <div className={css.footer}>

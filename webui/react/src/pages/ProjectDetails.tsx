@@ -603,6 +603,11 @@ const ProjectDetails: React.FC = () => {
         openCommand(result as CommandTask);
       }
 
+      if (action === Action.CompareExperiments) {
+        if (settings.row?.length)
+          return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
+      }
+
       /*
        * Deselect selected rows since their states may have changed where they
        * are no longer part of the filter criteria.
@@ -639,7 +644,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard || action === Action.Move) {
+    if (action === Action.OpenTensorBoard || action === Action.Move || action === Action.CompareExperiments) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);

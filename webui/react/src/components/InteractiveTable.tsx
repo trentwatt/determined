@@ -365,6 +365,7 @@ const InteractiveTable: InteractiveTable = ({
     (tablePagination, tableFilters, tableSorter): void => {
 
       if (Array.isArray(tableSorter)) return;
+>>>>>>> a5b83de34 (table stuff)
 
       const newSettings: Partial<InteractiveTableSettings> = {
         tableLimit: tablePagination.pageSize,
