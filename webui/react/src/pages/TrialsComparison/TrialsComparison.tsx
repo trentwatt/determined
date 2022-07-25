@@ -30,6 +30,7 @@ import TrialFilters, {
 } from './TrialFilters';
 import { TrialHParams, TrialMetrics } from './TrialsTable/TrialsTable';
 import { CompareTrialsParams } from 'services/types';
+import { glasbeyColor } from 'shared/utils/color';
 
 enum PageError {
   MetricBatches,
@@ -100,7 +101,7 @@ const TrialsComparison: React.FC = () => {
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ trialHpMap, setTrialHpMap ] = useState<Record<number, TrialHParams>>({});
   const [ trialMetrics , setTrialMetrics] = useState<Record<number, TrialMetrics>>({});
-
+  const [ colorMap, setColorMap] = useState<Record<number, string>>({});
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
   const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
@@ -149,8 +150,8 @@ const TrialsComparison: React.FC = () => {
           isEqual(prevTrialIds, newTrialIds)
             ? prevTrialIds
             : newTrialIds);
-
-        (event.trials || []).forEach((trial) => {
+        
+        (event.trials || []).forEach(trial => {
           const id = trial.trialId;
           const flatHParams = flattenObject(trial.hparams || {});
           Object.keys(flatHParams).forEach(
@@ -294,7 +295,14 @@ const TrialsComparison: React.FC = () => {
     setTrialHps(newTrialHps);
   },[trialHpMap, trialMetrics])
 
-
+  useEffect(() => {
+    if (!trialIds.length) return;
+    const newColorMap: Record<number, string> = {};
+    trialIds.forEach((trialId, index) => {
+      newColorMap[trialId] = glasbeyColor(index);
+    })
+    setColorMap(newColorMap);
+  }, [trialIds])
   if (!experimentIds.length) {
     return (
       <div className={css.alert}>

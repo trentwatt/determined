@@ -36,7 +36,7 @@ interface Props {
   trialHps: TrialHParams[];
   trialIds: number[];
   metrics: MetricName[];
-
+  colorMap?: Record<number, string>;
 }
 
 const Compare: React.FC<Props> = ({
@@ -51,7 +51,8 @@ const Compare: React.FC<Props> = ({
   batches,
   hyperparameters,
   hasLoaded,
-  metrics
+  metrics,
+  colorMap
 }: Props) => {
   const containerRef = useRef<HTMLElement>(null);
 
@@ -122,6 +123,7 @@ const Compare: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.chart}>
             <LearningCurveChart
+              colorMap={colorMap}
               data={chartData}
               focusedTrialId={highlightedTrialId}
               selectedMetric={selectedMetric}

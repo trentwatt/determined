@@ -6,6 +6,7 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, Scale } from 'types';
 import { metricNameToStr } from 'utils/metric';
+import { number } from 'fp-ts';
 
 interface Props {
   data: (number | null)[][];
@@ -17,6 +18,7 @@ interface Props {
   selectedTrialIds: number[];
   trialIds: number[];
   xValues: number[];
+  colorMap?: Record<number, string>;
 }
 
 const CHART_HEIGHT = 400;
@@ -33,6 +35,7 @@ const LearningCurveChart: React.FC<Props> = ({
   selectedTrialIds,
   trialIds,
   xValues,
+  colorMap,
 }: Props) => {
   const [ focusIndex, setFocusIndex ] = useState<number>();
 
@@ -85,7 +88,7 @@ const LearningCurveChart: React.FC<Props> = ({
           scale: 'y',
           show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
           spanGaps: true,
-          stroke: glasbeyColor(index),
+          stroke: colorMap ? colorMap[trialId] : glasbeyColor(trialId),
           width: SERIES_WIDTH / window.devicePixelRatio,
         })),
       ],
