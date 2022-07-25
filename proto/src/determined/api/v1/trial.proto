@@ -106,7 +106,7 @@ message TrialsMetricsNamesRequest {
 
 message QueryTrialsResponse {
   int32  trial_id = 1;
-  string trial_state = 2;
+  string state = 2;
   google.protobuf.Struct hparams = 3; 
   google.protobuf.Struct training_metrics = 4;
   google.protobuf.Struct validation_metrics =  5;   

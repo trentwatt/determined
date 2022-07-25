@@ -22,20 +22,20 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
   SELECT
       t.id AS trial_id,
       t.state AS state,
+      t.hparams AS hparams,
+      s.metrics->'avg_metrics' AS training_metrics,
+      v.metrics->'validation_metrics' AS validation_metrics,
+      t.tags AS tags,
       t.start_time AS start_time,
       t.end_time AS end_time,
-      t.hparams AS hparams,
-      t.tags AS tags,
+      e.config->'searcher'->>'name' as searcher_type,
       e.id AS experiment_id,
       e.config->>'name' AS experiment_name,
       e.config->>'description' AS experiment_description,
-      e.config->'searcher'->>'name' as searcher_type,
       e.config->'labels' AS experiment_labels,
       e.owner_id AS user_id,
       e.project_id AS project_id,
-      p.workspace_id AS workspace_id,
-      s.metrics->'avg_metrics' AS training_metrics,
-      v.metrics->'validation_metrics' AS validation_metrics
+      p.workspace_id AS workspace_id
   FROM trials t
   LEFT JOIN experiments e ON t.experiment_id = e.id
   LEFT JOIN projects p ON e.project_id = p.id

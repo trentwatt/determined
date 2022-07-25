@@ -370,22 +370,28 @@ func (a *apiServer) GetTrialCheckpoints(
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
 	filtersLength := len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
+	limit := req.Limit
+	if limit == 0 {
+		limit = 10
+	}
 	if filtersLength == 0 && req.Filters.Searcher == "" {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"at least one filter required",
 		)
 	}
-	response := &apiv1.QueryTrialsResponse{}
-	trialIDs, err := a.m.db.QueryTrials(req.Filters)
 
-	q = db.Bun().NewSelect().Table("trials_augmented_view")
+	q := db.Bun().NewSelect().TableExpr("trials_augmented_view")
+	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.SelectQuery)
 
+	var resp apiv1.QueryTrialsResponse
+
+	err := q.Scan(context.TODO(), &resp)
 	if err != nil {
 		return nil, err
 	}
-	response.TrialIds = trialIDs
-	return response, nil
+
+	return &resp, nil
 }
 
 func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagRequest) (*apiv1.AddTrialTagResponse, error) {
@@ -399,25 +405,6 @@ func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagReque
 		Exec(context.TODO())
 	resp := &apiv1.AddTrialTagResponse{}
 	return resp, nil
-}
-
-func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
-	q := db.Bun().NewUpdate().Table("trials_augmented_view")
-
-	if req.Filters.ExpRank.Rank != 0 {
-		q, _ = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
-	}
-	_, _ = a.m.db.FilterTrials(q, req.Filters)
-
-	setClause := fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, req.Tag.Key, req.Tag.Value)
-
-	// need to make safe
-	q.Set(setClause).
-		Exec(context.TODO())
-
-	resp := &apiv1.BulkAddTrialTagResponse{}
-	return resp, nil
-
 }
 
 func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTagRequest) (*apiv1.RemoveTrialTagResponse, error) {
@@ -434,18 +421,45 @@ func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTa
 	return resp, nil
 }
 
-func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
+func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
 	q := db.Bun().NewUpdate().Table("trials_augmented_view")
 
-	if req.Filters.ExpRank.Rank != 0 {
-		q = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
-	}
-	q = a.m.db.FilterTrials(q, req.Filters)
+	var err error
 
-	// need to make safe
-	setClause := fmt.Sprintf(`tags = tags::jsonb - ?`, key, req.Tag.Key)
+	if req.Filters.ExpRank.Rank != 0 {
+		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.UpdateQuery)
+
+	// TODO: make this safe
+	setClause := fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, req.Tag.Key, req.Tag.Value)
 
 	q.Set(setClause).
+		Exec(context.TODO())
+
+	resp := &apiv1.BulkAddTrialTagResponse{}
+	return resp, nil
+
+}
+
+func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
+	q := db.Bun().NewUpdate().Table("trials_augmented_view")
+	var err error
+
+	if req.Filters.ExpRank.Rank != 0 {
+		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.UpdateQuery)
+
+	q.Set(`tags = tags::jsonb - ?`, req.Key).
 		Exec(context.TODO())
 	resp := &apiv1.BulkRemoveTrialTagResponse{}
 	return resp, nil

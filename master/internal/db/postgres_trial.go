@@ -444,6 +444,135 @@ WHERE t.id = $1;
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
 }
 
+/**
+// Scan converts jsonb from postgres into a Resources object.
+
+package model
+
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+)
+
+// Resources maps filenames to file sizes.
+// type Resources map[string]int64
+
+// Scan converts jsonb from postgres into a Resources object.
+// TODO: Combine all json.unmarshal-based Scanners into a single Scan implementation.
+// TODO: Combine all json.unmarshal-based Scanners into a single Scan implementation.
+func (r *Resources) Scan(src interface{}) error {
+	if src == nil {
+		*r = nil
+		return nil
+	}
+	bytes, ok := src.([]byte)
+	if !ok {
+		return errors.Errorf("unable to convert to []byte: %v", src)
+	}
+	obj := make(map[string]int64)
+	if err := json.Unmarshal(bytes, &obj); err != nil {
+		return errors.Wrapf(err, "unable to unmarshal Resources: %v", src)
+	}
+	*r = Resources(obj)
+	return nil
+}
+
+// Checkpoint represents a row from the `checkpoints` table.
+type Checkpoint struct {
+	bun.BaseModel
+
+	ID                int        `db:"id" json:"id"`
+	TrialID           int        `db:"trial_id" json:"trial_id"`
+	TrialRunID        int        `db:"trial_run_id" json:"-"`
+	TotalBatches      int        `db:"total_batches" json:"total_batches"`
+	State             State      `db:"state" json:"state"`
+	EndTime           *time.Time `db:"end_time" json:"end_time"`
+	UUID              *string    `db:"uuid" json:"uuid"`
+	Resources         Resources  `db:"resources" json:"resources"`
+	Metadata          JSONObj    `db:"metadata" json:"metadata"`
+	Framework         string     `db:"framework" json:"framework"`
+	Format            string     `db:"format" json:"format"`
+	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
+}
+
+// ValidationMetrics is based on the checkpointv1.Metrics protobuf message.
+type ValidationMetrics struct {
+	NumInputs         int     `json:"num_inputs"`
+	ValidationMetrics JSONObj `json:"validation_metrics"`
+}
+
+func (m *ValidationMetrics) ToProto(pc *protoutils.ProtoConverter) *checkpointv1.Metrics {
+	return &checkpointv1.Metrics{
+		NumInputs:         pc.ToInt32(m.NumInputs),
+		ValidationMetrics: pc.ToStruct(m.ValidationMetrics, "validation_metrics"),
+	}
+}
+
+// CheckpointExpanded represents a row from the `checkpoints_expanded` view.  It is called
+// "expanded" because it includes various data from non-checkpoint tables that our system
+// auto-associates with checkpoints.  Likely this object is only useful to REST API endpoint code;
+// most of the rest of the system will prefer the more specific Checkpoint object.
+type CheckpointExpanded struct {
+	bun.BaseModel
+
+	// CheckpointExpanded is not json-serialized, so no `json:""` struct tags.
+	// CheckpointExpanded is only used by bun code, so no `db:""` struct tags.
+
+	ID                int
+	TrialID           int
+	TrialRunID        int
+	TotalBatches      int
+	State             State
+	EndTime           time.Time
+	UUID              string
+	Resources         Resources
+	Metadata          JSONObj
+	Framework         string
+	Format            string
+	DeterminedVersion string
+
+	ExperimentConfig  JSONObj
+	ExperimentID      int
+	Hparams           JSONObj
+	ValidationMetrics ValidationMetrics
+	ValidationState   State
+	SearcherMetric    *float64
+}
+
+func (c CheckpointExpanded) ToProto(pc *protoutils.ProtoConverter) checkpointv1.Checkpoint {
+	if pc.Error() != nil {
+		return checkpointv1.Checkpoint{}
+	}
+
+	out := checkpointv1.Checkpoint{
+		Uuid:              c.UUID,
+		ExperimentConfig:  pc.ToStruct(c.ExperimentConfig, "experiment config"),
+		ExperimentId:      pc.ToInt32(c.ExperimentID),
+		TrialId:           pc.ToInt32(c.TrialID),
+		Hparams:           pc.ToStruct(c.Hparams, "hparams"),
+		BatchNumber:       pc.ToInt32(c.TotalBatches),
+		EndTime:           pc.ToTimestamp(c.EndTime),
+		Resources:         c.Resources,
+		Metadata:          pc.ToStruct(c.Metadata, "metadata"),
+		Framework:         c.Framework,
+		Format:            c.Format,
+		DeterminedVersion: c.DeterminedVersion,
+		Metrics:           c.ValidationMetrics.ToProto(pc),
+		ValidationState:   pc.ToCheckpointv1State(string(c.ValidationState)),
+		State:             pc.ToCheckpointv1State(string(c.State)),
+		SearcherMetric:    pc.ToDoubleValue(c.SearcherMetric),
+	}
+
+	return out
+}
+
+*/
 func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.QueryFilters_ExpRank) (*bun.SelectQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -471,7 +600,7 @@ func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.QueryFilters_ExpRan
 	return q, nil
 }
 
-func (db *PgDB) FilterTrials(q *bun.QueryBuilder, filters *apiv1.QueryFilters) (*bun.QueryBuilder, error) {
+func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.QueryFilters) bun.QueryBuilder {
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
@@ -484,10 +613,10 @@ func (db *PgDB) FilterTrials(q *bun.QueryBuilder, filters *apiv1.QueryFilters) (
 		q = q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
 	if len(filters.ProjectIds) > 0 {
-		q = q.Where("experiments.project_id IN (?)", bun.In(filters.ProjectIds))
+		q = q.Where("project_id IN (?)", bun.In(filters.ProjectIds))
 	}
 	if len(filters.WorkspaceIds) > 0 {
-		q.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
+		q.Where("workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 
 	if len(filters.ValidationMetrics) > 0 {
@@ -498,7 +627,7 @@ func (db *PgDB) FilterTrials(q *bun.QueryBuilder, filters *apiv1.QueryFilters) (
 
 	if len(filters.TrainingMetrics) > 0 {
 		for _, f := range filters.TrainingMetrics {
-			q = q.Where("(training_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+			q = q.Where("(training_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 	if len(filters.Hparams) > 0 {
@@ -518,5 +647,5 @@ func (db *PgDB) FilterTrials(q *bun.QueryBuilder, filters *apiv1.QueryFilters) (
 		q = q.Where("user_id IN (?)", bun.In(filters.UserIds))
 	}
 
-	return q, nil
+	return q
 }
