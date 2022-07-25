@@ -297,9 +297,12 @@ const TrialsComparison: React.FC = () => {
 
   useEffect(() => {
     if (!trialIds.length) return;
-    const newColorMap: Record<number, string> = {};
-    trialIds.forEach((trialId, index) => {
-      newColorMap[trialId] = glasbeyColor(index);
+    const newColorMap = Object.assign({}, colorMap);
+    trialIds.forEach((trialId) => {
+      if (!colorMap[trialId]){
+        const [r,g,b] = [Math.random()*255,Math.random()*255,Math.random()*255];
+        newColorMap[trialId] = `rgb(${r}, ${g}, ${b})`
+      }
     })
     setColorMap(newColorMap);
   }, [trialIds])
