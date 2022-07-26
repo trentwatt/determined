@@ -371,6 +371,7 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
 	filtersLength := len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
 	limit := req.Limit
+
 	if limit == 0 {
 		limit = 10
 	}
@@ -381,14 +382,20 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 		)
 	}
 
-	q := db.Bun().NewSelect().TableExpr("trials_augmented_view")
+	trials := []db.TrialsAugmented{}
+
+	q := db.Bun().NewSelect().Model(&trials)
 	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.SelectQuery)
 
-	var resp apiv1.QueryTrialsResponse
-
-	err := q.Scan(context.TODO(), &resp)
+	err := q.Scan(context.TODO())
 	if err != nil {
 		return nil, err
+	}
+	resp := apiv1.QueryTrialsResponse{Trials: []*apiv1.AugmentedTrial{}}
+
+	for _, trial := range trials {
+		resp.Trials = append(resp.Trials,
+			&apiv1.AugmentedTrial{})
 	}
 
 	return &resp, nil

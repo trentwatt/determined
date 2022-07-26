@@ -104,7 +104,7 @@ message TrialsMetricsNamesRequest {
   QueryFilters filters = 1;
 }
 
-message QueryTrialsResponse {
+message AugmentedTrial { 
   int32  trial_id = 1;
   string state = 2;
   google.protobuf.Struct hparams = 3; 
@@ -122,6 +122,10 @@ message QueryTrialsResponse {
   int32 user_id = 15;
   int32 project_id = 16;
   int32 workspace_id = 17;
+}
+
+message QueryTrialsResponse {
+  repeated AugmentedTrial trials = 1;
 }
 
 

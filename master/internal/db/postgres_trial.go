@@ -573,6 +573,51 @@ func (c CheckpointExpanded) ToProto(pc *protoutils.ProtoConverter) checkpointv1.
 }
 
 */
+
+// Proto converts an Augmented Trial to its protobuf representation.
+func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
+	return &apiv1.AugmentedTrial{
+		TrialId:               t.TrialID,
+		State:                 t.State,
+		Hparams:               t.Proto().Hparams,
+		TrainingMetrics:       t.Proto().TrainingMetrics,
+		ValidationMetrics:     t.Proto().ValidationMetrics,
+		Tags:                  t.Proto().Tags,
+		StartTime:             t.Proto().StartTime,
+		EndTime:               t.Proto().EndTime,
+		SearcherType:          t.EndTime,
+		RankWithinExp:         t.Proto().RankWithinExp,
+		ExperimentId:          t.Proto().ExperimentId,
+		ExperimentName:        t.ExperimentName,
+		ExperimentDescription: t.ExperimentDescription,
+		ExperimentLabels:      t.Proto().ExperimentLabels,
+		UserId:                t.Proto().UserId,
+		ProjectId:             t.Proto().ProjectId,
+		WorkspaceId:           t.Proto().WorkspaceId,
+	}
+}
+
+type TrialsAugmented struct {
+	bun.BaseModel `bun:"table:trials_augmented_view"`
+
+	TrialID               int32  `bun:"trial_id"`
+	State                 string `bun:"state"`
+	Hparams               string `bun:"hparams"`
+	TrainingMetrics       string `bun:"training_metrics"`
+	ValidationMetrics     string `bun:"validation_metrics"`
+	Tags                  string `bun:"tags"`
+	StartTime             string `bun:"start_time"`
+	EndTime               string `bun:"end_time"`
+	SearcherType          string `bun:"searcher_type"`
+	ExperimentId          string `bun:"experiment_id"`
+	ExperimentName        string `bun:"experiment_name"`
+	ExperimentDescription string `bun:"experiment_description"`
+	ExperimentLabels      string `bun:"experiment_labels"`
+	UserID                string `bun:"user_id"`
+	ProjectID             string `bun:"project_id"`
+	WorkspaceID           string `bun:"workspace_id"`
+}
+
 func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.QueryFilters_ExpRank) (*bun.SelectQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
