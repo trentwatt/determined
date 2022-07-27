@@ -131,24 +131,24 @@ message TrialPatch {
   repeated SetTag tags = 1;
 }
 
-message BulkPatchTrialRequest {
+message BulkPatchTrialsRequest {
   // the filters
   TrialFilters filters = 1;
   // the patch
   TrialPatch patch = 2;
 }
 
-message BulkPatchTrialResponse {
+message BulkPatchTrialsResponse {
   repeated int32 trial_ids = 1;
 }
 
 
-message PatchTrialRequest {
+message PatchTrialsRequest {
   repeated int32 trial_ids = 1;
   TrialPatch patch = 2;
 }
 
-message PatchTrialResponse {
+message PatchTrialsResponse {
   repeated int32 trial_ids = 1;
 }
 

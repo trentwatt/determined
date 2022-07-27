@@ -369,7 +369,9 @@ func (a *apiServer) GetTrialCheckpoints(
 }
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
+	var err error
 	filtersLength := len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
+
 	limit := req.Limit
 
 	if limit == 0 {
@@ -385,9 +387,11 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	trials := []db.TrialsAugmented{}
 
 	q := db.Bun().NewSelect().Model(&trials)
-	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.SelectQuery)
-
-	err := q.Scan(context.TODO())
+	q, err = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.SelectQuery)
+	if err != nil {
+		return nil, err
+	}
+	err = q.Scan(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -401,41 +405,46 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	return &resp, nil
 }
 
-func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest) (*apiv1.PatchTrialResponse, error) {
+func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsRequest) (*apiv1.PatchTrialsResponse, error) {
 	trialIDs := req.TrialIds
 	payload := req.Patch
 
 	if len(payload.Tags) == 0 {
 		return nil, errors.New("blank trial patch payload")
 	}
-	db.Bun().
+	q := db.Bun().
 		NewUpdate().
-		Table("trials").
-		Set(fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, tag.Key, tag.Value)). // need to make safe
-		Where("id IN (?)", bun.In(trialIDs)).
+		Table("trials")
+
+	addTagsPhrase := "tags"
+	removeTagsPhrase := ""
+	for _, tag := range payload.Tags {
+		if tag.Value != "" {
+			// need to make safe
+			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
+		} else {
+			// need to make safe
+			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+		}
+		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+
+	}
+
+	q.Where("id IN (?)", bun.In(trialIDs)).
 		Exec(context.TODO())
-	resp := &apiv1.AddTrialTagResponse{}
+	resp := &apiv1.PatchTrialsResponse{}
 	return resp, nil
 }
 
-func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTagRequest) (*apiv1.RemoveTrialTagResponse, error) {
-	trialIDs := req.TrialIds
-	key := req.Key
-
-	db.Bun().
-		NewUpdate().
-		Table("trials").
-		Set(`tags = tags::jsonb - ?`, key).
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(context.TODO())
-	resp := &apiv1.RemoveTrialTagResponse{}
-	return resp, nil
-}
-
-func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
-	q := db.Bun().NewUpdate().Table("trials_augmented_view")
-
+func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTrialsRequest) (*apiv1.BulkPatchTrialsResponse, error) {
 	var err error
+
+	payload := req.Patch
+
+	if len(payload.Tags) == 0 {
+		return nil, errors.New("blank trial patch payload")
+	}
+	q := db.Bun().NewUpdate().Table("trials_augmented_view")
 
 	if req.Filters.ExpRank.Rank != 0 {
 		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
@@ -450,33 +459,24 @@ func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrial
 	}
 
 	// TODO: make this safe
-	setClause := fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, req.Tag.Key, req.Tag.Value)
+	addTagsPhrase := "tags"
+	removeTagsPhrase := ""
+	for _, tag := range payload.Tags {
+		if tag.Value != "" {
+			// need to make safe
+			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
+		} else {
+			// need to make safe
+			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+		}
+		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
 
-	q.Set(setClause).
-		Exec(context.TODO())
+	}
+	q.Exec(context.TODO())
 
-	resp := &apiv1.BulkAddTrialTagResponse{}
+	resp := &apiv1.BulkPatchTrialsResponse{}
 	return resp, nil
 
-}
-
-func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
-	q := db.Bun().NewUpdate().Table("trials_augmented_view")
-	var err error
-
-	if req.Filters.ExpRank.Rank != 0 {
-		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.UpdateQuery)
-
-	q.Set(`tags = tags::jsonb - ?`, req.Key).
-		Exec(context.TODO())
-	resp := &apiv1.BulkRemoveTrialTagResponse{}
-	return resp, nil
 }
 
 func (a *apiServer) GetTrialsCollections(

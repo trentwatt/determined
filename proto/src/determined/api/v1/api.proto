@@ -529,7 +529,7 @@ service Determined {
     };
   }
 
-  rpc BulkPatchTrial(BulkPatchTrialRequest) returns (BulkPatchTrialResponse) {
+  rpc BulkPatchTrials(BulkPatchTrialsRequest) returns (BulkPatchTrialsResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/tags/bulk-add"
       body: "*"
@@ -541,7 +541,7 @@ service Determined {
   
 
 
-  rpc PatchTrial(PatchTrialRequest) returns (PatchTrialResponse) {
+  rpc PatchTrials(PatchTrialsRequest) returns (PatchTrialsResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/tags/add"
       body: "*"
