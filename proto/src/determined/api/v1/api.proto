@@ -529,7 +529,7 @@ service Determined {
     };
   }
 
-  rpc BulkAddTrialTag(BulkAddTrialTagRequest) returns (BulkAddTrialTagResponse) {
+  rpc BulkPatchTrial(BulkPatchTrialRequest) returns (BulkPatchTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/tags/bulk-add"
       body: "*"
@@ -539,29 +539,11 @@ service Determined {
     };
   }
   
-  rpc BulkRemoveTrialTag(BulkRemoveTrialTagRequest) returns (BulkRemoveTrialTagResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trials/tags/bulk-remove"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials" ]
-    };
-  }
 
-  rpc AddTrialTag(AddTrialTagRequest) returns (AddTrialTagResponse) {
+
+  rpc PatchTrial(PatchTrialRequest) returns (PatchTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/tags/add"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials" ]
-    };
-  }
-
-  rpc RemoveTrialTag(RemoveTrialTagRequest) returns (RemoveTrialTagResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trials/tags/remove"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

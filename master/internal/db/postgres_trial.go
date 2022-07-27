@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -579,46 +581,47 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 	return &apiv1.AugmentedTrial{
 		TrialId:               t.TrialID,
 		State:                 t.State,
-		Hparams:               t.Proto().Hparams,
-		TrainingMetrics:       t.Proto().TrainingMetrics,
-		ValidationMetrics:     t.Proto().ValidationMetrics,
-		Tags:                  t.Proto().Tags,
-		StartTime:             t.Proto().StartTime,
-		EndTime:               t.Proto().EndTime,
-		SearcherType:          t.EndTime,
-		RankWithinExp:         t.Proto().RankWithinExp,
-		ExperimentId:          t.Proto().ExperimentId,
+		Hparams:               protoutils.ToStruct(t.Hparams),
+		TrainingMetrics:       protoutils.ToStruct(t.TrainingMetrics),
+		ValidationMetrics:     protoutils.ToStruct(t.ValidationMetrics),
+		Tags:                  protoutils.ToStruct(t.Tags),
+		StartTime:             protoutils.ToTimestamp(t.StartTime),
+		EndTime:               protoutils.ToTimestamp(t.EndTime),
+		SearcherType:          t.SearcherType,
+		ExperimentId:          t.ExperimentId,
 		ExperimentName:        t.ExperimentName,
 		ExperimentDescription: t.ExperimentDescription,
-		ExperimentLabels:      t.Proto().ExperimentLabels,
-		UserId:                t.Proto().UserId,
-		ProjectId:             t.Proto().ProjectId,
-		WorkspaceId:           t.Proto().WorkspaceId,
+		ExperimentLabels:      t.ExperimentLabels,
+		UserId:                t.UserId,
+		ProjectId:             t.ProjectId,
+		WorkspaceId:           t.WorkspaceId,
+		// RankWithinExp:         t.RankWithinExp,
 	}
 }
 
 type TrialsAugmented struct {
 	bun.BaseModel `bun:"table:trials_augmented_view"`
 
-	TrialID               int32  `bun:"trial_id"`
-	State                 string `bun:"state"`
-	Hparams               string `bun:"hparams"`
-	TrainingMetrics       string `bun:"training_metrics"`
-	ValidationMetrics     string `bun:"validation_metrics"`
-	Tags                  string `bun:"tags"`
-	StartTime             string `bun:"start_time"`
-	EndTime               string `bun:"end_time"`
-	SearcherType          string `bun:"searcher_type"`
-	ExperimentId          string `bun:"experiment_id"`
-	ExperimentName        string `bun:"experiment_name"`
-	ExperimentDescription string `bun:"experiment_description"`
-	ExperimentLabels      string `bun:"experiment_labels"`
-	UserID                string `bun:"user_id"`
-	ProjectID             string `bun:"project_id"`
-	WorkspaceID           string `bun:"workspace_id"`
+	TrialID               int32              `bun:"trial_id"`
+	State                 string             `bun:"state"`
+	Hparams               model.JSONObj      `bun:"hparams"`
+	TrainingMetrics       map[string]float64 `bun:"training_metrics,json_use_number"`
+	ValidationMetrics     map[string]float64 `bun:"validation_metrics,json_use_number"`
+	Tags                  map[string]string  `bun:"tags"`
+	StartTime             time.Time          `bun:"start_time"`
+	EndTime               time.Time          `bun:"end_time"`
+	SearcherType          string             `bun:"searcher_type"`
+	ExperimentId          int32              `bun:"experiment_id"`
+	ExperimentName        string             `bun:"experiment_name"`
+	ExperimentDescription string             `bun:"experiment_description"`
+	ExperimentLabels      []string           `bun:"experiment_labels"`
+	UserId                int32              `bun:"user_id"`
+	ProjectId             int32              `bun:"project_id"`
+	WorkspaceId           int32              `bun:"workspace_id"`
+	// RankWithinExp         int32              `bun:"RankWithinExp"`
 }
 
-func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.QueryFilters_ExpRank) (*bun.SelectQuery, error) {
+func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.TrialFilters_ExpRank) (*bun.SelectQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
@@ -632,7 +635,7 @@ func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.QueryFilters_ExpRan
 	return q, nil
 }
 
-func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.QueryFilters_ExpRank) (*bun.UpdateQuery, error) {
+func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.TrialFilters_ExpRank) (*bun.UpdateQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
@@ -645,7 +648,11 @@ func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.QueryFilters_ExpRan
 	return q, nil
 }
 
-func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.QueryFilters) bun.QueryBuilder {
+func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.TrialFilters) (bun.QueryBuilder, error) {
+	// FilterTrials filters trials according to filters
+
+	// added a \. to where this was defined elsewhere, dangerous??
+	validField := regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
@@ -664,27 +671,25 @@ func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.QueryFilters) bu
 		q.Where("workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 
-	if len(filters.ValidationMetrics) > 0 {
-		for _, f := range filters.ValidationMetrics {
-			q = q.Where("(validation_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
-		}
+	for _, f := range filters.ValidationMetrics {
+		q = q.Where("(validation_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 	}
 
-	if len(filters.TrainingMetrics) > 0 {
-		for _, f := range filters.TrainingMetrics {
-			q = q.Where("(training_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
-		}
+	for _, f := range filters.TrainingMetrics {
+		q = q.Where("(training_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 	}
-	if len(filters.Hparams) > 0 {
-		// what if it's a string?
-		// given the protos, we would probably need a different type
-		// what about nested?
-		// in that case, we probably want to send outer.inner in the api
-		// then construct trials.hparams->'outer'->'inner' expression in query
-		for _, f := range filters.Hparams {
-			q = q.Where("(hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+
+	for _, hp := range filters.Hparams {
+		if !validField.MatchString(hp.Name) {
+			return nil, fmt.Errorf("hp filter %s contains possible SQL injection", hp.Name)
 		}
+		nesting := strings.Split(hp.Name, ".")
+		hpAccessorString := strings.Join(nesting, "->>")
+
+		// this will fail for non-coerceable strings
+		q = q.Where("(hparams->>?)::float8 BETWEEN ? AND ?", hpAccessorString, hp.Min, hp.Max)
 	}
+
 	if filters.Searcher != "" {
 		q = q.Where("searcher_type = ?", filters.Searcher)
 	}
@@ -692,5 +697,5 @@ func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.QueryFilters) bu
 		q = q.Where("user_id IN (?)", bun.In(filters.UserIds))
 	}
 
-	return q
+	return q, nil
 }

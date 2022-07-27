@@ -395,15 +395,19 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 
 	for _, trial := range trials {
 		resp.Trials = append(resp.Trials,
-			&apiv1.AugmentedTrial{})
+			trial.Proto())
 	}
 
 	return &resp, nil
 }
 
-func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagRequest) (*apiv1.AddTrialTagResponse, error) {
+func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest) (*apiv1.PatchTrialResponse, error) {
 	trialIDs := req.TrialIds
-	tag := req.Tag
+	payload := req.Patch
+
+	if len(payload.Tags) == 0 {
+		return nil, errors.New("blank trial patch payload")
+	}
 	db.Bun().
 		NewUpdate().
 		Table("trials").
@@ -440,7 +444,10 @@ func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrial
 	if err != nil {
 		return nil, err
 	}
-	q = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.UpdateQuery)
+	q, err = a.m.db.FilterTrials(q.QueryBuilder(), req.Filters).Unwrap().(*bun.UpdateQuery)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: make this safe
 	setClause := fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, req.Tag.Key, req.Tag.Value)

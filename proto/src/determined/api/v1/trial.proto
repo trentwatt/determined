@@ -65,7 +65,7 @@ message QueryTrialsSortBy {
 }
 
 
-message QueryFilters {
+message TrialFilters {
   repeated int32 experiment_ids = 1;
   repeated int32 project_ids = 2;
   repeated int32 workspace_ids = 3;
@@ -84,7 +84,7 @@ message QueryFilters {
 }
 
 message QueryTrialsRequest {
-  QueryFilters filters = 1;
+  TrialFilters filters = 1;
     // Sort trials by the given field.
     QueryTrialsSortBy sorter = 2;
     int32 offset = 3;
@@ -92,17 +92,11 @@ message QueryTrialsRequest {
     int32 limit = 4;
 }
 
-message PatchTrialsRequest {
-  QueryFilters filters = 1;
-}
-
 message ExportTrialsRequest {
-  QueryFilters filters = 1;
+  TrialFilters filters = 1;
 }
 
-message TrialsMetricsNamesRequest {
-  QueryFilters filters = 1;
-}
+
 
 message AugmentedTrial { 
   int32  trial_id = 1;
@@ -129,45 +123,41 @@ message QueryTrialsResponse {
 }
 
 
-message BulkAddTrialTagRequest {
+message TrialPatch {
+  message SetTag {
+    string key = 1;
+    string value = 2;
+  }
+  repeated SetTag tags = 1;
+}
+
+message BulkPatchTrialRequest {
   // the filters
-  QueryFilters filters = 1;
-  // the tag key
-  TrialTag tag = 2;
+  TrialFilters filters = 1;
+  // the patch
+  TrialPatch patch = 2;
 }
 
-message BulkRemoveTrialTagRequest {
-  // the filters
-  QueryFilters filters = 1;
-  // the tag key
-  string key = 2;
-}
-
-
-message BulkAddTrialTagResponse {}
-
-message BulkRemoveTrialTagResponse {}
-
-
-message AddTrialTagRequest {
+message BulkPatchTrialResponse {
   repeated int32 trial_ids = 1;
-  TrialTag tag = 2;
 }
 
-message RemoveTrialTagRequest {
+
+message PatchTrialRequest {
   repeated int32 trial_ids = 1;
-  string key = 2;
+  TrialPatch patch = 2;
 }
 
-message AddTrialTagResponse {}
+message PatchTrialResponse {
+  repeated int32 trial_ids = 1;
+}
 
-message RemoveTrialTagResponse {}
 
 message TrialsCollection {
   int32 id = 1;
   int32 user_id = 2;
   string name = 3;
-  QueryFilters filters = 4;
+  TrialFilters filters = 4;
 }
 
 message GetTrialsCollectionsRequest {}
@@ -185,13 +175,11 @@ message SaveTrialsCollectionResponse {
 
 message CreateTrialsCollectionRequest {
   string name = 1;
-  QueryFilters filters = 2;
+  TrialFilters filters = 2;
 }
 message CreateTrialsCollectionResponse {
   TrialsCollection collection = 1;
 }
-
-
 
 
 // Stream trial logs.
