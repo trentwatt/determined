@@ -311,6 +311,13 @@ export enum ExperimentAction {
   ViewLogs = 'View Logs',
 }
 
+/* Trial */
+
+export enum TrialAction {
+  BulkAddTags = 'Bulk Add Tag',
+  BulkRemoveTags = 'Bulk Remove Tags',
+}
+
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }

@@ -81,7 +81,7 @@ const TableBatch: React.FC<Props> = ({
         </div>)
         }
           {onSelectIndividual && selectionMode === SelectionMode.SELECT_MATCHING && (<div className={css.selectMode}>
-            <Button onClick={onSelectIndividual}>Select Individual</Button>
+            <Button onClick={onSelectIndividual}>Individual Selection</Button>
           </div>)
         }
         <div className={css.clear}>

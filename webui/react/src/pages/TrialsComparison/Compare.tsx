@@ -9,7 +9,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Scale } from 'types';
 import {
-  ExperimentAction as Action, CommandTask, Hyperparameter,
+  ExperimentAction as Action, TrialAction, CommandTask, Hyperparameter,
   MetricName,
 } from 'types';
 import handleError from 'utils/error';
@@ -148,6 +148,8 @@ const Compare: React.FC<Props> = ({
           <TableBatch
             actions={[
               { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+              { label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
+              { label: TrialAction.BulkRemoveTags, value: TrialAction.BulkRemoveTags },
             ]}
             selectedRowCount={selectedRowKeys.length}
             onAction={action => submitBatchAction(action as Action)}
