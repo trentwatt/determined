@@ -39,6 +39,7 @@ interface Props {
   metrics: MetricName[];
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
+  selectDisabled: boolean;
   selectedRowKeys?: number[];
   selection?: boolean;
   trialHps: TrialHParams[];
@@ -71,6 +72,7 @@ const CompareTable: React.FC<Props> = ({
   onMouseLeave,
   trialHps,
   trialIds,
+  selectDisabled,
   selection,
   handleTableRowSelect,
   selectedRowKeys,
@@ -285,6 +287,11 @@ const CompareTable: React.FC<Props> = ({
         onChange: handleTableRowSelect,
         preserveSelectedRowKeys: true,
         selectedRowKeys,
+        getCheckboxProps : () => {
+          return {
+            disabled: selectDisabled,
+          }
+        },
       } : undefined}
       scroll={{ x: 1000 }}
       showSorterTooltip={false}

@@ -3,7 +3,7 @@ import React, { useCallback, useRef, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch, {SelectionMode} from 'components/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -58,7 +58,8 @@ const Compare: React.FC<Props> = ({
 
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
-
+  const [selectDisabled, setSelectDisabled] = useState(false);
+  const [selectionMode, setSelectionMode,] = useState<SelectionMode>();
   const hasTrials = trialIds.length !== 0;
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
@@ -75,6 +76,16 @@ const Compare: React.FC<Props> = ({
 
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
+  }, []);
+
+  const handleSelectMatching = useCallback(() => {
+    setSelectDisabled(true);
+    setSelectionMode(SelectionMode.SELECT_MATCHING);
+  }, []);
+  
+  const handleSelectIndividual = useCallback(() => {
+    setSelectDisabled(false);
+    setSelectionMode(SelectionMode.SELECT_INDIVIDUAL);
   }, []);
 
   const sendBatchActions = useCallback(async (action: Action) => {
@@ -139,7 +150,10 @@ const Compare: React.FC<Props> = ({
               { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
             ]}
             selectedRowCount={selectedRowKeys.length}
-            onAction={(action) => submitBatchAction(action as Action)}
+            onAction={action => submitBatchAction(action as Action)}
+            onSelectMatching={handleSelectMatching}
+            onSelectIndividual={handleSelectIndividual}
+            selectionMode={selectionMode}
             onClear={clearSelected}
           />
           <CompareTable
@@ -156,6 +170,7 @@ const Compare: React.FC<Props> = ({
             metrics={metrics}
             onMouseEnter={handleTableMouseEnter}
             onMouseLeave={handleTableMouseLeave}
+            selectDisabled={selectDisabled}
           />
         </div>
       </Section>
