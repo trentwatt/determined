@@ -394,9 +394,7 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	trials := []db.TrialsAugmented{}
 
 	q := db.Bun().NewSelect().Model(&trials)
-	qb, err := a.m.db.FilterTrials(q.QueryBuilder(), req.Filters)
-
-	q = qb.Unwrap().(*bun.SelectQuery)
+	q, err = a.m.db.FilterTrials(q, req.Filters)
 
 	if err != nil {
 		return nil, err
@@ -421,26 +419,13 @@ func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsReque
 	if len(payload.Tags) == 0 {
 		return nil, errors.New("blank trial patch payload")
 	}
-	q := db.Bun().
-		NewUpdate().
-		Table("trials")
+	q := db.Bun().NewUpdate().Table("trials")
 
-	addTagsPhrase := "tags"
-	removeTagsPhrase := ""
-	for _, tag := range payload.Tags {
-		if tag.Value != "" {
-			// need to make safe
-			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
-		} else {
-			// need to make safe
-			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
-		}
-		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
-
-	}
+	q = a.m.db.ApplyTrialPatch(q, payload)
 
 	q.Where("id IN (?)", bun.In(trialIDs)).
 		Exec(context.TODO())
+
 	resp := &apiv1.PatchTrialsResponse{}
 	return resp, nil
 }
@@ -453,41 +438,25 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 	if len(payload.Tags) == 0 {
 		return nil, errors.New("blank trial patch payload")
 	}
-	q := db.Bun().NewUpdate().Table("trials_augmented_view")
+	q := db.Bun().NewUpdate().Table("trial")
 
-	if req.Filters.ExpRank.Rank != 0 {
-		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
-	}
+	subQ := db.Bun().NewSelect().Column("trial_id").Table("trials_augmented_view")
+
+	subQ, err = a.m.db.FilterTrials(subQ, req.Filters)
 
 	if err != nil {
 		return nil, err
 	}
-	qb, err := a.m.db.FilterTrials(q.QueryBuilder(), req.Filters)
 
-	q = qb.Unwrap().(*bun.UpdateQuery)
-	if err != nil {
-		return nil, err
-	}
+	q = a.m.db.ApplyTrialPatch(q, req.Patch)
 
-	// TODO: make this safe
-	addTagsPhrase := "tags"
-	removeTagsPhrase := ""
-	for _, tag := range payload.Tags {
-		if tag.Value != "" {
-			// need to make safe
-			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
-		} else {
-			// need to make safe
-			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
-		}
-		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+	q.Where("id IN (?)", subQ).
+		Exec(context.TODO())
 
-	}
 	q.Exec(context.TODO())
 
 	resp := &apiv1.BulkPatchTrialsResponse{}
 	return resp, nil
-
 }
 
 func (a *apiServer) GetTrialsCollections(

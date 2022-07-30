@@ -501,35 +501,43 @@ type TrialsCollection struct {
 	Filters TrialFilters `bun:"filters"`
 }
 
-func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.TrialFilters_ExpRank) (*bun.SelectQuery, error) {
-	orderHow := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
+func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) *bun.UpdateQuery {
+
+	if len(payload.Tags) > 0 {
+		addTagsPhrase := "tags"
+		removeTagsPhrase := ""
+		for _, tag := range payload.Tags {
+			if tag.Value != "" {
+				// need to make safe
+				removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+			} else {
+				// need to make safe
+				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
+			}
+			q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+
+		}
 	}
-	q = q.ColumnExpr(`ROW_NUMBER() OVER(
-		PARTITION BY t.experiment_id
-		ORDER BY ?  ?
-	) as exp_rank`, r.SortBy.Field, orderHow[r.SortBy.OrderBy])
-	q = q.Where(`exp_rank <= ?`, r.Rank)
-	return q, nil
+	return q
 }
 
-func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.TrialFilters_ExpRank) (*bun.UpdateQuery, error) {
-	orderHow := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-	}
-	q = q.Where(`ROW_NUMBER() OVER(
-		PARTITION BY t.experiment_id
-		ORDER BY ?  ?
-	) <= ?`, r.SortBy.Field, orderHow[r.SortBy.OrderBy], r.Rank)
-	return q, nil
-}
-
-func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.TrialFilters) (bun.QueryBuilder, error) {
+func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
+
+	if filters.ExpRank.Rank != 0 {
+		r := filters.ExpRank
+
+		orderHow := map[apiv1.OrderBy]string{
+			apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+			apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+			apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
+		}
+		q = q.Where(`ROW_NUMBER() OVER(
+			PARTITION BY t.experiment_id
+			ORDER BY ?  ?
+		) <= ?`, r.SortBy.Field, orderHow[r.SortBy.OrderBy], r.Rank)
+
+	}
 
 	// added a \. to where this was defined, dangerous??
 	validField := regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
