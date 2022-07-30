@@ -370,92 +370,124 @@ func (a *apiServer) GetTrialCheckpoints(
 }
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
-	filtersLength := len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
+	var err error
+	filtersLength := len(req.Filters.WorkspaceIds) +
+		len(req.Filters.ExperimentIds) +
+		len(req.Filters.ProjectIds) +
+		len(req.Filters.ValidationMetrics) +
+		len(req.Filters.TrainingMetrics) +
+		len(req.Filters.Hparams) +
+		len(req.Filters.UserIds)
+
+	limit := req.Limit
+
+	if limit == 0 {
+		limit = 10
+	}
 	if filtersLength == 0 && req.Filters.Searcher == "" {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"at least one filter required",
 		)
 	}
-	response := &apiv1.QueryTrialsResponse{}
-	trialIDs, err := a.m.db.QueryTrials(req.Filters)
+
+	trials := []db.TrialsAugmented{}
+
+	q := db.Bun().NewSelect().Model(&trials)
+	qb, err := a.m.db.FilterTrials(q.QueryBuilder(), req.Filters)
+
+	q = qb.Unwrap().(*bun.SelectQuery)
+
 	if err != nil {
 		return nil, err
 	}
-	response.TrialIds = trialIDs
-	return response, nil
-}
-
-func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagRequest) (*apiv1.AddTrialTagResponse, error) {
-	trialIDs := req.TrialIds
-	tag := req.Tag
-	db.Bun().
-		NewUpdate().
-		Table("trials").
-		Set(fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, tag.Key, tag.Value)). // need to make safe
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(context.TODO())
-	resp := &apiv1.AddTrialTagResponse{}
-	return resp, nil
-}
-
-func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
-	// TODO: apply the filters to Bun().NewUpdate() via helper function
-	// DONT query for ids and pass them back again
-	resp := &apiv1.BulkAddTrialTagResponse{}
-	tag := req.Tag
-	trialIDs, err := a.m.db.QueryTrials(req.Filters)
+	err = q.Scan(context.TODO())
 	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error fetching trials")
+		return nil, err
+	}
+	resp := apiv1.QueryTrialsResponse{Trials: []*apiv1.AugmentedTrial{}}
+
+	for _, trial := range trials {
+		resp.Trials = append(resp.Trials, trial.Proto())
 	}
 
-	if len(trialIDs) == 0 {
-		return resp, nil
-	}
-	fmt.Println(trialIDs)
-
-	db.Bun().NewUpdate().
-		Table("trials").
-		Set(fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, tag.Key, tag.Value)). // need to make safe
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(context.TODO())
-
-	return resp, nil
+	return &resp, nil
 }
 
-func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTagRequest) (*apiv1.RemoveTrialTagResponse, error) {
+func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsRequest) (*apiv1.PatchTrialsResponse, error) {
 	trialIDs := req.TrialIds
-	key := req.Key
+	payload := req.Patch
 
-	db.Bun().
+	if len(payload.Tags) == 0 {
+		return nil, errors.New("blank trial patch payload")
+	}
+	q := db.Bun().
 		NewUpdate().
-		Table("trials").
-		Set(`tags = tags::jsonb - ?`, key).
-		Where("id IN (?)", bun.In(trialIDs)).
+		Table("trials")
+
+	addTagsPhrase := "tags"
+	removeTagsPhrase := ""
+	for _, tag := range payload.Tags {
+		if tag.Value != "" {
+			// need to make safe
+			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+		} else {
+			// need to make safe
+			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
+		}
+		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+
+	}
+
+	q.Where("id IN (?)", bun.In(trialIDs)).
 		Exec(context.TODO())
-	resp := &apiv1.RemoveTrialTagResponse{}
+	resp := &apiv1.PatchTrialsResponse{}
 	return resp, nil
 }
 
-func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
-	// TODO: apply the filters to Bun().NewUpdate() via helper function
-	// DONT query for ids and pass them back again
-	trialIDs, err := a.m.db.QueryTrials(req.Filters)
-	key := req.Key
+func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTrialsRequest) (*apiv1.BulkPatchTrialsResponse, error) {
+	var err error
+
+	payload := req.Patch
+
+	if len(payload.Tags) == 0 {
+		return nil, errors.New("blank trial patch payload")
+	}
+	q := db.Bun().NewUpdate().Table("trials_augmented_view")
+
+	if req.Filters.ExpRank.Rank != 0 {
+		q, err = a.m.db.RankUpdateQuery(q, req.Filters.ExpRank)
+	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error fetching trials")
+		return nil, err
 	}
-	db.Bun().
-		NewUpdate().
-		Table("trials").
-		Set(`tags = tags::jsonb - ?`, key).
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(context.TODO())
-	resp := &apiv1.BulkRemoveTrialTagResponse{}
+	qb, err := a.m.db.FilterTrials(q.QueryBuilder(), req.Filters)
+
+	q = qb.Unwrap().(*bun.UpdateQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: make this safe
+	addTagsPhrase := "tags"
+	removeTagsPhrase := ""
+	for _, tag := range payload.Tags {
+		if tag.Value != "" {
+			// need to make safe
+			addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
+		} else {
+			// need to make safe
+			removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+		}
+		q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+
+	}
+	q.Exec(context.TODO())
+
+	resp := &apiv1.BulkPatchTrialsResponse{}
 	return resp, nil
+
 }
 
 func (a *apiServer) GetTrialsCollections(

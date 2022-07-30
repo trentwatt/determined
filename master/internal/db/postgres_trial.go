@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -444,99 +446,136 @@ WHERE t.id = $1;
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
 }
 
-func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err error) {
-	var trialIds []int32
-	// certain (outer) joins dont get materialized if they're not needed?
-	// or that only applies to views?
-	// any case we can do a CTE
-	qb := Bun().NewSelect().TableExpr("trials").
-		Column("trials.id").Join("INNER JOIN experiments ON trials.experiment_id = experiments.id").
-		Join("INNER JOIN projects ON projects.id = experiments.project_id").
-		Join("INNER JOIN validations ON trials.id = validations.trial_id AND validations.id = trial.best_validation_id").
-		Join("INNER JOIN steps on steps.trial_id = trials.id AND steps.total_batches = validations.total_batches")
-		// is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
-		// does avg_metrics correspond to the actual state at that batch?
-		// or an average over previous batches?
+// Proto converts an Augmented Trial to its protobuf representation.
+func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
+	return &apiv1.AugmentedTrial{
+		TrialId:               t.TrialID,
+		State:                 t.State,
+		Hparams:               protoutils.ToStruct(t.Hparams),
+		TrainingMetrics:       protoutils.ToStruct(t.TrainingMetrics),
+		ValidationMetrics:     protoutils.ToStruct(t.ValidationMetrics),
+		Tags:                  protoutils.ToStruct(t.Tags),
+		StartTime:             protoutils.ToTimestamp(t.StartTime),
+		EndTime:               protoutils.ToTimestamp(t.EndTime),
+		SearcherType:          t.SearcherType,
+		ExperimentId:          t.ExperimentId,
+		ExperimentName:        t.ExperimentName,
+		ExperimentDescription: t.ExperimentDescription,
+		ExperimentLabels:      t.ExperimentLabels,
+		UserId:                t.UserId,
+		ProjectId:             t.ProjectId,
+		WorkspaceId:           t.WorkspaceId,
+		// RankWithinExp:         t.RankWithinExp,
+	}
+}
 
+type TrialsAugmented struct {
+	bun.BaseModel `bun:"table:trials_augmented_view"`
+
+	TrialID               int32              `bun:"trial_id"`
+	State                 string             `bun:"state"`
+	Hparams               model.JSONObj      `bun:"hparams"`
+	TrainingMetrics       map[string]float64 `bun:"training_metrics,json_use_number"`
+	ValidationMetrics     map[string]float64 `bun:"validation_metrics,json_use_number"`
+	Tags                  map[string]string  `bun:"tags"`
+	StartTime             time.Time          `bun:"start_time"`
+	EndTime               time.Time          `bun:"end_time"`
+	SearcherType          string             `bun:"searcher_type"`
+	ExperimentId          int32              `bun:"experiment_id"`
+	ExperimentName        string             `bun:"experiment_name"`
+	ExperimentDescription string             `bun:"experiment_description"`
+	ExperimentLabels      []string           `bun:"experiment_labels"`
+	UserId                int32              `bun:"user_id"`
+	ProjectId             int32              `bun:"project_id"`
+	WorkspaceId           int32              `bun:"workspace_id"`
+	// RankWithinExp         int32              `bun:"RankWithinExp"`
+}
+
+type TrialFilters struct {
+}
+
+type TrialsCollection struct {
+	ID      int32        `bun:"id,pk,autoincrement"`
+	UserId  int32        `bun:"user_id"`
+	Name    string       `bun:"user_id"`
+	Filters TrialFilters `bun:"filters"`
+}
+
+func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.TrialFilters_ExpRank) (*bun.SelectQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
+	q = q.ColumnExpr(`ROW_NUMBER() OVER(
+		PARTITION BY t.experiment_id
+		ORDER BY ?  ?
+	) as exp_rank`, r.SortBy.Field, orderHow[r.SortBy.OrderBy])
+	q = q.Where(`exp_rank <= ?`, r.Rank)
+	return q, nil
+}
 
-	if filters.ExpRank.Rank != 0 {
-		rankSorter := filters.ExpRank.SortBy
-		switch rankSorter.Namespace {
-		case apiv1.QueryTrialsSortBy_TRIAL_ITSELF:
-			qb = qb.ColumnExpr("trials.? AS rank_sorter", rankSorter.Field)
-		case apiv1.QueryTrialsSortBy_VALIDATION_METRIC:
-			qb = qb.ColumnExpr("(validations.metrics->'validation_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
-		case apiv1.QueryTrialsSortBy_TRAINING_METRIC:
-			qb = qb.ColumnExpr("(steps.metrics->'avg_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
-		default:
-			return nil, errors.New("no")
-		}
-		qb = qb.ColumnExpr(`ROW_NUMBER() OVER(
-			PARTITION BY t.experiment_id
-			ORDER BY rank_sorter  ?
-		) as exp_rank`, orderHow[rankSorter.OrderBy])
-		qb = qb.Where(`exp_rank <= ?`, filters.ExpRank.Rank)
+func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.TrialFilters_ExpRank) (*bun.UpdateQuery, error) {
+	orderHow := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
+	q = q.Where(`ROW_NUMBER() OVER(
+		PARTITION BY t.experiment_id
+		ORDER BY ?  ?
+	) <= ?`, r.SortBy.Field, orderHow[r.SortBy.OrderBy], r.Rank)
+	return q, nil
+}
 
+func (db *PgDB) FilterTrials(q bun.QueryBuilder, filters *apiv1.TrialFilters) (bun.QueryBuilder, error) {
+	// FilterTrials filters trials according to filters
+
+	// added a \. to where this was defined, dangerous??
+	validField := regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
 			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
 		}
-		qb = qb.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
+		q = q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
 	}
 
 	if len(filters.ExperimentIds) > 0 {
-		qb = qb.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
+		q = q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
-
 	if len(filters.ProjectIds) > 0 {
-		qb = qb.Where("experiments.project_id IN (?)", bun.In(filters.ProjectIds))
+		q = q.Where("project_id IN (?)", bun.In(filters.ProjectIds))
 	}
-
 	if len(filters.WorkspaceIds) > 0 {
-		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
+		q.Where("workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 
-	if len(filters.ValidationMetrics) > 0 {
-		// TODO trial has best validation? probably join that instead
-		for _, f := range filters.ValidationMetrics {
-			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
-		}
+	for _, f := range filters.ValidationMetrics {
+		q = q.Where("(validation_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 	}
 
-	if len(filters.TrainingMetrics) > 0 {
-		for _, f := range filters.TrainingMetrics {
-			// TODO: avg metrics correct?
-			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
-		}
+	for _, f := range filters.TrainingMetrics {
+		q = q.Where("(training_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 	}
-	if len(filters.Hparams) > 0 {
-		// what if it's a string?
-		// given the protos, we would probably need a different type
-		// what about nested?
-		// in that case, we probably want to send outer.inner in the api
-		// then construct trials.hparams->'outer'->'inner' expression in query
-		for _, f := range filters.TrainingMetrics {
-			qb = qb.Where("(trials.hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+
+	for _, hp := range filters.Hparams {
+		if !validField.MatchString(hp.Name) {
+			return nil, fmt.Errorf("hp filter %s contains possible SQL injection", hp.Name)
 		}
+		nesting := strings.Split(hp.Name, ".")
+		hpAccessorString := strings.Join(nesting, "->>")
+
+		// this will fail for non-coerceable strings
+		q = q.Where("(hparams->>?)::float8 BETWEEN ? AND ?", hpAccessorString, hp.Min, hp.Max)
 	}
+
 	if filters.Searcher != "" {
-		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
+		q = q.Where("searcher_type = ?", filters.Searcher)
 	}
-
 	if len(filters.UserIds) > 0 {
-		qb = qb.Where("experiments.owner_id IN (?)", bun.In(filters.UserIds))
+		q = q.Where("user_id IN (?)", bun.In(filters.UserIds))
 	}
 
-	err = qb.Group("trials.id").Scan(context.TODO(), &trialIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error querying for filtered trials")
-	}
-	return trialIds, nil
+	return q, nil
 }
