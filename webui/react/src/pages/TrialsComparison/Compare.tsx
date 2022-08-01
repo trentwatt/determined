@@ -116,6 +116,13 @@ const Compare: React.FC<Props> = ({
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
+  const individualBatchActions = [
+    { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard }
+  ]
+
+  const filterBatchActions = [{ label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
+  { label: TrialAction.BulkRemoveTags, value: TrialAction.BulkRemoveTags },
+]
   if (hasLoaded && !hasTrials) {
     return (
       <div className={css.waiting}>
@@ -146,11 +153,7 @@ const Compare: React.FC<Props> = ({
             />
           </div>
           <TableBatch
-            actions={[
-              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-              { label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
-              { label: TrialAction.BulkRemoveTags, value: TrialAction.BulkRemoveTags },
-            ]}
+            actions={selectDisabled ? filterBatchActions : individualBatchActions}
             selectedRowCount={selectedRowKeys.length}
             onAction={action => submitBatchAction(action as Action)}
             onSelectMatching={handleSelectMatching}
