@@ -371,6 +371,12 @@ func (a *apiServer) GetTrialCheckpoints(
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
 	var err error
+	if req.Filters == nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"at least one filter required",
+		)
+	}
 	filtersLength := len(req.Filters.WorkspaceIds) +
 		len(req.Filters.ExperimentIds) +
 		len(req.Filters.ProjectIds) +
@@ -421,7 +427,11 @@ func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsReque
 	}
 	q := db.Bun().NewUpdate().Table("trials")
 
-	q = a.m.db.ApplyTrialPatch(q, payload)
+	q, err := a.m.db.ApplyTrialPatch(q, payload)
+
+	if err != nil {
+		return nil, err
+	}
 
 	q.Where("id IN (?)", bun.In(trialIDs)).
 		Exec(context.TODO())
@@ -448,7 +458,11 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 		return nil, err
 	}
 
-	q = a.m.db.ApplyTrialPatch(q, req.Patch)
+	q, err = a.m.db.ApplyTrialPatch(q, req.Patch)
+
+	if err != nil {
+		return nil, err
+	}
 
 	q.Where("id IN (?)", subQ).
 		Exec(context.TODO())
@@ -462,21 +476,31 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 func (a *apiServer) GetTrialsCollections(
 	ctx context.Context, req *apiv1.GetTrialsCollectionsRequest,
 ) (*apiv1.GetTrialsCollectionsResponse, error) {
+	fmt.Println("in get trials collection")
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	collections := []*apiv1.TrialsCollection{}
+	collections := []*db.TrialsCollection{}
+
 	err = db.Bun().
 		NewSelect().
-		Table("trials_collections").
 		Model(&collections).
 		Where("user_id = ?", curUser.ID).
 		Scan(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query error %f", err)
 	}
-	resp := &apiv1.GetTrialsCollectionsResponse{Collections: collections}
+
+	resp := &apiv1.GetTrialsCollectionsResponse{
+		Collections: []*apiv1.TrialsCollection{},
+	}
+
+	for _, c := range collections {
+		fmt.Println(collections)
+		// is this nil at beginnning?
+		resp.Collections = append(resp.Collections, c.Proto())
+	}
 	return resp, nil
 }
 
@@ -488,38 +512,56 @@ func (a *apiServer) CreateTrialsCollection(
 		return nil, err
 	}
 
-	collection := apiv1.TrialsCollection{
-		UserId:  int32(curUser.ID),
-		Name:    req.Name,
+	collection := db.TrialsCollection{
+		UserId: int32(curUser.ID),
+		Name:   req.Name,
+		// the hope here is that using proto types is okay for Filters,
+		// since presumably bun is doing the same thing we would be doing:
+		// marshalling/unmarshalling the JSON according to the type
 		Filters: req.Filters,
 	}
-	db.Bun().NewInsert().
+
+	_, err = db.Bun().NewInsert().
 		Model(&collection).
-		Table("trials_collections").
 		Returning("*").
 		Exec(context.TODO())
 
-	resp := &apiv1.CreateTrialsCollectionResponse{Collection: &collection}
-	return resp, nil
-}
-
-func (a *apiServer) SaveTrialsCollection(
-	ctx context.Context, req *apiv1.SaveTrialsCollectionRequest,
-) (*apiv1.SaveTrialsCollectionResponse, error) {
-	collection := apiv1.TrialsCollection{
-		Id:      req.Collection.Id,
-		Name:    req.Collection.Name,
-		Filters: req.Collection.Filters,
-	}
-	_, err := db.Bun().NewUpdate().
-		Model(&collection).
-		Table("trials_collections").
-		Returning("*").
-		Exec(context.TODO())
 	if err != nil {
 		return nil, err
 	}
-	resp := &apiv1.SaveTrialsCollectionResponse{Collection: &collection}
+
+	resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
+	return resp, nil
+}
+
+func (a *apiServer) PatchTrialsCollection(
+	ctx context.Context, req *apiv1.PatchTrialsCollectionRequest,
+) (*apiv1.PatchTrialsCollectionResponse, error) {
+	collection := db.TrialsCollection{
+		ID:      req.Collection.Id,
+		Name:    req.Collection.Name,
+		Filters: req.Collection.Filters,
+	}
+
+	q := db.Bun().NewUpdate().
+		Model(&collection).
+		Returning("*").
+		WherePK()
+
+	if req.Collection.Name != "" {
+		q.Column("name")
+	}
+
+	if req.Collection.Filters != nil {
+		q.Column("filters")
+	}
+
+	_, err := q.Exec(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+	resp := &apiv1.PatchTrialsCollectionResponse{Collection: collection.Proto()}
 	return resp, nil
 }
 

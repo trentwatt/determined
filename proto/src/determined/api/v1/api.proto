@@ -531,7 +531,7 @@ service Determined {
 
   rpc BulkPatchTrials(BulkPatchTrialsRequest) returns (BulkPatchTrialsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/tags/bulk-add"
+      post: "/api/v1/trials/patch-bulk"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -543,7 +543,7 @@ service Determined {
 
   rpc PatchTrials(PatchTrialsRequest) returns (PatchTrialsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/tags/add"
+      post: "/api/v1/trials/patch"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -552,19 +552,31 @@ service Determined {
   }
 
 
-  rpc SaveTrialsCollection(SaveTrialsCollectionRequest) returns (SaveTrialsCollectionResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trials/collections/save"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials" ]
-    };
-  }
+
 
   rpc GetTrialsCollections(GetTrialsCollectionsRequest) returns (GetTrialsCollectionsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/collections"
+      get: "/api/v1/trials-collections"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc CreateTrialsCollection(CreateTrialsCollectionRequest) returns (CreateTrialsCollectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials-collections/create"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc PatchTrialsCollection(PatchTrialsCollectionRequest) returns (PatchTrialsCollectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials-collections/patch"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trials" ]

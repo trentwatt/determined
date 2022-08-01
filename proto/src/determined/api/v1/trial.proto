@@ -59,9 +59,16 @@ message TrialTag {
 
 
 
-message QueryTrialsSortBy {
-  string field = 1;
-  OrderBy order_by = 2;
+message TrialsSorter {
+  enum Namespace {
+    TRIALS = 0;
+    HPARAMS = 1;
+    TRAINING_METRICS = 2;
+    VALIDATION_METRICS = 3;
+  }
+  Namespace namespace = 1;
+  string field = 2;
+  OrderBy order_by = 3;
 }
 
 
@@ -75,21 +82,21 @@ message TrialFilters {
   string searcher = 7;
   repeated int32 user_ids = 8;
   repeated TrialTag tags = 9;
-  message ExpRank {
-    QueryTrialsSortBy sort_by = 1;
+  message RankWithinExp {
+    TrialsSorter sorter = 1;
     int32 rank = 2;
   }
-  ExpRank exp_rank = 10;
+  RankWithinExp rank_within_exp = 10;
  
 }
 
 message QueryTrialsRequest {
   TrialFilters filters = 1;
-    // Sort trials by the given field.
-    QueryTrialsSortBy sorter = 2;
-    int32 offset = 3;
-    // Limit the number of trials. A value of 0 denotes no limit.
-    int32 limit = 4;
+  // Sort trials by the given field.
+  TrialsSorter sorter = 2;
+  int32 offset = 3;
+  // Limit the number of trials. A value of 0 denotes no limit.
+  int32 limit = 4;
 }
 
 message ExportTrialsRequest {
@@ -166,10 +173,10 @@ message GetTrialsCollectionsResponse {
 }
 
 
-message SaveTrialsCollectionRequest {
+message PatchTrialsCollectionRequest {
   TrialsCollection collection = 1;
 }
-message SaveTrialsCollectionResponse {
+message PatchTrialsCollectionResponse {
   TrialsCollection collection = 1;
 } 
 

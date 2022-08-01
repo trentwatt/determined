@@ -491,59 +491,150 @@ type TrialsAugmented struct {
 	// RankWithinExp         int32              `bun:"RankWithinExp"`
 }
 
-type TrialFilters struct {
-}
+// type TrialFilters struct {
+// 	ExperimentIds     []int32
+// 	ProjectIds        []int32
+// 	WorkspaceIds      []int32
+// 	ValidationMetrics []*NumberRangeFilter
+// 	TrainingMetrics   []*NumberRangeFilter
+// 	Hparams           []*NumberRangeFilter
+// 	Searcher          string
+// 	UserIds           []int32
+// 	Tags              []*TrialTag
+// 	RankWithinExp     *TrialFilters_RankWithinExp
+// }
 
+// func (tf *TrialFilters) Proto() *apiv1.TrialFilters {
+// 	return &apiv1.TrialFilters{
+// 		ExperimentIds     []int32
+// 		ProjectIds        []int32
+// 		WorkspaceIds      []int32
+// 		ValidationMetrics []*NumberRangeFilter
+// 		TrainingMetrics   []*NumberRangeFilter
+// 		Hparams           []*NumberRangeFilter
+// 		Searcher          string
+// 		UserIds           []int32
+// 		Tags              []*TrialTag
+// 		RankWithinExp     *TrialFilters_RankWithinExp
+
+// 	}
+// }
+
+//
+//
+//
 type TrialsCollection struct {
-	ID      int32        `bun:"id,pk,autoincrement"`
-	UserId  int32        `bun:"user_id"`
-	Name    string       `bun:"user_id"`
-	Filters TrialFilters `bun:"filters"`
+	ID     int32  `bun:"id,pk,autoincrement"`
+	UserId int32  `bun:"user_id"`
+	Name   string `bun:"name"`
+	// the hope here is that using proto types for the db is okay here,
+	// since presumably bun is doing the same thing we would be doing:
+	// marshalling/unmarshalling the JSON according to the type
+	Filters *apiv1.TrialFilters `bun:"filters,type:jsonb"`
 }
 
-func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) *bun.UpdateQuery {
+// func decodeFilters(data []byte) *apiv1.TrialFilters {
+// 	var f apiv1.TrialFilters
+// 	err := json.Unmarshal(data, &f)
+// 	if err != nil {
+// 		log.Warnf("Unable to decode filter in collection %s", data)
+// 		return &apiv1.TrialFilters{}
+// 	}
+// 	return &f
+// }
 
+func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
+	return &apiv1.TrialsCollection{
+		Id:     tc.ID,
+		UserId: tc.UserId,
+		Name:   tc.Name,
+		// the hope here is that using proto types for the db is okay here,
+		// since presumably bun is doing the same thing we would be doing:
+		// marshalling/unmarshalling the JSON according to the type
+		Filters: tc.Filters,
+	}
+}
+
+// This allows dot on top of whats allowed in exisint regex validField
+var alphaNumericalWithDots = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
+
+func hParamAccessor(hp string) string {
+	nesting := strings.Split(hp, ".")
+	nestingWithQuotes := []string{}
+	for _, n := range nesting {
+		nestingWithQuotes = append(nestingWithQuotes, fmt.Sprintf("'%s'", n))
+	}
+	return "hparams->>" + strings.Join(nestingWithQuotes, "->>")
+}
+
+func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (*bun.UpdateQuery, error) {
+	// takes an update query and adds the Set clauses for the patch
 	if len(payload.Tags) > 0 {
 		addTagsPhrase := "tags"
 		removeTagsPhrase := ""
 		for _, tag := range payload.Tags {
+			if !alphaNumericalWithDots.MatchString(tag.Key + tag.Value) {
+				return nil, fmt.Errorf("tag patch {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
+			}
 			if tag.Value != "" {
-				// need to make safe
 				removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
 			} else {
-				// need to make safe
 				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
 			}
 			q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
-
 		}
 	}
-	return q
+	return q, nil
+}
+
+func trialsColumnForNamespace(namespace apiv1.TrialsSorter_Namespace, field string) (string, error) {
+	if !alphaNumericalWithDots.MatchString(field) {
+		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
+	}
+	switch namespace {
+	case apiv1.TrialsSorter_TRIALS:
+		return field, nil
+	case apiv1.TrialsSorter_HPARAMS:
+		return hParamAccessor(field), nil
+	case apiv1.TrialsSorter_TRAINING_METRICS:
+		return "training_metrics->>" + field, nil
+	case apiv1.TrialsSorter_VALIDATION_METRICS:
+		return "validation_metrics->>" + field, nil
+	default:
+		return field, nil
+	}
 }
 
 func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
 
-	if filters.ExpRank.Rank != 0 {
-		r := filters.ExpRank
+	if filters.RankWithinExp != nil {
+		r := filters.RankWithinExp
 
 		orderHow := map[apiv1.OrderBy]string{
 			apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 			apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 			apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 		}
+		columnExpr, err := trialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
+
+		if err != nil {
+			return nil, fmt.Errorf("possible unsafe filters, %f", err)
+		}
+
 		q = q.Where(`ROW_NUMBER() OVER(
 			PARTITION BY t.experiment_id
 			ORDER BY ?  ?
-		) <= ?`, r.SortBy.Field, orderHow[r.SortBy.OrderBy], r.Rank)
+		) <= ?`, columnExpr, orderHow[r.Sorter.OrderBy], r.Rank)
 
 	}
 
-	// added a \. to where this was defined, dangerous??
-	validField := regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
+			if !alphaNumericalWithDots.MatchString(tag.Key + tag.Value) {
+				return nil, fmt.Errorf("tag filter {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
+			}
 			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
 		}
 		q = q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
@@ -568,14 +659,9 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	}
 
 	for _, hp := range filters.Hparams {
-		if !validField.MatchString(hp.Name) {
-			return nil, fmt.Errorf("hp filter %s contains possible SQL injection", hp.Name)
-		}
-		nesting := strings.Split(hp.Name, ".")
-		hpAccessorString := strings.Join(nesting, "->>")
-
 		// this will fail for non-coerceable strings
-		q = q.Where("(hparams->>?)::float8 BETWEEN ? AND ?", hpAccessorString, hp.Min, hp.Max)
+		whereHParam := fmt.Sprintf("(%s)::float8 BETWEEN ? AND ?", hParamAccessor(hp.Name))
+		q = q.Where(whereHParam, hp.Min, hp.Max)
 	}
 
 	if filters.Searcher != "" {
