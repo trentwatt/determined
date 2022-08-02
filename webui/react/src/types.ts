@@ -1,4 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
+import { V1TrialFilters } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -6,6 +7,10 @@ interface WithPagination {
 }
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
+
+export interface QueryTrialsParams {
+  filters: V1TrialFilters
+}
 
 export interface User {
   displayName?: string;
@@ -316,6 +321,7 @@ export enum ExperimentAction {
 export enum TrialAction {
   BulkAddTags = 'Bulk Add Tag',
   BulkRemoveTags = 'Bulk Remove Tags',
+  OpenTensorBoard = 'View in TensorBoard',
 }
 
 export interface ExperimentPagination extends WithPagination {

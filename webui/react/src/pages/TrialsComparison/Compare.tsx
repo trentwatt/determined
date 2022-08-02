@@ -1,20 +1,21 @@
 import { Alert } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
+import { openCommand } from 'wait';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import TableBatch, { SelectionMode } from 'components/TableBatch';
+import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
 import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Scale } from 'types';
 import {
-  ExperimentAction as Action, CommandTask, Hyperparameter, MetricName,
+  CommandTask, Hyperparameter, MetricName,
   TrialAction,
 } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'utils/wait';
 
 import css from './Compare.module.scss';
 import { HpValsMap } from './TrialsComparison';
@@ -60,6 +61,11 @@ const Compare: React.FC<Props> = ({
   const [ selectionMode, setSelectionMode ] = useState<SelectionMode>();
   const hasTrials = trialIds.length !== 0;
 
+  const {
+    contextHolder: modalTrialTagContextHolder,
+    modalOpen: openModalCreate,
+  } = useModalTrialTag({});
+
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);
   }, []);
@@ -86,20 +92,24 @@ const Compare: React.FC<Props> = ({
     setSelectionMode(SelectionMode.SELECT_INDIVIDUAL);
   }, []);
 
-  const sendBatchActions = useCallback(async (action: Action) => {
-    if (action === Action.OpenTensorBoard) {
+  const sendBatchActions = useCallback(async (action: TrialAction) => {
+    if (action === TrialAction.OpenTensorBoard) {
       return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
     }
   }, [ selectedRowKeys ]);
 
-  const submitBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
-      const result = await sendBatchActions(action);
-      if (action === Action.OpenTensorBoard && result) {
-        openCommand(result as CommandTask);
+      if (action == TrialAction.BulkAddTags){
+        openModalCreate({ trialIds: trialIds });
+      } else {
+        const result = await sendBatchActions(action);
+        if (action === TrialAction.OpenTensorBoard && result) {
+          openCommand(result as CommandTask);
+        }
       }
     } catch (e) {
-      const publicSubject = action === Action.OpenTensorBoard ?
+      const publicSubject = action === TrialAction.OpenTensorBoard ?
         'Unable to View TensorBoard for Selected Trials' :
         `Unable to ${action} Selected Trials`;
       handleError(e, {
@@ -115,7 +125,7 @@ const Compare: React.FC<Props> = ({
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   const individualBatchActions = [
-    { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+    { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard },
   ];
 
   const filterBatchActions = [ { label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
@@ -154,7 +164,7 @@ const Compare: React.FC<Props> = ({
             actions={selectDisabled ? filterBatchActions : individualBatchActions}
             selectedRowCount={selectedRowKeys.length}
             selectionMode={selectionMode}
-            onAction={(action) => submitBatchAction(action as Action)}
+            onAction={(action) => submitBatchAction(action as TrialAction)}
             onClear={clearSelected}
             onSelectIndividual={handleSelectIndividual}
             onSelectMatching={handleSelectMatching}
@@ -177,6 +187,7 @@ const Compare: React.FC<Props> = ({
           />
         </div>
       </Section>
+      {modalTrialTagContextHolder}
     </Page>
   );
 };

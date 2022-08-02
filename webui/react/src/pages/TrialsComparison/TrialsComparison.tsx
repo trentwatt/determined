@@ -6,7 +6,7 @@ import { useLocation } from 'react-router';
 import { useStore } from 'contexts/Store';
 import { compareTrials, getExperimentDetails } from 'services/api';
 import {
-  V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse,
+  V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse, 
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { CompareTrialsParams } from 'services/types';
@@ -14,7 +14,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
-import { glasbeyColor } from 'shared/utils/color';
+import { queryTrials } from 'services/api';
 import { isEqual } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -115,6 +115,20 @@ const TrialsComparison: React.FC = () => {
     setFilters((filters) => ({ ...filters, metric }));
   }, []);
 
+  useEffect(() => {
+    queryTrials(
+      {
+        filters : {
+          experimentIds: experimentIds
+        }
+      }
+    ).then(response => {
+      console.log(response);
+    }).catch(err => {
+      console.log(err);
+    })
+  }, [experimentIds])
+  
   useEffect(() => {
     if (ui.isPageHidden || !experimentIds.length || !filters.metric?.name) return;
 
