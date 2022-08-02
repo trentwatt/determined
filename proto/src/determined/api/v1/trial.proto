@@ -137,7 +137,7 @@ message BulkPatchTrialsRequest {
 }
 
 message BulkPatchTrialsResponse {
-  repeated int32 trial_ids = 1;
+   int32 rows_affected = 1;
 }
 
 message PatchTrialsRequest {
@@ -152,18 +152,22 @@ message PatchTrialsResponse {
 message TrialsCollection {
   int32 id             = 1;
   int32 user_id        = 2;
-  string name          = 3;
-  TrialFilters filters = 4;
+  int32 project_id     = 3;
+  string name          = 4;
+  TrialFilters filters = 5;
 }
 
-message GetTrialsCollectionsRequest {}
+message GetTrialsCollectionsRequest {
+  int32 project_id = 1;
+}
 message GetTrialsCollectionsResponse {
   repeated TrialsCollection collections = 1;
 }
 
 message CreateTrialsCollectionRequest {
   string name          = 1;
-  TrialFilters filters = 2;
+  int32 project_id     = 2;
+  TrialFilters filters = 3;
 }
 message CreateTrialsCollectionResponse {
   TrialsCollection collection = 1;
@@ -180,6 +184,14 @@ message DeleteTrialsCollectionRequest {
   TrialsCollection collection = 1;
 }
 message DeleteTrialsCollectionResponse {}
+
+message GetTrialTagsRequest {
+  TrialFilters filters = 1;
+}
+
+message GetTrialTagsResponse {
+  repeated string tags = 1;
+}
 
 // Stream trial logs.
 message TrialLogsRequest {

@@ -585,6 +585,16 @@ service Determined {
     };
   }
 
+  rpc GetTrialTags(GetTrialTagsRequest) returns (GetTrialTagsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/tags"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {

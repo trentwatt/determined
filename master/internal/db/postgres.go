@@ -37,7 +37,7 @@ func initTheOneBun(db *sql.DB) {
 	// This will print every query that runs.
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
-	// This will print only the failed queries.
+	// Change this back before merge
 	theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 }
 

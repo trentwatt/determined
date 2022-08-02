@@ -490,72 +490,31 @@ type TrialsAugmented struct {
 	WorkspaceId           int32              `bun:"workspace_id"`
 	// RankWithinExp         int32              `bun:"RankWithinExp"`
 }
-
-// type TrialFilters struct {
-// 	ExperimentIds     []int32
-// 	ProjectIds        []int32
-// 	WorkspaceIds      []int32
-// 	ValidationMetrics []*NumberRangeFilter
-// 	TrainingMetrics   []*NumberRangeFilter
-// 	Hparams           []*NumberRangeFilter
-// 	Searcher          string
-// 	UserIds           []int32
-// 	Tags              []*TrialTag
-// 	RankWithinExp     *TrialFilters_RankWithinExp
-// }
-
-// func (tf *TrialFilters) Proto() *apiv1.TrialFilters {
-// 	return &apiv1.TrialFilters{
-// 		ExperimentIds     []int32
-// 		ProjectIds        []int32
-// 		WorkspaceIds      []int32
-// 		ValidationMetrics []*NumberRangeFilter
-// 		TrainingMetrics   []*NumberRangeFilter
-// 		Hparams           []*NumberRangeFilter
-// 		Searcher          string
-// 		UserIds           []int32
-// 		Tags              []*TrialTag
-// 		RankWithinExp     *TrialFilters_RankWithinExp
-
-// 	}
-// }
-
-//
-//
-//
 type TrialsCollection struct {
-	ID     int32  `bun:"id,pk,autoincrement"`
-	UserId int32  `bun:"user_id"`
-	Name   string `bun:"name"`
-	// the hope here is that using proto types for the db is okay here,
-	// since presumably bun is doing the same thing we would be doing:
-	// marshalling/unmarshalling the JSON according to the type
-	Filters *apiv1.TrialFilters `bun:"filters,type:jsonb"`
+	ID        int32               `bun:"id,pk,autoincrement"`
+	UserId    int32               `bun:"user_id"`
+	ProjectId int32               `bun:"project_id"`
+	Name      string              `bun:"name"`
+	Filters   *apiv1.TrialFilters `bun:"filters,type:jsonb"`
 }
-
-// func decodeFilters(data []byte) *apiv1.TrialFilters {
-// 	var f apiv1.TrialFilters
-// 	err := json.Unmarshal(data, &f)
-// 	if err != nil {
-// 		log.Warnf("Unable to decode filter in collection %s", data)
-// 		return &apiv1.TrialFilters{}
-// 	}
-// 	return &f
-// }
 
 func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
 	return &apiv1.TrialsCollection{
-		Id:     tc.ID,
-		UserId: tc.UserId,
-		Name:   tc.Name,
-		// the hope here is that using proto types for the db is okay here,
-		// since presumably bun is doing the same thing we would be doing:
-		// marshalling/unmarshalling the JSON according to the type
-		Filters: tc.Filters,
+		Id:        tc.ID,
+		UserId:    tc.UserId,
+		ProjectId: tc.ProjectId,
+		Name:      tc.Name,
+		Filters:   tc.Filters,
 	}
 }
 
-// This allows dot on top of whats allowed in exisint regex validField
+var QueryTrialsOrderMap = map[apiv1.OrderBy]SortDirection{
+	apiv1.OrderBy_ORDER_BY_UNSPECIFIED: SortDirectionAsc,
+	apiv1.OrderBy_ORDER_BY_ASC:         SortDirectionAsc,
+	apiv1.OrderBy_ORDER_BY_DESC:        SortDirectionDescNullsLast,
+}
+
+// This allows dot on top of whats allowed in existing regex validField.
 var alphaNumericalWithDots = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
 
 func hParamAccessor(hp string) string {
@@ -587,7 +546,7 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (
 	return q, nil
 }
 
-func trialsColumnForNamespace(namespace apiv1.TrialsSorter_Namespace, field string) (string, error) {
+func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialsSorter_Namespace, field string) (string, error) {
 	if !alphaNumericalWithDots.MatchString(field) {
 		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
 	}
@@ -611,13 +570,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	if filters.RankWithinExp != nil {
 		r := filters.RankWithinExp
 
-		orderHow := map[apiv1.OrderBy]string{
-			apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-			apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-			apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-		}
-		columnExpr, err := trialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
-
+		columnExpr, err := db.TrialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
 		if err != nil {
 			return nil, fmt.Errorf("possible unsafe filters, %f", err)
 		}
@@ -625,8 +578,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 		q = q.Where(`ROW_NUMBER() OVER(
 			PARTITION BY t.experiment_id
 			ORDER BY ?  ?
-		) <= ?`, columnExpr, orderHow[r.Sorter.OrderBy], r.Rank)
-
+		) <= ?`, columnExpr, QueryTrialsOrderMap[r.Sorter.OrderBy], r.Rank)
 	}
 
 	if len(filters.Tags) > 0 {
@@ -660,6 +612,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 
 	for _, hp := range filters.Hparams {
 		// this will fail for non-coerceable strings
+		// a request where you ask for string hps in a range is a "Bad Request"
 		whereHParam := fmt.Sprintf("(%s)::float8 BETWEEN ? AND ?", hParamAccessor(hp.Name))
 		q = q.Where(whereHParam, hp.Min, hp.Max)
 	}
