@@ -500,8 +500,6 @@ service Determined {
     };
   }
 
-
-
   // Return downsampled metrics from multiple trials to compare them
   // side-by-side.
   rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
@@ -513,7 +511,6 @@ service Determined {
     };
   }
 
-
   rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/query"
@@ -524,7 +521,8 @@ service Determined {
     };
   }
 
-  rpc BulkPatchTrials(BulkPatchTrialsRequest) returns (BulkPatchTrialsResponse) {
+  rpc BulkPatchTrials(BulkPatchTrialsRequest)
+      returns (BulkPatchTrialsResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/patch-bulk"
       body: "*"
@@ -533,8 +531,6 @@ service Determined {
       tags: [ "Trial Comparison" ]
     };
   }
-  
-
 
   rpc PatchTrials(PatchTrialsRequest) returns (PatchTrialsResponse) {
     option (google.api.http) = {
@@ -546,10 +542,8 @@ service Determined {
     };
   }
 
-
-
-
-  rpc GetTrialsCollections(GetTrialsCollectionsRequest) returns (GetTrialsCollectionsResponse) {
+  rpc GetTrialsCollections(GetTrialsCollectionsRequest)
+      returns (GetTrialsCollectionsResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/collections"
     };
@@ -558,7 +552,8 @@ service Determined {
     };
   }
 
-  rpc CreateTrialsCollection(CreateTrialsCollectionRequest) returns (CreateTrialsCollectionResponse) {
+  rpc CreateTrialsCollection(CreateTrialsCollectionRequest)
+      returns (CreateTrialsCollectionResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/collections/create"
       body: "*"
@@ -568,7 +563,8 @@ service Determined {
     };
   }
 
-  rpc PatchTrialsCollection(PatchTrialsCollectionRequest) returns (PatchTrialsCollectionResponse) {
+  rpc PatchTrialsCollection(PatchTrialsCollectionRequest)
+      returns (PatchTrialsCollectionResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/collections/patch"
       body: "*"
@@ -578,16 +574,15 @@ service Determined {
     };
   }
 
-    // Get a single trial.
-    rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
-      option (google.api.http) = {
-        get: "/api/v1/trials/{trial_id}"
-      };
-      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-        tags: [ "Trials", "Experiments" ]
-      };
-    }
-
+  // Get a single trial.
+  rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Experiments" ]
+    };
+  }
 
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
