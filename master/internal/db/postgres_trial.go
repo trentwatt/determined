@@ -470,7 +470,7 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 }
 
 type TrialsAugmented struct {
-	bun.BaseModel `bun:"table:trials_augmented_view"`
+	bun.BaseModel `bun:"table:trials_augmented_view,alias:trials_augmented_view"`
 
 	TrialID               int32              `bun:"trial_id"`
 	State                 string             `bun:"state"`
@@ -567,6 +567,7 @@ func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialsSorter_Namespace,
 
 func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
+	fmt.Println("In Filter")
 
 	if filters.RankWithinExp != nil {
 		r := filters.RankWithinExp
@@ -583,11 +584,11 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 
 		rankQ := Bun().NewSelect().
 			Model((*TrialsAugmented)(nil)).
-			Column("trial_id").
+			ColumnExpr("trial_id as t_id").
 			ColumnExpr(rankExpr)
 
 		q = q.With("rank", rankQ).
-			Join("join rank on rank.trial_id = trials_augmented.trial_id").
+			Join("join rank on rank.t_id = trials_augmented_view.trial_id").
 			Where("rank.n <= ?", r.Rank)
 
 	}

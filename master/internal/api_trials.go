@@ -395,13 +395,17 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 }
 
 func checkTrialPatchEmpty(p *apiv1.TrialPatch) error {
-	if len(p.Tags) == 0 {
-		return errors.New("blank trial patch payload")
+	if p == nil || len(p.Tags) == 0 {
+		return status.Errorf(
+			codes.InvalidArgument,
+			"patch payload empty",
+		)
 	}
 	return nil
 }
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
+	fmt.Println("In API")
 	err := checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
 		return nil, fmt.Errorf("error querying tags for trials %w", err)
@@ -416,9 +420,13 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 		return nil, fmt.Errorf("error querying for trials %w", err)
 	}
 
-	orderColumn, err := a.m.db.TrialsColumnForNamespace(req.Sorter.Namespace, req.Sorter.Field)
-	if err != nil {
-		return nil, fmt.Errorf("error querying for trials, bad order by column %w", err)
+	orderColumn := "trial_id"
+	orderDirection := db.SortDirectionAsc
+	if req.Sorter != nil {
+		orderColumn, err = a.m.db.TrialsColumnForNamespace(req.Sorter.Namespace, req.Sorter.Field)
+		if err != nil {
+			return nil, fmt.Errorf("error querying for trials, bad order by column %w", err)
+		}
 	}
 
 	if req.Limit == 0 {
@@ -428,7 +436,7 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	q = db.PaginateBun(
 		q,
 		orderColumn,
-		db.QueryTrialsOrderMap[req.Sorter.OrderBy],
+		orderDirection,
 		int(req.Offset),
 		int(req.Limit),
 	)
