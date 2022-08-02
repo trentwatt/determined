@@ -369,32 +369,49 @@ func (a *apiServer) GetTrialCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
-func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
-	var err error
-	if req.Filters == nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"at least one filter required",
-		)
+func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
+	emptyFilters := status.Errorf(
+		codes.InvalidArgument,
+		"at least one filter required",
+	)
+
+	if f == nil {
+		return emptyFilters
 	}
-	filtersLength := len(req.Filters.WorkspaceIds) +
-		len(req.Filters.ExperimentIds) +
-		len(req.Filters.ProjectIds) +
-		len(req.Filters.ValidationMetrics) +
-		len(req.Filters.TrainingMetrics) +
-		len(req.Filters.Hparams) +
-		len(req.Filters.UserIds)
+
+	filtersLength := len(f.WorkspaceIds) +
+		len(f.ExperimentIds) +
+		len(f.ProjectIds) +
+		len(f.ValidationMetrics) +
+		len(f.TrainingMetrics) +
+		len(f.Hparams) +
+		len(f.UserIds)
+
+	if filtersLength == 0 {
+		return emptyFilters
+	}
+	return nil
+}
+
+func checkTrialPatchEmpty(p *apiv1.TrialPatch) error {
+	if len(p.Tags) == 0 {
+		return errors.New("blank trial patch payload")
+	}
+	return nil
+}
+
+func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
+
+	err := checkTrialFiltersEmpty(req.Filters)
+
+	if err != nil {
+		return nil, fmt.Errorf("error querying for trials %f", err)
+	}
 
 	limit := req.Limit
 
 	if limit == 0 {
 		limit = 10
-	}
-	if filtersLength == 0 && req.Filters.Searcher == "" {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"at least one filter required",
-		)
 	}
 
 	trials := []db.TrialsAugmented{}
@@ -403,12 +420,15 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	q, err = a.m.db.FilterTrials(q, req.Filters)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error querying for trials %f", err)
 	}
+
 	err = q.Scan(context.TODO())
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error querying for trials %f", err)
 	}
+
 	resp := apiv1.QueryTrialsResponse{Trials: []*apiv1.AugmentedTrial{}}
 
 	for _, trial := range trials {
@@ -419,35 +439,68 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 }
 
 func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsRequest) (*apiv1.PatchTrialsResponse, error) {
-	trialIDs := req.TrialIds
-	payload := req.Patch
-
-	if len(payload.Tags) == 0 {
-		return nil, errors.New("blank trial patch payload")
-	}
-	q := db.Bun().NewUpdate().Table("trials")
-
-	q, err := a.m.db.ApplyTrialPatch(q, payload)
+	_, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt patch trials %f", err)
 	}
 
-	q.Where("id IN (?)", bun.In(trialIDs)).
+	// check user is authorized for modifying project? after RBAC?
+	// in that case we will want to make sure all trials belong to same project
+	// right now only option is adding/removing tags, pretty low stakes
+
+	if len(req.TrialIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "no trial ids provided to patch")
+	}
+
+	err = checkTrialPatchEmpty(req.Patch)
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt patch trials %f", err)
+	}
+
+	q := db.Bun().NewUpdate().Table("trials")
+
+	q, err = a.m.db.ApplyTrialPatch(q, req.Patch)
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt patch trials %f", err)
+	}
+
+	_, err = q.Where("id IN (?)", bun.In(req.TrialIds)).
 		Exec(context.TODO())
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt patch trials %f", err)
+	}
 
 	resp := &apiv1.PatchTrialsResponse{}
 	return resp, nil
 }
 
 func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTrialsRequest) (*apiv1.BulkPatchTrialsResponse, error) {
-	var err error
+	_, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 
-	payload := req.Patch
-
-	if len(payload.Tags) == 0 {
-		return nil, errors.New("blank trial patch payload")
+	if err != nil {
+		return nil, fmt.Errorf("couldnt patch trials %f", err)
 	}
+
+	// check user is authorized for modifying project? after RBAC?
+	// in that case we will want to make sure len(req.Filters.ProjectId) == 1
+	// right now only option is adding/removing tags, pretty low stakes
+
+	err = checkTrialFiltersEmpty(req.Filters)
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+	}
+
+	err = checkTrialPatchEmpty(req.Patch)
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+	}
+
 	q := db.Bun().NewUpdate().Table("trial")
 
 	subQ := db.Bun().NewSelect().Column("trial_id").Table("trials_augmented_view")
@@ -455,19 +508,21 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 	subQ, err = a.m.db.FilterTrials(subQ, req.Filters)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
 	}
 
 	q, err = a.m.db.ApplyTrialPatch(q, req.Patch)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
 	}
 
-	q.Where("id IN (?)", subQ).
+	_, err = q.Where("id IN (?)", subQ).
 		Exec(context.TODO())
 
-	q.Exec(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+	}
 
 	resp := &apiv1.BulkPatchTrialsResponse{}
 	return resp, nil
@@ -476,20 +531,20 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 func (a *apiServer) GetTrialsCollections(
 	ctx context.Context, req *apiv1.GetTrialsCollectionsRequest,
 ) (*apiv1.GetTrialsCollectionsResponse, error) {
-	fmt.Println("in get trials collection")
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt get trials collections %f", err)
 	}
 	collections := []*db.TrialsCollection{}
 
 	err = db.Bun().
 		NewSelect().
 		Model(&collections).
-		Where("user_id = ?", curUser.ID).
+		Where("user_id = ?", user.ID).
 		Scan(context.TODO())
+
 	if err != nil {
-		return nil, fmt.Errorf("query error %f", err)
+		return nil, fmt.Errorf("couldnt get trials collections %f", err)
 	}
 
 	resp := &apiv1.GetTrialsCollectionsResponse{
@@ -497,23 +552,29 @@ func (a *apiServer) GetTrialsCollections(
 	}
 
 	for _, c := range collections {
-		fmt.Println(collections)
-		// is this nil at beginnning?
 		resp.Collections = append(resp.Collections, c.Proto())
 	}
+
 	return resp, nil
 }
 
 func (a *apiServer) CreateTrialsCollection(
 	ctx context.Context, req *apiv1.CreateTrialsCollectionRequest,
 ) (*apiv1.CreateTrialsCollectionResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt create trials collection %f", err)
+	}
+
+	err = checkTrialFiltersEmpty(req.Filters)
+
+	if err != nil {
+		return nil, fmt.Errorf("couldnt create trials collection %f", err)
 	}
 
 	collection := db.TrialsCollection{
-		UserId: int32(curUser.ID),
+		UserId: int32(user.ID),
 		Name:   req.Name,
 		// the hope here is that using proto types is okay for Filters,
 		// since presumably bun is doing the same thing we would be doing:
@@ -527,7 +588,7 @@ func (a *apiServer) CreateTrialsCollection(
 		Exec(context.TODO())
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldnt create trials collection %f", err)
 	}
 
 	resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
@@ -537,6 +598,11 @@ func (a *apiServer) CreateTrialsCollection(
 func (a *apiServer) PatchTrialsCollection(
 	ctx context.Context, req *apiv1.PatchTrialsCollectionRequest,
 ) (*apiv1.PatchTrialsCollectionResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, fmt.Errorf("couldnt patch trials collection %f", err)
+	}
+
 	collection := db.TrialsCollection{
 		ID:      req.Collection.Id,
 		Name:    req.Collection.Name,
@@ -546,7 +612,9 @@ func (a *apiServer) PatchTrialsCollection(
 	q := db.Bun().NewUpdate().
 		Model(&collection).
 		Returning("*").
-		WherePK()
+		WherePK().
+		Where("user_id = ?", user.ID).
+		WhereOr("?", user.Admin)
 
 	if req.Collection.Name != "" {
 		q.Column("name")
@@ -556,7 +624,31 @@ func (a *apiServer) PatchTrialsCollection(
 		q.Column("filters")
 	}
 
-	_, err := q.Exec(context.TODO())
+	_, err = q.Exec(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+	resp := &apiv1.PatchTrialsCollectionResponse{Collection: collection.Proto()}
+	return resp, nil
+}
+
+func (a *apiServer) DeleteTrialsCollection(
+	ctx context.Context, req *apiv1.PatchTrialsCollectionRequest,
+) (*apiv1.PatchTrialsCollectionResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+
+	collection := db.TrialsCollection{
+		ID: req.Collection.Id,
+	}
+
+	q := db.Bun().NewDelete().
+		Model(&collection).
+		WherePK().
+		Where("user_id = ?", user.ID).
+		WhereOr("?", user.Admin)
+
+	_, err = q.Exec(context.TODO())
 
 	if err != nil {
 		return nil, err

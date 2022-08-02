@@ -574,6 +574,17 @@ service Determined {
     };
   }
 
+  rpc DeleteTrialsCollection(DeleteTrialsCollectionRequest)
+      returns (DeleteTrialsCollectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/collections/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {

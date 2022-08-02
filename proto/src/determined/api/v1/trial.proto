@@ -161,13 +161,6 @@ message GetTrialsCollectionsResponse {
   repeated TrialsCollection collections = 1;
 }
 
-message PatchTrialsCollectionRequest {
-  TrialsCollection collection = 1;
-}
-message PatchTrialsCollectionResponse {
-  TrialsCollection collection = 1;
-}
-
 message CreateTrialsCollectionRequest {
   string name          = 1;
   TrialFilters filters = 2;
@@ -175,6 +168,18 @@ message CreateTrialsCollectionRequest {
 message CreateTrialsCollectionResponse {
   TrialsCollection collection = 1;
 }
+
+message PatchTrialsCollectionRequest {
+  TrialsCollection collection = 1;
+}
+message PatchTrialsCollectionResponse {
+  TrialsCollection collection = 1;
+}
+
+message DeleteTrialsCollectionRequest {
+  TrialsCollection collection = 1;
+}
+message DeleteTrialsCollectionResponse {}
 
 // Stream trial logs.
 message TrialLogsRequest {
