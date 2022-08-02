@@ -40,6 +40,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
+    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
     Workspaces: new Api.WorkspacesApi(config),
   };
@@ -486,7 +487,7 @@ export const compareTrials: DetApi<
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.CompareTrialsParams) => detApi.Experiments.compareTrials(
+  request: (params: Service.CompareTrialsParams) => detApi.TrialsComparison.compareTrials(
     params.trialIds,
     params.maxDatapoints,
     params.metricNames.map((m) => m.name),

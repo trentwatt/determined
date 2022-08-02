@@ -1332,10 +1332,10 @@ export interface V1BulkPatchTrialsRequest {
 export interface V1BulkPatchTrialsResponse {
     /**
      * 
-     * @type {Array<number>}
+     * @type {number}
      * @memberof V1BulkPatchTrialsResponse
      */
-    trialIds?: Array<number>;
+    rowsAffected?: number;
 }
 
 /**
@@ -1744,6 +1744,12 @@ export interface V1CreateTrialsCollectionRequest {
     name?: string;
     /**
      * 
+     * @type {number}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    projectId?: number;
+    /**
+     * 
      * @type {V1TrialFilters}
      * @memberof V1CreateTrialsCollectionRequest
      */
@@ -1858,6 +1864,28 @@ export interface V1DeleteProjectResponse {
  * @interface V1DeleteTemplateResponse
  */
 export interface V1DeleteTemplateResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteTrialsCollectionRequest
+ */
+export interface V1DeleteTrialsCollectionRequest {
+    /**
+     * 
+     * @type {V1TrialsCollection}
+     * @memberof V1DeleteTrialsCollectionRequest
+     */
+    collection?: V1TrialsCollection;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteTrialsCollectionResponse
+ */
+export interface V1DeleteTrialsCollectionResponse {
 }
 
 /**
@@ -3338,6 +3366,34 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     workloads: Array<V1WorkloadContainer>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetTrialTagsRequest
+ */
+export interface V1GetTrialTagsRequest {
+    /**
+     * 
+     * @type {V1TrialFilters}
+     * @memberof V1GetTrialTagsRequest
+     */
+    filters?: V1TrialFilters;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetTrialTagsResponse
+ */
+export interface V1GetTrialTagsResponse {
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof V1GetTrialTagsResponse
+     */
+    tags?: Array<string>;
 }
 
 /**
@@ -7302,6 +7358,12 @@ export interface V1TrialsCollection {
     userId?: number;
     /**
      * 
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    projectId?: number;
+    /**
+     * 
      * @type {string}
      * @memberof V1TrialsCollection
      */
@@ -10165,72 +10227,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (trialIds) {
-                localVarQueryParameter['trialIds'] = trialIds;
-            }
-
-            if (maxDatapoints !== undefined) {
-                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
-            }
-
-            if (metricNames) {
-                localVarQueryParameter['metricNames'] = metricNames;
-            }
-
-            if (startBatches !== undefined) {
-                localVarQueryParameter['startBatches'] = startBatches;
-            }
-
-            if (endBatches !== undefined) {
-                localVarQueryParameter['endBatches'] = endBatches;
-            }
-
-            if (metricType !== undefined) {
-                localVarQueryParameter['metricType'] = metricType;
-            }
-
-            if (scale !== undefined) {
-                localVarQueryParameter['scale'] = scale;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -11410,31 +11406,6 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -11960,22 +11931,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -12297,24 +12252,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public cancelExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).cancelExperiment(id, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-     * @param {Array<number>} [trialIds] The requested trial ids.
-     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-     * @param {Array<string>} [metricNames] The names of selected metrics.
-     * @param {number} [startBatches] Sample from metrics after this batch number.
-     * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20663,10 +20600,10 @@ export class TensorboardsApi extends BaseAPI {
 }
 
 /**
- * TrialsApi - fetch parameter creator
+ * TrialComparisonApi - fetch parameter creator
  * @export
  */
-export const TrialsApiFetchParamCreator = function (configuration?: Configuration) {
+export const TrialComparisonApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
@@ -20784,7 +20721,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
             }
-            const localVarPath = `/api/v1/trials-collections/create`;
+            const localVarPath = `/api/v1/trials/collections/create`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -20812,6 +20749,635 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {V1DeleteTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(body: V1DeleteTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials/collections/delete`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1DeleteTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1GetTrialTagsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialTags(body: V1GetTrialTagsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getTrialTags.');
+            }
+            const localVarPath = `/api/v1/trials/tags`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1GetTrialTagsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} [projectId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/collections`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrials.');
+            }
+            const localVarPath = `/api/v1/trials/patch`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials/collections/patch`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+            }
+            const localVarPath = `/api/v1/trials/query`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TrialComparisonApi - functional programming interface
+ * @export
+ */
+export const TrialComparisonApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {V1BulkPatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkPatchTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).bulkPatchTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1DeleteTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(body: V1DeleteTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1GetTrialTagsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialTags(body: V1GetTrialTagsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialTagsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialTags(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {number} [projectId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections(projectId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * TrialComparisonApi - factory interface
+ * @export
+ */
+export const TrialComparisonApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @param {V1BulkPatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).bulkPatchTrials(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+            return TrialComparisonApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1DeleteTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(body: V1DeleteTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).deleteTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1GetTrialTagsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialTags(body: V1GetTrialTagsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).getTrialTags(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {number} [projectId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options?: any) {
+            return TrialComparisonApiFp(configuration).getTrialsCollections(projectId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrials(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).queryTrials(body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * TrialComparisonApi - object-oriented interface
+ * @export
+ * @class TrialComparisonApi
+ * @extends {BaseAPI}
+ */
+export class TrialComparisonApi extends BaseAPI {
+    /**
+     * 
+     * @param {V1BulkPatchTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).bulkPatchTrials(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
+     * @param {Array<number>} [trialIds] The requested trial ids.
+     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+     * @param {Array<string>} [metricNames] The names of selected metrics.
+     * @param {number} [startBatches] Sample from metrics after this batch number.
+     * @param {number} [endBatches] Sample from metrics before this batch number.
+     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        return TrialComparisonApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1CreateTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1DeleteTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public deleteTrialsCollection(body: V1DeleteTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).deleteTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1GetTrialTagsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public getTrialTags(body: V1GetTrialTagsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).getTrialTags(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {number} [projectId] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public getTrialsCollections(projectId?: number, options?: any) {
+        return TrialComparisonApiFp(this.configuration).getTrialsCollections(projectId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1PatchTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public patchTrials(body: V1PatchTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrials(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1PatchTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1QueryTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * TrialsApi - fetch parameter creator
+ * @export
+ */
+export const TrialsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
         /**
          * 
          * @summary Get the list of trials for an experiment.
@@ -20876,6 +21442,41 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
+=======
+         * @param {V1QueryTrialsRequest} body 
+=======
+         * @param {V1PatchTrialsRequest} body 
+>>>>>>> f7e05a507 (make -C proto bindings)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+<<<<<<< HEAD
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+>>>>>>> a5b83de34 (table stuff)
+=======
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrials.');
+>>>>>>> f7e05a507 (make -C proto bindings)
+=======
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -20885,6 +21486,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrial.');
+>>>>>>> 02b5e61eb (bindings)
             }
             const localVarPath = `/api/v1/trials/{trialId}`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -20901,6 +21503,19 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+<<<<<<< HEAD
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (sortKey !== undefined) {
+                localVarQueryParameter['sortKey'] = sortKey;
+            }
+
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter;
+            }
+
+=======
+>>>>>>> 02b5e61eb (bindings)
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -20965,36 +21580,6 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrialsCollections(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials-collections`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -21024,156 +21609,6 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-<<<<<<< HEAD
-<<<<<<< HEAD
-         * @summary Get the list of workloads for a trial.
-         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
-         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
-         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
-=======
-         * @param {V1QueryTrialsRequest} body 
-=======
-         * @param {V1PatchTrialsRequest} body 
->>>>>>> f7e05a507 (make -C proto bindings)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrials(body: V1PatchTrialsRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-<<<<<<< HEAD
-                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
->>>>>>> a5b83de34 (table stuff)
-=======
-                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrials.');
->>>>>>> f7e05a507 (make -C proto bindings)
-            }
-            const localVarPath = `/api/v1/trials/patch`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            if (sortKey !== undefined) {
-                localVarQueryParameter['sortKey'] = sortKey;
-            }
-
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1PatchTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
-            }
-            const localVarPath = `/api/v1/trials-collections/patch`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1QueryTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
-            }
-            const localVarPath = `/api/v1/trials/query`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -21397,67 +21832,6 @@ export const TrialsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @param {V1BulkPatchTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkPatchTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).bulkPatchTrials(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1CreateTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).createTrialsCollection(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -21525,23 +21899,6 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrialsCollections(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialsCollections(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -21549,60 +21906,6 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          */
         killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1PatchTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrials(body: V1PatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).patchTrials(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1PatchTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1QueryTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).queryTrials(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21700,40 +22003,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
     return {
         /**
          * 
-         * @param {V1BulkPatchTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
-            return TrialsApiFp(configuration).bulkPatchTrials(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-            return TrialsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1CreateTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-            return TrialsApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -21774,14 +22043,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTrialsCollections(options?: any) {
-            return TrialsApiFp(configuration).getTrialsCollections(options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -21789,33 +22050,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         killTrial(id: number, options?: any) {
             return TrialsApiFp(configuration).killTrial(id, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1PatchTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrials(body: V1PatchTrialsRequest, options?: any) {
-            return TrialsApiFp(configuration).patchTrials(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1PatchTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-            return TrialsApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1QueryTrialsRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        queryTrials(body: V1QueryTrialsRequest, options?: any) {
-            return TrialsApiFp(configuration).queryTrials(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21878,46 +22112,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
 export class TrialsApi extends BaseAPI {
     /**
      * 
-     * @param {V1BulkPatchTrialsRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
-        return TrialsApiFp(this.configuration).bulkPatchTrials(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-     * @param {Array<number>} [trialIds] The requested trial ids.
-     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-     * @param {Array<string>} [metricNames] The names of selected metrics.
-     * @param {number} [startBatches] Sample from metrics after this batch number.
-     * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-        return TrialsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1CreateTrialsCollectionRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-        return TrialsApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -21964,16 +22158,6 @@ export class TrialsApi extends BaseAPI {
 
     /**
      * 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public getTrialsCollections(options?: any) {
-        return TrialsApiFp(this.configuration).getTrialsCollections(options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Kill a trial.
      * @param {number} id The trial id
      * @param {*} [options] Override http request option.
@@ -21982,39 +22166,6 @@ export class TrialsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1PatchTrialsRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public patchTrials(body: V1PatchTrialsRequest, options?: any) {
-        return TrialsApiFp(this.configuration).patchTrials(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1PatchTrialsCollectionRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-        return TrialsApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1QueryTrialsRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
-        return TrialsApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
     }
 
     /**

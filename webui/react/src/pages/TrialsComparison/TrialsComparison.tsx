@@ -306,6 +306,7 @@ const TrialsComparison: React.FC = () => {
     });
     setColorMap(newColorMap);
   }, [ trialIds ]);
+
   if (!experimentIds.length) {
     return (
       <div className={css.alert}>
