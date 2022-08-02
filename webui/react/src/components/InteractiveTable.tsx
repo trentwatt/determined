@@ -363,11 +363,15 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
-
+      console.log({ tableFilters, tablePagination, tableSorter });
       if (Array.isArray(tableSorter)) return;
->>>>>>> a5b83de34 (table stuff)
 
-      const newSettings: Partial<InteractiveTableSettings> = {
+      const { columnKey, order } = tableSorter as SorterResult<unknown>;
+      if (!columnKey || !settings.columns.find((col) => columnDefs[col]?.key === columnKey)) return;
+
+      const newSettings = {
+        sortDesc: order === 'descend',
+        sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

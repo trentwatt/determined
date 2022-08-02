@@ -4,8 +4,8 @@ import React, { PropsWithChildren, useCallback, useState } from 'react';
 import css from './TableBatch.module.scss';
 
 export enum SelectionMode {
-  SELECT_MATCHING= 'SELECT_MATCHING',
-  SELECT_INDIVIDUAL= 'SELECT_INDIVIDUAL'
+  SELECT_MATCHING= "SELECT_MATCHING",
+  SELECT_INDIVIDUAL= "SELECT_INDIVIDUAL"
 }
 interface Action {
   disabled?: boolean;
@@ -18,10 +18,10 @@ interface Props {
   ids?: string[];
   onAction?: (action: string) => void;
   onClear?: () => void;
-  onSelectIndividual? : () => void
   onSelectMatching? : () => void;
-  selectedRowCount?: number;
+  onSelectIndividual? : () => void
   selectionMode?: SelectionMode
+  selectedRowCount?: number;
 }
 
 const defaultProps = {
@@ -36,7 +36,7 @@ const TableBatch: React.FC<Props> = ({
   onAction,
   onClear,
   onSelectMatching,
-  onSelectIndividual,
+  onSelectIndividual
 }: PropsWithChildren<Props>) => {
   const [ action, setAction ] = useState<string>();
   const classes = [ css.base ];
@@ -76,17 +76,13 @@ const TableBatch: React.FC<Props> = ({
           />
         </div>
         <div className={css.message}>{message}</div>
-        {onSelectMatching && selectionMode !== SelectionMode.SELECT_MATCHING && (
-          <div className={css.selectMode}>
-            <Button onClick={onSelectMatching}>Select All Matching</Button>
-          </div>
-        )
+        {onSelectMatching && selectionMode !== SelectionMode.SELECT_MATCHING && (<div className={css.selectMode}>
+          <Button onClick={onSelectMatching}>Select All Matching</Button>
+        </div>)
         }
-        {onSelectIndividual && selectionMode === SelectionMode.SELECT_MATCHING && (
-          <div className={css.selectMode}>
+          {onSelectIndividual && selectionMode === SelectionMode.SELECT_MATCHING && (<div className={css.selectMode}>
             <Button onClick={onSelectIndividual}>Individual Selection</Button>
-          </div>
-        )
+          </div>)
         }
         <div className={css.clear}>
           <Button onClick={handleClear}>Clear</Button>

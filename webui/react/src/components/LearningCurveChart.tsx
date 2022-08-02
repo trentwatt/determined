@@ -6,9 +6,9 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, Scale } from 'types';
 import { metricNameToStr } from 'utils/metric';
+import { number } from 'fp-ts';
 
 interface Props {
-  colorMap?: Record<number, string>;
   data: (number | null)[][];
   focusedTrialId?: number;
   onTrialClick?: (event: MouseEvent, trialId: number) => void;
@@ -18,6 +18,7 @@ interface Props {
   selectedTrialIds: number[];
   trialIds: number[];
   xValues: number[];
+  colorMap?: Record<number, string>;
 }
 
 const CHART_HEIGHT = 400;
@@ -92,14 +93,7 @@ const LearningCurveChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ onTrialClick,
-    onTrialFocus,
-    colorMap,
-    selectedMetric,
-    selectedScale,
-    trialIds,
-    selectedTrialsIdsSet,
-  ]);
+  }, [ onTrialClick, onTrialFocus, selectedMetric, selectedScale, trialIds, selectedTrialsIdsSet ]);
 
   /*
    * Focus on a trial series if provided.

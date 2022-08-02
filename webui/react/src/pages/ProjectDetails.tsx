@@ -605,9 +605,7 @@ const ProjectDetails: React.FC = () => {
 
       if (action === Action.CompareExperiments) {
         if (settings.row?.length)
-          return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString())),
-          );
+          return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
       }
 
       /*
@@ -630,7 +628,7 @@ const ProjectDetails: React.FC = () => {
         silent: false,
       });
     }
-  }, [ fetchExperiments, sendBatchActions, updateSettings, settings.row ]);
+  }, [ fetchExperiments, sendBatchActions, updateSettings ]);
 
   const showConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -646,9 +644,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard
-      || action === Action.Move
-      || action === Action.CompareExperiments) {
+    if (action === Action.OpenTensorBoard || action === Action.Move || action === Action.CompareExperiments) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);

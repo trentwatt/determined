@@ -2,13 +2,15 @@ import { Button, Input } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Icon from '../shared/components/Icon/Icon';
+
 import css from './TableFilterSearch.module.scss';
 
 interface Props extends FilterDropdownProps {
-  max: string;
-  min: string;
   onReset?: () => void;
   onSet?: (min: string, max: string) => void;
+  min: string;
+  max: string;
 }
 
 const TableFilterRange: React.FC<Props> = ({
@@ -25,6 +27,9 @@ const TableFilterRange: React.FC<Props> = ({
   const [ inputMin, setInputMin ] = useState(min);
   const [ inputMax, setInputMax ] = useState(max);
 
+  console.log(min, inputMin)
+
+
   const handleMinChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMin(e.target.value || '');
   }, []);
@@ -33,8 +38,8 @@ const TableFilterRange: React.FC<Props> = ({
   }, []);
 
   const handleReset = useCallback(() => {
-    setInputMin('');
-    setInputMax('');
+    setInputMin('')
+    setInputMax('')
     if (onReset) onReset();
     if (clearFilters) clearFilters();
   }, [ clearFilters, onReset ]);
