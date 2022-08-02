@@ -295,37 +295,6 @@ export enum ProtobufNullValue {
 /**
  * 
  * @export
- * @interface QueryFiltersExpRank
- */
-export interface QueryFiltersExpRank {
-    /**
-     * 
-     * @type {V1QueryTrialsSortBy}
-     * @memberof QueryFiltersExpRank
-     */
-    sortBy?: V1QueryTrialsSortBy;
-    /**
-     * 
-     * @type {number}
-     * @memberof QueryFiltersExpRank
-     */
-    rank?: number;
-}
-
-/**
- * 
- * @export
- * @enum {string}
- */
-export enum QueryTrialsSortByNamespace {
-    TRIALITSELF = <any> 'TRIAL_ITSELF',
-    VALIDATIONMETRIC = <any> 'VALIDATION_METRIC',
-    TRAININGMETRIC = <any> 'TRAINING_METRIC'
-}
-
-/**
- * 
- * @export
  * @interface RuntimeError
  */
 export interface RuntimeError {
@@ -686,6 +655,46 @@ export enum TrialEarlyExitExitedReason {
 }
 
 /**
+ * 
+ * @export
+ * @interface TrialFiltersRankWithinExp
+ */
+export interface TrialFiltersRankWithinExp {
+    /**
+     * 
+     * @type {V1TrialsSorter}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    sorter?: V1TrialsSorter;
+    /**
+     * 
+     * @type {number}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    rank?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface TrialPatchSetTag
+ */
+export interface TrialPatchSetTag {
+    /**
+     * 
+     * @type {string}
+     * @memberof TrialPatchSetTag
+     */
+    key?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof TrialPatchSetTag
+     */
+    value?: string;
+}
+
+/**
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  * @enum {string}
@@ -695,6 +704,18 @@ export enum TrialProfilerMetricLabelsProfilerMetricType {
     SYSTEM = <any> 'PROFILER_METRIC_TYPE_SYSTEM',
     TIMING = <any> 'PROFILER_METRIC_TYPE_TIMING',
     MISC = <any> 'PROFILER_METRIC_TYPE_MISC'
+}
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export enum TrialsSorterNamespace {
+    TRIALS = <any> 'TRIALS',
+    HPARAMS = <any> 'HPARAMS',
+    TRAININGMETRICS = <any> 'TRAINING_METRICS',
+    VALIDATIONMETRICS = <any> 'VALIDATION_METRICS'
 }
 
 /**
@@ -849,34 +870,6 @@ export interface V1AddProjectNoteResponse {
      * @memberof V1AddProjectNoteResponse
      */
     notes: Array<V1Note>;
-}
-
-/**
- * 
- * @export
- * @interface V1AddTrialTagRequest
- */
-export interface V1AddTrialTagRequest {
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1AddTrialTagRequest
-     */
-    trialIds?: Array<number>;
-    /**
-     * 
-     * @type {V1TrialTag}
-     * @memberof V1AddTrialTagRequest
-     */
-    tag?: V1TrialTag;
-}
-
-/**
- * 
- * @export
- * @interface V1AddTrialTagResponse
- */
-export interface V1AddTrialTagResponse {
 }
 
 /**
@@ -1184,6 +1177,116 @@ export interface V1ArchiveWorkspaceResponse {
 /**
  * 
  * @export
+ * @interface V1AugmentedTrial
+ */
+export interface V1AugmentedTrial {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    trialId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    state?: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    hparams?: any;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    trainingMetrics?: any;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    validationMetrics?: any;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    tags?: any;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1AugmentedTrial
+     */
+    startTime?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1AugmentedTrial
+     */
+    endTime?: Date;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    searcherType?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    rankWithinExp?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    experimentId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    experimentName?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    experimentDescription?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof V1AugmentedTrial
+     */
+    experimentLabels?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    userId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    projectId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    workspaceId?: number;
+}
+
+/**
+ * 
+ * @export
  * @interface V1AwsCustomTag
  */
 export interface V1AwsCustomTag {
@@ -1204,57 +1307,35 @@ export interface V1AwsCustomTag {
 /**
  * 
  * @export
- * @interface V1BulkAddTrialTagRequest
+ * @interface V1BulkPatchTrialsRequest
  */
-export interface V1BulkAddTrialTagRequest {
+export interface V1BulkPatchTrialsRequest {
     /**
      * 
-     * @type {V1QueryFilters}
-     * @memberof V1BulkAddTrialTagRequest
+     * @type {V1TrialFilters}
+     * @memberof V1BulkPatchTrialsRequest
      */
-    filters?: V1QueryFilters;
+    filters?: V1TrialFilters;
     /**
      * 
-     * @type {V1TrialTag}
-     * @memberof V1BulkAddTrialTagRequest
+     * @type {V1TrialPatch}
+     * @memberof V1BulkPatchTrialsRequest
      */
-    tag?: V1TrialTag;
+    patch?: V1TrialPatch;
 }
 
 /**
  * 
  * @export
- * @interface V1BulkAddTrialTagResponse
+ * @interface V1BulkPatchTrialsResponse
  */
-export interface V1BulkAddTrialTagResponse {
-}
-
-/**
- * 
- * @export
- * @interface V1BulkRemoveTrialTagRequest
- */
-export interface V1BulkRemoveTrialTagRequest {
+export interface V1BulkPatchTrialsResponse {
     /**
      * 
-     * @type {V1QueryFilters}
-     * @memberof V1BulkRemoveTrialTagRequest
+     * @type {Array<number>}
+     * @memberof V1BulkPatchTrialsResponse
      */
-    filters?: V1QueryFilters;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1BulkRemoveTrialTagRequest
-     */
-    key?: string;
-}
-
-/**
- * 
- * @export
- * @interface V1BulkRemoveTrialTagResponse
- */
-export interface V1BulkRemoveTrialTagResponse {
+    trialIds?: Array<number>;
 }
 
 /**
@@ -1647,6 +1728,40 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1CreateTrialsCollectionRequest
+ */
+export interface V1CreateTrialsCollectionRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {V1TrialFilters}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    filters?: V1TrialFilters;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1CreateTrialsCollectionResponse
+ */
+export interface V1CreateTrialsCollectionResponse {
+    /**
+     * 
+     * @type {V1TrialsCollection}
+     * @memberof V1CreateTrialsCollectionResponse
+     */
+    collection?: V1TrialsCollection;
 }
 
 /**
@@ -4718,6 +4833,68 @@ export interface V1PatchProjectResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1PatchTrialsCollectionRequest
+ */
+export interface V1PatchTrialsCollectionRequest {
+    /**
+     * 
+     * @type {V1TrialsCollection}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    collection?: V1TrialsCollection;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsCollectionResponse
+ */
+export interface V1PatchTrialsCollectionResponse {
+    /**
+     * 
+     * @type {V1TrialsCollection}
+     * @memberof V1PatchTrialsCollectionResponse
+     */
+    collection?: V1TrialsCollection;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsRequest
+ */
+export interface V1PatchTrialsRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1PatchTrialsRequest
+     */
+    trialIds?: Array<number>;
+    /**
+     * 
+     * @type {V1TrialPatch}
+     * @memberof V1PatchTrialsRequest
+     */
+    patch?: V1TrialPatch;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsResponse
+ */
+export interface V1PatchTrialsResponse {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1PatchTrialsResponse
+     */
+    trialIds?: Array<number>;
+}
+
+/**
  * Request to edit fields for a user.
  * @export
  * @interface V1PatchUser
@@ -5292,89 +5469,21 @@ export interface V1PutTemplateResponse {
 /**
  * 
  * @export
- * @interface V1QueryFilters
- */
-export interface V1QueryFilters {
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1QueryFilters
-     */
-    experimentIds?: Array<number>;
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1QueryFilters
-     */
-    projectIds?: Array<number>;
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1QueryFilters
-     */
-    workspaceIds?: Array<number>;
-    /**
-     * 
-     * @type {Array<V1NumberRangeFilter>}
-     * @memberof V1QueryFilters
-     */
-    validationMetrics?: Array<V1NumberRangeFilter>;
-    /**
-     * 
-     * @type {Array<V1NumberRangeFilter>}
-     * @memberof V1QueryFilters
-     */
-    trainingMetrics?: Array<V1NumberRangeFilter>;
-    /**
-     * 
-     * @type {Array<V1NumberRangeFilter>}
-     * @memberof V1QueryFilters
-     */
-    hparams?: Array<V1NumberRangeFilter>;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1QueryFilters
-     */
-    searcher?: string;
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1QueryFilters
-     */
-    userIds?: Array<number>;
-    /**
-     * 
-     * @type {Array<V1TrialTag>}
-     * @memberof V1QueryFilters
-     */
-    tags?: Array<V1TrialTag>;
-    /**
-     * 
-     * @type {QueryFiltersExpRank}
-     * @memberof V1QueryFilters
-     */
-    expRank?: QueryFiltersExpRank;
-}
-
-/**
- * 
- * @export
  * @interface V1QueryTrialsRequest
  */
 export interface V1QueryTrialsRequest {
     /**
      * 
-     * @type {V1QueryFilters}
+     * @type {V1TrialFilters}
      * @memberof V1QueryTrialsRequest
      */
-    filters?: V1QueryFilters;
+    filters?: V1TrialFilters;
     /**
      * Sort trials by the given field.
-     * @type {V1QueryTrialsSortBy}
+     * @type {V1TrialsSorter}
      * @memberof V1QueryTrialsRequest
      */
-    sorter?: V1QueryTrialsSortBy;
+    sorter?: V1TrialsSorter;
     /**
      * 
      * @type {number}
@@ -5397,36 +5506,10 @@ export interface V1QueryTrialsRequest {
 export interface V1QueryTrialsResponse {
     /**
      * 
-     * @type {Array<number>}
+     * @type {Array<V1AugmentedTrial>}
      * @memberof V1QueryTrialsResponse
      */
-    trialIds?: Array<number>;
-}
-
-/**
- * 
- * @export
- * @interface V1QueryTrialsSortBy
- */
-export interface V1QueryTrialsSortBy {
-    /**
-     * 
-     * @type {QueryTrialsSortByNamespace}
-     * @memberof V1QueryTrialsSortBy
-     */
-    namespace?: QueryTrialsSortByNamespace;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1QueryTrialsSortBy
-     */
-    field?: string;
-    /**
-     * 
-     * @type {V1OrderBy}
-     * @memberof V1QueryTrialsSortBy
-     */
-    orderBy?: V1OrderBy;
+    trials?: Array<V1AugmentedTrial>;
 }
 
 /**
@@ -5517,34 +5600,6 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
-}
-
-/**
- * 
- * @export
- * @interface V1RemoveTrialTagRequest
- */
-export interface V1RemoveTrialTagRequest {
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof V1RemoveTrialTagRequest
-     */
-    trialIds?: Array<number>;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1RemoveTrialTagRequest
-     */
-    key?: string;
-}
-
-/**
- * 
- * @export
- * @interface V1RemoveTrialTagResponse
- */
-export interface V1RemoveTrialTagResponse {
 }
 
 /**
@@ -6321,34 +6376,6 @@ export interface V1SSOProvider {
 }
 
 /**
- * 
- * @export
- * @interface V1SaveTrialsCollectionRequest
- */
-export interface V1SaveTrialsCollectionRequest {
-    /**
-     * 
-     * @type {V1TrialsCollection}
-     * @memberof V1SaveTrialsCollectionRequest
-     */
-    collection?: V1TrialsCollection;
-}
-
-/**
- * 
- * @export
- * @interface V1SaveTrialsCollectionResponse
- */
-export interface V1SaveTrialsCollectionResponse {
-    /**
-     * 
-     * @type {V1TrialsCollection}
-     * @memberof V1SaveTrialsCollectionResponse
-     */
-    collection?: V1TrialsCollection;
-}
-
-/**
  * Scale options available in metrics charts.   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
  * @export
  * @enum {string}
@@ -6942,6 +6969,74 @@ export interface V1TrialEarlyExit {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1TrialFilters
+ */
+export interface V1TrialFilters {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    experimentIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    projectIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    workspaceIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    validationMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    trainingMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    hparams?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialFilters
+     */
+    searcher?: string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    userIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialFilters
+     */
+    tags?: Array<V1TrialTag>;
+    /**
+     * 
+     * @type {TrialFiltersRankWithinExp}
+     * @memberof V1TrialFilters
+     */
+    rankWithinExp?: TrialFiltersRankWithinExp;
+}
+
+/**
  * Response to TrialLogFieldsRequest.
  * @export
  * @interface V1TrialLogsFieldsResponse
@@ -7047,6 +7142,20 @@ export interface V1TrialMetrics {
      * @memberof V1TrialMetrics
      */
     batchMetrics?: Array<any>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialPatch
+ */
+export interface V1TrialPatch {
+    /**
+     * 
+     * @type {Array<TrialPatchSetTag>}
+     * @memberof V1TrialPatch
+     */
+    tags?: Array<TrialPatchSetTag>;
 }
 
 /**
@@ -7199,10 +7308,10 @@ export interface V1TrialsCollection {
     name?: string;
     /**
      * 
-     * @type {V1QueryFilters}
+     * @type {V1TrialFilters}
      * @memberof V1TrialsCollection
      */
-    filters?: V1QueryFilters;
+    filters?: V1TrialFilters;
 }
 
 /**
@@ -7301,6 +7410,32 @@ export interface V1TrialsSnapshotResponseTrial {
      * @memberof V1TrialsSnapshotResponseTrial
      */
     batchesProcessed: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialsSorter
+ */
+export interface V1TrialsSorter {
+    /**
+     * 
+     * @type {TrialsSorterNamespace}
+     * @memberof V1TrialsSorter
+     */
+    namespace?: TrialsSorterNamespace;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialsSorter
+     */
+    field?: string;
+    /**
+     * 
+     * @type {V1OrderBy}
+     * @memberof V1TrialsSorter
+     */
+    orderBy?: V1OrderBy;
 }
 
 /**
@@ -10269,12 +10404,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options: any = {}): FetchArgs {
+        getExperimentModelFile(experimentId: number, path: string, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentModelFile.');
@@ -10283,7 +10418,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             if (path === null || path === undefined) {
                 throw new RequiredError('path','Required parameter path was null or undefined when calling getExperimentModelFile.');
             }
-            const localVarPath = `/experiment_id/file/download`;
+            const localVarPath = `/experiments/{experiment_id}/file/download`
+                .replace(`{${"experiment_id"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -10295,10 +10431,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (experimentId !== undefined) {
-                localVarQueryParameter['experiment_id'] = experimentId;
             }
 
             if (path !== undefined) {
@@ -11385,12 +11517,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+        getExperimentModelFile(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile(experimentId, path, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -11890,12 +12022,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options?: any) {
+        getExperimentModelFile(experimentId: number, path: string, options?: any) {
             return ExperimentsApiFp(configuration).getExperimentModelFile(experimentId, path, options)(fetch, basePath);
         },
         /**
@@ -12241,13 +12373,13 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Get individual file from modal definitions for download.
-     * @param {string} experimentId Id of the experiment
+     * @param {number} experimentId Experiment ID
      * @param {string} path Path to the target file
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentModelFile(experimentId: string, path: string, options?: any) {
+    public getExperimentModelFile(experimentId: number, path: string, options?: any) {
         return ExperimentsApiFp(this.configuration).getExperimentModelFile(experimentId, path, options)(this.fetch, this.basePath);
     }
 
@@ -20538,16 +20670,16 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
     return {
         /**
          * 
-         * @param {V1AddTrialTagRequest} body 
+         * @param {V1BulkPatchTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addTrialTag(body: V1AddTrialTagRequest, options: any = {}): FetchArgs {
+        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling addTrialTag.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkPatchTrials.');
             }
-            const localVarPath = `/api/v1/trials/tags/add`;
+            const localVarPath = `/api/v1/trials/patch-bulk`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -20567,85 +20699,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1AddTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1BulkAddTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkAddTrialTag.');
-            }
-            const localVarPath = `/api/v1/trials/tags/bulk-add`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1BulkAddTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1BulkRemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkRemoveTrialTag.');
-            }
-            const localVarPath = `/api/v1/trials/tags/bulk-remove`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1BulkRemoveTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1BulkPatchTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -20713,6 +20767,45 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials-collections/create`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1CreateTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -20876,7 +20969,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @throws {RequiredError}
          */
         getTrialsCollections(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/collections`;
+            const localVarPath = `/api/v1/trials-collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -20940,6 +21033,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
 <<<<<<< HEAD
+<<<<<<< HEAD
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -20956,16 +21050,23 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
 =======
          * @param {V1QueryTrialsRequest} body 
+=======
+         * @param {V1PatchTrialsRequest} body 
+>>>>>>> f7e05a507 (make -C proto bindings)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+        patchTrials(body: V1PatchTrialsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
+<<<<<<< HEAD
                 throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
 >>>>>>> a5b83de34 (table stuff)
+=======
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrials.');
+>>>>>>> f7e05a507 (make -C proto bindings)
             }
-            const localVarPath = `/api/v1/trials/query`;
+            const localVarPath = `/api/v1/trials/patch`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -20993,85 +21094,85 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials-collections/patch`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+            }
+            const localVarPath = `/api/v1/trials/query`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1RemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        removeTrialTag(body: V1RemoveTrialTagRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling removeTrialTag.');
-            }
-            const localVarPath = `/api/v1/trials/tags/remove`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1RemoveTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @param {V1SaveTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        saveTrialsCollection(body: V1SaveTrialsCollectionRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling saveTrialsCollection.');
-            }
-            const localVarPath = `/api/v1/trials/collections/save`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1SaveTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -21296,48 +21397,12 @@ export const TrialsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @param {V1AddTrialTagRequest} body 
+         * @param {V1BulkPatchTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addTrialTag(body: V1AddTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddTrialTagResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).addTrialTag(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1BulkAddTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkAddTrialTagResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).bulkAddTrialTag(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1BulkRemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkRemoveTrialTagResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).bulkRemoveTrialTag(body, options);
+        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkPatchTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).bulkPatchTrials(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21363,6 +21428,24 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          */
         compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).createTrialsCollection(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21478,48 +21561,48 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).patchTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).queryTrials(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1RemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        removeTrialTag(body: V1RemoveTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveTrialTagResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).removeTrialTag(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @param {V1SaveTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        saveTrialsCollection(body: V1SaveTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SaveTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).saveTrialsCollection(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21617,30 +21700,12 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
     return {
         /**
          * 
-         * @param {V1AddTrialTagRequest} body 
+         * @param {V1BulkPatchTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addTrialTag(body: V1AddTrialTagRequest, options?: any) {
-            return TrialsApiFp(configuration).addTrialTag(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1BulkAddTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any) {
-            return TrialsApiFp(configuration).bulkAddTrialTag(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1BulkRemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any) {
-            return TrialsApiFp(configuration).bulkRemoveTrialTag(body, options)(fetch, basePath);
+        bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
+            return TrialsApiFp(configuration).bulkPatchTrials(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21657,6 +21722,15 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
             return TrialsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+            return TrialsApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21718,30 +21792,30 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any) {
+            return TrialsApiFp(configuration).patchTrials(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+            return TrialsApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         queryTrials(body: V1QueryTrialsRequest, options?: any) {
             return TrialsApiFp(configuration).queryTrials(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1RemoveTrialTagRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        removeTrialTag(body: V1RemoveTrialTagRequest, options?: any) {
-            return TrialsApiFp(configuration).removeTrialTag(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @param {V1SaveTrialsCollectionRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        saveTrialsCollection(body: V1SaveTrialsCollectionRequest, options?: any) {
-            return TrialsApiFp(configuration).saveTrialsCollection(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21804,35 +21878,13 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
 export class TrialsApi extends BaseAPI {
     /**
      * 
-     * @param {V1AddTrialTagRequest} body 
+     * @param {V1BulkPatchTrialsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public addTrialTag(body: V1AddTrialTagRequest, options?: any) {
-        return TrialsApiFp(this.configuration).addTrialTag(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1BulkAddTrialTagRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any) {
-        return TrialsApiFp(this.configuration).bulkAddTrialTag(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1BulkRemoveTrialTagRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any) {
-        return TrialsApiFp(this.configuration).bulkRemoveTrialTag(body, options)(this.fetch, this.basePath);
+    public bulkPatchTrials(body: V1BulkPatchTrialsRequest, options?: any) {
+        return TrialsApiFp(this.configuration).bulkPatchTrials(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21851,6 +21903,17 @@ export class TrialsApi extends BaseAPI {
      */
     public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
         return TrialsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1CreateTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+        return TrialsApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21923,6 +21986,28 @@ export class TrialsApi extends BaseAPI {
 
     /**
      * 
+     * @param {V1PatchTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public patchTrials(body: V1PatchTrialsRequest, options?: any) {
+        return TrialsApiFp(this.configuration).patchTrials(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1PatchTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+        return TrialsApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @param {V1QueryTrialsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -21930,28 +22015,6 @@ export class TrialsApi extends BaseAPI {
      */
     public queryTrials(body: V1QueryTrialsRequest, options?: any) {
         return TrialsApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1RemoveTrialTagRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public removeTrialTag(body: V1RemoveTrialTagRequest, options?: any) {
-        return TrialsApiFp(this.configuration).removeTrialTag(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @param {V1SaveTrialsCollectionRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public saveTrialsCollection(body: V1SaveTrialsCollectionRequest, options?: any) {
-        return TrialsApiFp(this.configuration).saveTrialsCollection(body, options)(this.fetch, this.basePath);
     }
 
     /**
