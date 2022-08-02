@@ -506,7 +506,7 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
 	}
 
-	q := db.Bun().NewUpdate().Table("trial")
+	q := db.Bun().NewUpdate().Table("trials")
 	subQ := db.Bun().NewSelect().Column("trial_id").Table("trials_augmented_view")
 
 	subQ, err = a.m.db.FilterTrials(subQ, req.Filters)

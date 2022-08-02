@@ -535,12 +535,13 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (
 			if !alphaNumericalWithDots.MatchString(tag.Key + tag.Value) {
 				return nil, fmt.Errorf("tag patch {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
 			}
-			if tag.Value != "" {
+			if tag.Value == "" {
 				removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
 			} else {
 				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
 			}
-			q = q.Set("tags = ? ?", addTagsPhrase, removeTagsPhrase)
+			setPhrase := fmt.Sprintf("tags = %s %s", addTagsPhrase, removeTagsPhrase)
+			q = q.Set(setPhrase)
 		}
 	}
 	return q, nil
@@ -556,9 +557,9 @@ func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialsSorter_Namespace,
 	case apiv1.TrialsSorter_HPARAMS:
 		return hParamAccessor(field), nil
 	case apiv1.TrialsSorter_TRAINING_METRICS:
-		return "training_metrics->>" + field, nil
+		return fmt.Sprintf("training_metrics->>'%s'", field), nil
 	case apiv1.TrialsSorter_VALIDATION_METRICS:
-		return "validation_metrics->>" + field, nil
+		return fmt.Sprintf("validation_metrics->>'%s'", field), nil
 	default:
 		return field, nil
 	}
@@ -575,10 +576,20 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 			return nil, fmt.Errorf("possible unsafe filters, %f", err)
 		}
 
-		q = q.Where(`ROW_NUMBER() OVER(
-			PARTITION BY t.experiment_id
-			ORDER BY ?  ?
-		) <= ?`, columnExpr, QueryTrialsOrderMap[r.Sorter.OrderBy], r.Rank)
+		rankExpr := fmt.Sprintf(
+			`ROW_NUMBER() OVER(PARTITION BY experiment_id ORDER BY %s  %s) as n`,
+			columnExpr,
+			QueryTrialsOrderMap[r.Sorter.OrderBy])
+
+		rankQ := Bun().NewSelect().
+			Model((*TrialsAugmented)(nil)).
+			Column("trial_id").
+			ColumnExpr(rankExpr)
+
+		q = q.With("rank", rankQ).
+			Join("join rank on rank.trial_id = trials_augmented.trial_id").
+			Where("rank.n <= ?", r.Rank)
+
 	}
 
 	if len(filters.Tags) > 0 {
