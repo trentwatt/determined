@@ -2,8 +2,6 @@ import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-
-
 export interface CompareTableSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: string[];
