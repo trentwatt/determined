@@ -80,7 +80,6 @@ const CompareTable: React.FC<Props> = ({
 
   // PLACHOLDER, would actually be passed in
   const [ filters, setFilters ] = useState<RawJson>({});
-  console.log({ filters });
 
   const { settings, updateSettings } = useSettings<CompareTableSettings>(settingsConfig);
   const dataSource = useMemo(() => {
@@ -256,7 +255,6 @@ const CompareTable: React.FC<Props> = ({
   }, [ columns ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    console.log(tablePagination, tableFilters, tableSorter);
     setPageSize(tablePagination.pageSize);
   }, []);
 
