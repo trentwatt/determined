@@ -291,7 +291,6 @@ message GetTrialCheckpointsRequest {
   int32 offset = 4;
   // Limit the number of checkpoints. A value of 0 denotes no limit.
   int32 limit = 5;
-
   // Limit the checkpoints to those that match the states.
   repeated determined.checkpoint.v1.State states = 7;
 }
