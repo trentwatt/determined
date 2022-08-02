@@ -404,7 +404,7 @@ func checkTrialPatchEmpty(p *apiv1.TrialPatch) error {
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
 	err := checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
-		return nil, fmt.Errorf("error querying tags for trials %f", err)
+		return nil, fmt.Errorf("error querying tags for trials %w", err)
 	}
 
 	trials := []db.TrialsAugmented{}
@@ -413,12 +413,12 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	q, err = a.m.db.FilterTrials(q, req.Filters)
 
 	if err != nil {
-		return nil, fmt.Errorf("error querying for trials %f", err)
+		return nil, fmt.Errorf("error querying for trials %w", err)
 	}
 
 	orderColumn, err := a.m.db.TrialsColumnForNamespace(req.Sorter.Namespace, req.Sorter.Field)
 	if err != nil {
-		return nil, fmt.Errorf("error querying for trials, bad order by column %f", err)
+		return nil, fmt.Errorf("error querying for trials, bad order by column %w", err)
 	}
 
 	if req.Limit == 0 {
@@ -436,7 +436,7 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	err = q.Scan(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("error querying for trials %f", err)
+		return nil, fmt.Errorf("error querying for trials %w", err)
 	}
 
 	resp := apiv1.QueryTrialsResponse{Trials: []*apiv1.AugmentedTrial{}}
@@ -451,7 +451,7 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsRequest) (*apiv1.PatchTrialsResponse, error) {
 	_, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %f", err)
+		return nil, fmt.Errorf("couldnt patch trials %w", err)
 	}
 
 	// check user is authorized for modifying project? after RBAC?
@@ -464,13 +464,13 @@ func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsReque
 
 	err = checkTrialPatchEmpty(req.Patch)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %f", err)
+		return nil, fmt.Errorf("couldnt patch trials %w", err)
 	}
 
 	q := db.Bun().NewUpdate().Table("trials")
 	q, err = a.m.db.ApplyTrialPatch(q, req.Patch)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %f", err)
+		return nil, fmt.Errorf("couldnt patch trials %w", err)
 	}
 
 	var affectedTrialIds []int32
@@ -479,7 +479,7 @@ func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsReque
 		Exec(context.TODO(), &affectedTrialIds)
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %f", err)
+		return nil, fmt.Errorf("couldnt patch trials %w", err)
 	}
 
 	resp := &apiv1.PatchTrialsResponse{TrialIds: affectedTrialIds}
@@ -489,7 +489,7 @@ func (a *apiServer) PatchTrials(ctx context.Context, req *apiv1.PatchTrialsReque
 func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTrialsRequest) (*apiv1.BulkPatchTrialsResponse, error) {
 	_, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %f", err)
+		return nil, fmt.Errorf("couldnt patch trials %w", err)
 	}
 
 	// check user is authorized for modifying project? after RBAC?
@@ -498,12 +498,12 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 
 	err = checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}
 
 	err = checkTrialPatchEmpty(req.Patch)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}
 
 	q := db.Bun().NewUpdate().Table("trials")
@@ -511,18 +511,18 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 
 	subQ, err = a.m.db.FilterTrials(subQ, req.Filters)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}
 
 	q, err = a.m.db.ApplyTrialPatch(q, req.Patch)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}
 
 	res, err := q.Where("id IN (?)", subQ).
 		Exec(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %f", err)
+		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
@@ -539,7 +539,7 @@ func (a *apiServer) GetTrialsCollections(
 ) (*apiv1.GetTrialsCollectionsResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt get trials collections %f", err)
+		return nil, fmt.Errorf("couldnt get trials collections %w", err)
 	}
 	collections := []*db.TrialsCollection{}
 
@@ -555,7 +555,7 @@ func (a *apiServer) GetTrialsCollections(
 	err = q.Scan(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt get trials collections %f", err)
+		return nil, fmt.Errorf("couldnt get trials collections %w", err)
 	}
 
 	resp := &apiv1.GetTrialsCollectionsResponse{
@@ -574,13 +574,13 @@ func (a *apiServer) CreateTrialsCollection(
 ) (*apiv1.CreateTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %f", err)
+		return nil, fmt.Errorf("couldnt create trials collection %w", err)
 	}
 
 	err = checkTrialFiltersEmpty(req.Filters)
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %f", err)
+		return nil, fmt.Errorf("couldnt create trials collection %w", err)
 	}
 
 	if req.ProjectId == 0 {
@@ -600,7 +600,7 @@ func (a *apiServer) CreateTrialsCollection(
 		Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %f", err)
+		return nil, fmt.Errorf("couldnt create trials collection %w", err)
 	}
 
 	resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
@@ -612,7 +612,7 @@ func (a *apiServer) PatchTrialsCollection(
 ) (*apiv1.PatchTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials collection %f", err)
+		return nil, fmt.Errorf("couldnt patch trials collection %w", err)
 	}
 
 	collection := db.TrialsCollection{
@@ -643,7 +643,7 @@ func (a *apiServer) PatchTrialsCollection(
 	_, err = q.Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials collection %f", err)
+		return nil, fmt.Errorf("couldnt patch trials collection %w", err)
 	}
 	resp := &apiv1.PatchTrialsCollectionResponse{Collection: collection.Proto()}
 	return resp, nil
@@ -654,7 +654,7 @@ func (a *apiServer) DeleteTrialsCollection(
 ) (*apiv1.DeleteTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt delete trials collection %f", err)
+		return nil, fmt.Errorf("couldnt delete trials collection %w", err)
 	}
 
 	collection := db.TrialsCollection{
@@ -670,7 +670,7 @@ func (a *apiServer) DeleteTrialsCollection(
 	_, err = q.Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt delete trials collection %f", err)
+		return nil, fmt.Errorf("couldnt delete trials collection %w", err)
 	}
 
 	return &apiv1.DeleteTrialsCollectionResponse{}, nil
@@ -683,13 +683,13 @@ func (a *apiServer) GetTrialTags(_ context.Context, req *apiv1.GetTrialTagsReque
 	// q, err := a.m.db.FilterTrials(q, req.Filters)
 
 	// if err != nil {
-	// 	return nil, fmt.Errorf("error fetching tags for trials %f", err)
+	// 	return nil, fmt.Errorf("error fetching tags for trials %w", err)
 	// }
 
 	// err = q.Scan(context.TODO())
 
 	// if err != nil {
-	// 	return nil, fmt.Errorf("error fetching tags %f", err)
+	// 	return nil, fmt.Errorf("error fetching tags for trials %w", err)
 	// }
 
 	return &apiv1.GetTrialTagsResponse{Tags: tags}, nil
