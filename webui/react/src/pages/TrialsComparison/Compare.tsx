@@ -2,41 +2,39 @@ import { Alert } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
+import Page from 'components/Page';
 import Section from 'components/Section';
-import TableBatch, {SelectionMode} from 'components/TableBatch';
+import TableBatch, { SelectionMode } from 'components/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Scale } from 'types';
 import {
-  ExperimentAction as Action, TrialAction, CommandTask, Hyperparameter,
-  MetricName,
+  ExperimentAction as Action, CommandTask, Hyperparameter, MetricName,
+  TrialAction,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
 
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { HpValsMap } from './TrialsComparison';
-
 import css from './Compare.module.scss';
+import { HpValsMap } from './TrialsComparison';
 import CompareTable, { TrialHParams, TrialMetrics } from './TrialsTable/TrialsTable';
-import Page from 'components/Page';
 
 interface Props {
   batches: number[]
   chartData: (number | null)[][];
+  colorMap?: Record<number, string>;
   filters?: React.ReactNode;
   // fullHParams: string[];
   hasLoaded: boolean;
   hpVals: HpValsMap
   hyperparameters: Record<string, Hyperparameter>;
+  metrics: MetricName[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
   selectedScale: Scale;
   trialHps: TrialHParams[];
   trialIds: number[];
-  metrics: MetricName[];
-  colorMap?: Record<number, string>;
 }
 
 const Compare: React.FC<Props> = ({
@@ -52,14 +50,14 @@ const Compare: React.FC<Props> = ({
   hyperparameters,
   hasLoaded,
   metrics,
-  colorMap
+  colorMap,
 }: Props) => {
   const containerRef = useRef<HTMLElement>(null);
 
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
-  const [selectDisabled, setSelectDisabled] = useState(false);
-  const [selectionMode, setSelectionMode,] = useState<SelectionMode>();
+  const [ selectDisabled, setSelectDisabled ] = useState(false);
+  const [ selectionMode, setSelectionMode ] = useState<SelectionMode>();
   const hasTrials = trialIds.length !== 0;
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
@@ -82,7 +80,7 @@ const Compare: React.FC<Props> = ({
     setSelectDisabled(true);
     setSelectionMode(SelectionMode.SELECT_MATCHING);
   }, []);
-  
+
   const handleSelectIndividual = useCallback(() => {
     setSelectDisabled(false);
     setSelectionMode(SelectionMode.SELECT_INDIVIDUAL);
@@ -117,12 +115,12 @@ const Compare: React.FC<Props> = ({
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   const individualBatchActions = [
-    { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard }
-  ]
+    { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+  ];
 
-  const filterBatchActions = [{ label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
-  { label: TrialAction.BulkRemoveTags, value: TrialAction.BulkRemoveTags },
-]
+  const filterBatchActions = [ { label: TrialAction.BulkAddTags, value: TrialAction.BulkAddTags },
+    { label: TrialAction.BulkRemoveTags, value: TrialAction.BulkRemoveTags },
+  ];
   if (hasLoaded && !hasTrials) {
     return (
       <div className={css.waiting}>
@@ -136,7 +134,7 @@ const Compare: React.FC<Props> = ({
   }
 
   return (
-    <Page containerRef={containerRef} className={css.base}>
+    <Page className={css.base} containerRef={containerRef}>
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
@@ -155,11 +153,11 @@ const Compare: React.FC<Props> = ({
           <TableBatch
             actions={selectDisabled ? filterBatchActions : individualBatchActions}
             selectedRowCount={selectedRowKeys.length}
-            onAction={action => submitBatchAction(action as Action)}
-            onSelectMatching={handleSelectMatching}
-            onSelectIndividual={handleSelectIndividual}
             selectionMode={selectionMode}
+            onAction={(action) => submitBatchAction(action as Action)}
             onClear={clearSelected}
+            onSelectIndividual={handleSelectIndividual}
+            onSelectMatching={handleSelectMatching}
           />
           <CompareTable
             containerRef={containerRef}
@@ -168,14 +166,14 @@ const Compare: React.FC<Props> = ({
             hpVals={hpVals}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
+            metrics={metrics}
+            selectDisabled={selectDisabled}
             selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}
             trialIds={trialIds}
-            metrics={metrics}
             onMouseEnter={handleTableMouseEnter}
             onMouseLeave={handleTableMouseLeave}
-            selectDisabled={selectDisabled}
           />
         </div>
       </Section>
