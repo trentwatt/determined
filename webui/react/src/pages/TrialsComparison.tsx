@@ -8,15 +8,24 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
+import MetricsView, {
+  MetricView,
+  ViewType,
+} from 'pages/TrialsComparison/MetricsView';
+import ComparisonHeader from 'pages/TrialsComparison/TrialsComparisonHeader';
+import TrialsTable from 'pages/TrialsComparison/TrialsTable/TrialsTable';
+import {
+  aggregrateTrialsMetadata,
+  defaultTrialsData,
+  TrialsWithMetadata,
+} from 'pages/TrialsComparison/utils/trialsData';
 import { compareTrials, openOrCreateTensorBoard, queryTrials } from 'services/api';
 import { V1AugmentedTrial, V1TrialFilters } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
-import { Primitive } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CommandTask,
-  ExperimentVisualizationType,
   MetricName,
   Scale,
   TrialAction,
@@ -26,89 +35,39 @@ import { metricNameToValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
 import css from './TrialsComparison.module.scss';
-import MetricsView, {
-  MetricView,
-  ViewType,
-} from './TrialsComparison/MetricsView';
-import ComparisonHeader from './TrialsComparison/TrialsComparisonHeader';
-import TrialsTable from './TrialsComparison/TrialsTable/TrialsTable';
+import useHighlight from './TrialsComparison/hooks/useHighlight';
 
-export type HpValsMap = Record<string, Set<Primitive>>
-
-const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
-
-interface TrialsWithMetadata {
-  hpVals: HpValsMap;
-  metrics: MetricName[];
-  trialIds: number[];
-  trials: V1AugmentedTrial[];
-}
-
-const defaultTrialsData: TrialsWithMetadata = {
-  hpVals: {},
-  metrics: [],
-  trialIds: [],
-  trials: [],
-};
-
-const metricInList = (metric: MetricName, metrics: MetricName[]): boolean => {
-  return metrics.some((m) => m.type === metric.type && m.name === metric.name);
-};
-
-const aggregateHpVals (agg: HpValsMap, hparams)
-
-// const flatHParams = flattenObject(trial.hparams || {});
-// Object.keys(flatHParams).forEach(
-//   (hpParam) => {
-//     // distinguishing between constant vs not is irrelevant when constant
-//     // hps can vary across experiments. placeholder code
-//     (hyperparameters[hpParam] = { type: HyperparameterType.Constant });
-//     //
-//     if (hpValsMap[hpParam] == null) {
-//       hpValsMap[hpParam] = new Set([ flatHParams[hpParam] ]);
-//     } else {
-//       hpValsMap[hpParam].add(flatHParams[hpParam]);
-//     }
-//   },
-// );
-// setHyperparameters(hyperparameters);
-// const hasHParams = Object.keys(flatHParams).length !== 0;
-
-const aggregrateTrialsMetadata =
-(agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
-  hpVals: aggregateHpVals(agg.hpVals, trial.hparams),
-  metrics: [
-    ...agg.metrics,
-    ...trial.validationMetrics.filter((m :MetricName) => !metricInList(m, agg.metrics)),
-    ...trial.trainingMetrics.filter((m :MetricName) => !metricInList(m, agg.metrics)),
-  ],
-  trialIds: [ ...agg.trialIds, trial.trialId ],
-  trials: [ ...agg.trials, trial ],
-});
-
-// `${MetricName.type}|${MetricName.name}`
 type Metric = string
 
 const batchActions = [
   { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard },
   { bulk: true, label: TrialAction.AddTags, value: TrialAction.AddTags },
-
 ];
 
+const BATCHES_TEMP = 1000;
+
+type ChartData = (number | null)[][]
 interface SeriesData {
   batches: number[];
-  metrics: Record<Metric, (number | null)[][]>
+  metrics: Record<Metric, ChartData>
 }
 
-const ExperimentComparison: React.FC = () => {
+const emptyChartData = (rows: number, columns: number): ChartData =>
+  [ ...Array(rows) ].map(() => Array(columns).fill(null));
 
+const seq = (n: number) => [ ...Array(n) ].map((_, i) => i + 1);
+
+const getTrialId = (trial: V1AugmentedTrial): number => trial.trialId;
+
+const ExperimentComparison: React.FC = () => {
   const location = useLocation();
   const [ trialsData, setTrialsData ] = useState<TrialsWithMetadata>(defaultTrialsData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<V1TrialFilters>();
   const [ view, setView ] = useState<MetricView>({ scale: Scale.Linear, view: ViewType.Grid });
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
-
+  const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
+  const highlight = useHighlight(getTrialId);
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
 
   const experimentIds: number[] = useMemo(() => {
@@ -124,29 +83,10 @@ const ExperimentComparison: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLElement>(null);
 
-  const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
-  const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
-
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
   } = useModalTrialTag({});
-
-  const handleTrialFocus = useCallback((trialId: number | null) => {
-    setHighlightedTrialId(trialId != null ? trialId : undefined);
-  }, []);
-
-  const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: V1AugmentedTrial) => {
-    if (record.trialId) setHighlightedTrialId(record.trialId);
-  }, []);
-
-  const handleTableMouseLeave = useCallback(() => {
-    setHighlightedTrialId(undefined);
-  }, []);
-
-  const clearSelected = useCallback(() => {
-    setSelectedTrialIds([]);
-  }, []);
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
@@ -170,6 +110,10 @@ const ExperimentComparison: React.FC = () => {
     }
   }, [ selectedTrialIds, openTagModal, trialsData.trialIds ]);
 
+  const clearSelected = useCallback(() => {
+    setSelectedTrialIds([]);
+  }, []);
+
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
 
   const handleViewChange = useCallback((view: MetricView) => {
@@ -181,7 +125,6 @@ const ExperimentComparison: React.FC = () => {
       const response = await queryTrials(
         { filters: { experimentIds: experimentIds } },
       );
-
       setTrialsData((prev) =>
         response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialsData))
        ?? prev);
@@ -195,29 +138,63 @@ const ExperimentComparison: React.FC = () => {
     fetchTrials();
   }, [ fetchTrials ]);
 
+  // to do: use polling
+
+  useEffect(() => {
+    if (!view.metric && trialsData.metrics.length) {
+      setView((view) => ({ ...view, metric: trialsData.metrics[0] }));
+    }
+
+  }, [ view.metric, trialsData.metrics ]);
+
   const fetchSeriesData = useCallback(async () => {
     if (!trialsData.trialIds || !trialsData.metrics.length) return;
 
-    const response = await compareTrials({
+    // preparing the new data structure
+    const metricKeys = trialsData.metrics.map((metric: MetricName) => metricNameToValue(metric));
+
+    const metricValsMap = metricKeys
+      .map((key) => ({ [key]: emptyChartData(trialsData.trialIds.length, BATCHES_TEMP) }))
+      .reduce((a, b) => ({ ...a, ...b }), {});
+
+    const newSeriesData: SeriesData = { batches: seq(BATCHES_TEMP), metrics: metricValsMap };
+
+    // calling the api
+
+    const trials = await compareTrials({
       maxDatapoints: 1000,
       metricNames: trialsData.metrics,
       trialIds: trialsData.trialIds,
     });
 
-    // setSeriesData(!!response && {});
-  }, [ trialsData.trialIds, trialsData.metrics ]);
+    // populating the data structure with the API results
+
+    trials.forEach((trial) => {
+      const trialRowIndex = trialsData.trialIds.indexOf(trial.id);
+      if (trialRowIndex === -1) return;
+      trial.metrics.forEach((metric) => {
+        const metricKey = metricNameToValue(metric);
+        if (!newSeriesData.metrics[metricKey]) return;
+        metric.data.forEach(({ batches, value }) => {
+          newSeriesData.metrics[metricKey][trialRowIndex][batches] = value;
+        });
+      });
+    });
+
+    setSeriesData(newSeriesData);
+  }, [ trialsData.trialIds, trialsData.metrics, trialsData.maxBatch ]);
 
   useEffect(() => {
     fetchSeriesData();
   }, [ fetchSeriesData ]);
-
-  const typeKey = DEFAULT_TYPE_KEY;
 
   const hasLoaded = !!trialsData.trialIds.length;
 
   const chartData = view.metric
     && metricNameToValue(view.metric)
     && seriesData?.metrics?.[metricNameToValue(view.metric)];
+
+  console.log(chartData);
 
   const metricsViewSelect = (
     <MetricsView
@@ -239,59 +216,59 @@ const ExperimentComparison: React.FC = () => {
       <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
         <div className={css.base}>
           <Tabs
-            activeKey={typeKey}
+            activeKey="X"
             destroyInactiveTabPane
             type="card">
             <Tabs.TabPane
-              key={ExperimentVisualizationType.LearningCurve}
+              key="X"
               tab="Learning Curve">
-              {view.metric && chartData && (
-                <Page className={css.base} containerRef={containerRef}>
-                  <Section
-                    bodyBorder
-                    bodyScroll
-                    filters={metricsViewSelect}
-                    loading={!hasLoaded}>
-                    <div className={css.container}>
-                      <div className={css.chart}>
+              <Page className={css.base} containerRef={containerRef}>
+                <Section
+                  bodyBorder
+                  bodyScroll
+                  filters={metricsViewSelect}
+                  loading={!hasLoaded}>
+                  <div className={css.container}>
+                    <div className={css.chart}>
+                      {view.metric && chartData && (
                         <LearningCurveChart
                           data={chartData}
-                          focusedTrialId={highlightedTrialId}
+                          focusedTrialId={highlight.id}
                           selectedMetric={view.metric}
                           selectedScale={view.scale}
                           selectedTrialIds={selectedTrialIds}
                           trialIds={trialsData.trialIds}
                           xValues={seriesData.batches}
-                          onTrialFocus={handleTrialFocus}
+                          onTrialFocus={highlight.focus}
                         />
-                      </div>
-                      <TableBatch
-                        actions={batchActions}
-                        selectAllMatching={selectAllMatching}
-                        selectedRowCount={selectedTrialIds.length}
-                        onAction={(action) => submitBatchAction(action as TrialAction)}
-                        onChangeSelectionMode={handleChangeSelectionMode}
-                        onClear={clearSelected}
-                      />
-                      <TrialsTable
-                        containerRef={containerRef}
-                        handleTableRowSelect={handleTableRowSelect}
-                        highlightedTrialId={highlightedTrialId}
-                        hpVals={trialsData.hpVals}
-                        metrics={trialsData.metrics}
-                        selectAllMatching={selectAllMatching}
-                        selectedTrialIds={selectedTrialIds}
-                        selection={true}
-                        trialIds={trialsData.trialIds}
-                        trials={trialsData.trials}
-                        onMouseEnter={handleTableMouseEnter}
-                        onMouseLeave={handleTableMouseLeave}
-                      />
+                      )}
                     </div>
-                  </Section>
-                  {modalTrialTagContextHolder}
-                </Page>
-              )}
+                    <TableBatch
+                      actions={batchActions}
+                      selectAllMatching={selectAllMatching}
+                      selectedRowCount={selectedTrialIds.length}
+                      onAction={(action) => submitBatchAction(action as TrialAction)}
+                      onChangeSelectionMode={handleChangeSelectionMode}
+                      onClear={clearSelected}
+                    />
+                    <TrialsTable
+                      containerRef={containerRef}
+                      handleTableRowSelect={handleTableRowSelect}
+                      highlightedTrialId={highlight.id}
+                      hpVals={trialsData.hpVals}
+                      metrics={trialsData.metrics}
+                      selectAllMatching={selectAllMatching}
+                      selectedTrialIds={selectedTrialIds}
+                      selection={true}
+                      trialIds={trialsData.trialIds}
+                      trials={trialsData.trials}
+                      onMouseEnter={highlight.mouseEnter}
+                      onMouseLeave={highlight.mouseLeave}
+                    />
+                  </div>
+                </Section>
+                {modalTrialTagContextHolder}
+              </Page>
             </Tabs.TabPane>
           </Tabs>
         </div>

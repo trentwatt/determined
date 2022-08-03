@@ -1,5 +1,5 @@
 import { Button, Select } from 'antd';
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
@@ -37,6 +37,8 @@ const TableBatch: React.FC<Props> = ({
   const classes = [ css.base ];
   const selectCount = selectedRowCount || 0;
 
+  const selectAllMatchingEnabled = useMemo(() => actions?.some((a) => !!a.bulk), [ actions ]);
+
   const message = `Apply batch operations to ${selectCount}` +
     ` item${selectCount === 1 ? '' : 's'}`;
 
@@ -72,16 +74,21 @@ const TableBatch: React.FC<Props> = ({
         </div>
         <div className={css.message}>{message}</div>
         <div className={css.selectMode}>
-          <Button onClick={onChangeSelectionMode}>
-            {selectAllMatching ?
-              'Individual Selection'
-              : 'Select All Matching'
-            }
-          </Button>
+          {selectAllMatchingEnabled && (
+            <Button onClick={onChangeSelectionMode}>
+              {selectAllMatching ?
+                'Individual Selection'
+                : 'Select All Matching'
+              }
+            </Button>
+          )}
         </div>
-        <div className={css.clear}>
-          <Button onClick={handleClear}>Clear</Button>
-        </div>
+        {!selectAllMatching && (
+          <div className={css.clear}>
+            <Button onClick={handleClear}>Clear</Button>
+          </div>
+        )}
+
       </div>
     </div>
   );

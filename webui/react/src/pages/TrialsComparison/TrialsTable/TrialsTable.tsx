@@ -8,17 +8,14 @@ import Link from 'components/Link';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import TableFilterRange from 'components/TableFilterRange';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { HpValsMap } from 'pages/TrialsComparison/utils/trialsData';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
-import {
-  HyperparametersFlattened, HyperparameterType, MetricName,
-} from 'types';
-
-import { HpValsMap } from '../../TrialsComparison';
+import { MetricName } from 'types';
 
 import css from './TrialsTable.module.scss';
 import settingsConfig, {
@@ -61,6 +58,7 @@ const TrialsTable: React.FC<Props> = ({
   trialIds,
   containerRef,
 }: Props) => {
+  // console.log(selectedTrialIds, trialIds);
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
   // PLACHOLDER, would actually be passed in
@@ -235,7 +233,7 @@ const TrialsTable: React.FC<Props> = ({
       dataSource={trials}
       pagination={getPaginationConfig(trials.length, pageSize)}
       rowClassName={rowClassName}
-      rowKey="id"
+      rowKey="trialId"
       rowSelection={selection ? {
         getCheckboxProps: () => {
           return { disabled: selectAllMatching };
