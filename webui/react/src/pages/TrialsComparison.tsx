@@ -43,7 +43,7 @@ type Metric = string
 const BATCH_PADDING = 50;
 
 const batchActions = [
-  { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard},
+  { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard },
   { label: TrialAction.AddTags, value: TrialAction.AddTags },
 ];
 
@@ -87,7 +87,7 @@ const TrialsComparison: React.FC = () => {
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
-  } = useModalTrialTag({trialIds: selectAllMatching ? trialsData.trialIds : selectedTrialIds});
+  } = useModalTrialTag({ trialIds: selectAllMatching ? trialsData.trialIds : selectedTrialIds });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {

@@ -271,7 +271,7 @@ export const patchTrials: DetApi<
   request: (params: Api.V1PatchTrialsRequest) => {
     console.log(params);
     return detApi.TrialsComparison.patchTrials(
-      { trialIds: params.trialIds, patch: params.patch},
+      { patch: params.patch, trialIds: params.trialIds },
     );
   },
 };
