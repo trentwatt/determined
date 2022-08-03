@@ -3,6 +3,7 @@ import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
+import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, Scale } from 'types';
 import { metricNameToStr } from 'utils/metric';
 
@@ -33,7 +34,6 @@ const LearningCurveChart: React.FC<Props> = ({
   selectedTrialIds,
   trialIds,
   xValues,
-  colorMap,
 }: Props) => {
   const [ focusIndex, setFocusIndex ] = useState<number>();
 
@@ -82,11 +82,10 @@ const LearningCurveChart: React.FC<Props> = ({
         { label: 'batches' },
         ...trialIds.map((trialId, index) => ({
           label: `trial ${trialId}`,
-
           scale: 'y',
           show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
           spanGaps: true,
-          stroke: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+          stroke: glasbeyColor(trialId),
           width: SERIES_WIDTH / window.devicePixelRatio,
         })),
       ],

@@ -319,8 +319,7 @@ export enum ExperimentAction {
 /* Trial */
 
 export enum TrialAction {
-  BulkAddTags = 'Bulk Add Tag',
-  BulkRemoveTags = 'Bulk Remove Tags',
+  AddTags = 'Add Tags',
   OpenTensorBoard = 'View in TensorBoard',
 }
 

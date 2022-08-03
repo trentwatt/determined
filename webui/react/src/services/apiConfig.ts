@@ -251,14 +251,12 @@ export const queryTrials: DetApi<
   Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, Api.V1QueryTrialsResponse
 > = {
   name: 'queryTrials',
-  postProcess: (response: Api.V1QueryTrialsResponse,) => {
-    return {
-      trials: response.trials
-    };
+  postProcess: (response: Api.V1QueryTrialsResponse) => {
+    return { trials: response.trials };
   },
   request: (params: Api.V1QueryTrialsRequest) => {
     return detApi.TrialsComparison.queryTrials(
-      {filters: params.filters}
+      { filters: params.filters },
     );
   },
 };

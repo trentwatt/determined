@@ -1185,55 +1185,55 @@ export interface V1AugmentedTrial {
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    trialId?: number;
+    trialId: number;
     /**
      * 
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    state?: string;
+    state: string;
     /**
      * 
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    hparams?: any;
+    hparams: any;
     /**
      * 
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    trainingMetrics?: any;
+    trainingMetrics: any;
     /**
      * 
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    validationMetrics?: any;
+    validationMetrics: any;
     /**
      * 
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    tags?: any;
+    tags: any;
     /**
      * 
      * @type {Date}
      * @memberof V1AugmentedTrial
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * 
      * @type {Date}
      * @memberof V1AugmentedTrial
      */
-    endTime?: Date;
+    endTime: Date;
     /**
      * 
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    searcherType?: string;
+    searcherType: string;
     /**
      * 
      * @type {number}
@@ -1245,43 +1245,43 @@ export interface V1AugmentedTrial {
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    experimentId?: number;
+    experimentId: number;
     /**
      * 
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    experimentName?: string;
+    experimentName: string;
     /**
      * 
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    experimentDescription?: string;
+    experimentDescription: string;
     /**
      * 
      * @type {Array<string>}
      * @memberof V1AugmentedTrial
      */
-    experimentLabels?: Array<string>;
+    experimentLabels: Array<string>;
     /**
      * 
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    userId?: number;
+    userId: number;
     /**
      * 
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    projectId?: number;
+    projectId: number;
     /**
      * 
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**

@@ -108,7 +108,7 @@ export const updateJobQueue = generateDetApi<
 >(Config.updateJobQueue);
 
 /* Trials */
-export const  queryTrials = generateDetApi<
+export const queryTrials = generateDetApi<
   Api.V1QueryTrialsRequest,
   Api.V1QueryTrialsResponse,
   Api.V1QueryTrialsResponse

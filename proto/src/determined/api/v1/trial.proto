@@ -98,6 +98,28 @@ message ExportTrialsRequest {
 }
 
 message AugmentedTrial {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "trial_id",
+        "state",
+        "hparams",
+        "training_metrics",
+        "validation_metrics",
+        "tags",
+        "start_time",
+        "end_time",
+        "searcher_type",
+        "experiment_id",
+        "experiment_name",
+        "experiment_description",
+        "experiment_labels",
+        "user_id",
+        "project_id",
+        "workspace_id"
+      ]
+    }
+  };
   int32 trial_id                            = 1;
   string state                              = 2;
   google.protobuf.Struct hparams            = 3;
@@ -137,7 +159,7 @@ message BulkPatchTrialsRequest {
 }
 
 message BulkPatchTrialsResponse {
-   int32 rows_affected = 1;
+  int32 rows_affected = 1;
 }
 
 message PatchTrialsRequest {

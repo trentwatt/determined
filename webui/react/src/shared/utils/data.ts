@@ -2,6 +2,8 @@
 import { Primitive, RawJson, RecordKey, UnknownRecord } from '../types';
 
 // `bigint` is not support yet for
+
+export const isThing = (data: unknown): boolean => !isNullOrUndefined(data);
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isDate = (data: unknown): data is Date => data instanceof Date;

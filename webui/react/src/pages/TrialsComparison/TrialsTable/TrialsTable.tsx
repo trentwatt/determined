@@ -1,24 +1,24 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import { alphaNumericSorter, primitiveSorter } from 'utils/sort';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
-import MetricBadgeTag from 'components/MetricBadgeTag';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import TableFilterRange from 'components/TableFilterRange';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
-import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
-  str2rgba } from 'shared/utils/color';
+import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
 import {
   HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
 
-import { HpValsMap } from '../TrialsComparison';
+import { HpValsMap } from '../../TrialsComparison';
 
 import css from './TrialsTable.module.scss';
 import settingsConfig, {
@@ -33,24 +33,14 @@ interface Props {
   highlightedTrialId?: number;
   hpVals: HpValsMap
   hyperparameters: HyperparametersFlattened;
-  metric: MetricName;
   metrics: MetricName[];
-  onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
-  onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
-  selectDisabled: boolean;
-  selectedRowKeys?: number[];
+  onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
+  onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
+  selectAllMatching: boolean;
+  selectedTrialIds?: number[];
   selection?: boolean;
-  trialHps: TrialHParams[];
+  trials: V1AugmentedTrial[];
   trialIds: number[];
-
-}
-
-export interface TrialHParams {
-  experimentId: number,
-  hparams: Record<RecordKey, Primitive>;
-  id: number;
-  metric: number | null;
-  metrics: Record<RecordKey, Primitive>
 }
 
 export interface TrialMetrics {
@@ -58,22 +48,19 @@ export interface TrialMetrics {
   metrics: Record<RecordKey, Primitive>;
 }
 
-const CompareTable: React.FC<Props> = ({
-  colorScale,
-  filteredTrialIdMap,
+const TrialsTable: React.FC<Props> = ({
   hyperparameters,
   highlightedTrialId,
   hpVals,
-  metric,
   onMouseEnter,
   onMouseLeave,
-  trialHps,
-  trialIds,
-  selectDisabled,
+  trials,
   selection,
   handleTableRowSelect,
-  selectedRowKeys,
+  selectedTrialIds,
+  selectAllMatching,
   metrics,
+  trialIds,
   containerRef,
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
@@ -82,33 +69,26 @@ const CompareTable: React.FC<Props> = ({
   const [ filters, setFilters ] = useState<RawJson>({});
 
   const { settings, updateSettings } = useSettings<CompareTableSettings>(settingsConfig);
-  const dataSource = useMemo(() => {
-    if (!filteredTrialIdMap) return trialHps;
-    return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
-  }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {
-    const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex((trialId) => trialId === record.id);
-      let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
-      if (record.metric != null && colorScale) {
-        const scaleRange = colorScale[1].scale - colorScale[0].scale;
-        const distance = (record.metric - colorScale[0].scale) / scaleRange;
-        const rgbaMin = str2rgba(colorScale[0].color);
-        const rgbaMax = str2rgba(colorScale[1].color);
-        color = rgba2str(rgbaFromGradient(rgbaMin, rgbaMax, distance));
-      }
+    const idRenderer = (_: string, record: V1AugmentedTrial) => {
+
+      const color = glasbeyColor(record.trialId);
+
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
-          <Link path={paths.trialDetails(record.id, record.experimentId)}>
-            {record.id}
+          <Link path={paths.trialDetails(record.trialId, record.experimentId)}>
+            {record.trialId}
           </Link>
         </div>
       );
     };
-    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.id, b.id);
-    const experimentIdSorter = (a: TrialHParams, b: TrialHParams): number =>
+    const idSorter = (
+      a: V1AugmentedTrial,
+      b: V1AugmentedTrial,
+    ): number => alphaNumericSorter(a.trialId, b.trialId);
+    const experimentIdSorter = (a: V1AugmentedTrial, b: V1AugmentedTrial): number =>
       alphaNumericSorter(a.experimentId, b.experimentId);
     const idColumn = {
       dataIndex: 'id',
@@ -119,14 +99,10 @@ const CompareTable: React.FC<Props> = ({
       title: 'Trial ID',
     };
 
-    const metricRenderer = (_: string, record: TrialHParams) => {
-      return <HumanReadableNumber num={record.metric} />;
-    };
-
     const metricsRenderer = (key: string) => {
-      return (_: string, record: TrialHParams) => {
-        if (record.metrics && isNumber(record.metrics[key])){
-          const value = record.metrics[key] as number;
+      return (_: string, record: V1AugmentedTrial) => {
+        if (record.validationMetrics && isNumber(record.validationMetrics[key])){
+          const value = record.validationMetrics[key] as number;
           return <HumanReadableNumber num={value} />;
         }
         return '-' ;
@@ -134,31 +110,18 @@ const CompareTable: React.FC<Props> = ({
     };
 
     const metricsSorter = (key: string) => {
-      return (recordA: TrialHParams, recordB: TrialHParams): number => {
-        const a = recordA.metrics[key] as Primitive;
-        const b = recordB.metrics[key] as Primitive;
+      return (recordA: V1AugmentedTrial, recordB: V1AugmentedTrial): number => {
+        const a = recordA.validationMetrics[key] as Primitive;
+        const b = recordB.validationMetrics[key] as Primitive;
         return primitiveSorter(a, b);
       };
-    };
-
-    const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
-      return numericSorter(recordA.metric ?? undefined, recordB.metric ?? undefined);
-    };
-
-    const metricColumn = {
-      dataIndex: 'metric',
-      defaultWidth: 60,
-      key: 'metric',
-      render: metricRenderer,
-      sorter: metricSorter,
-      title: <MetricBadgeTag metric={metric} />,
     };
 
     const experimentIdColumn = {
       dataIndex: 'experimentId',
       defaultWidth: 60,
       key: 'experimentId',
-      render: (_: string, record: TrialHParams) => (
+      render: (_: string, record: V1AugmentedTrial) => (
         <Link path={paths.experimentDetails(record.experimentId)}>
           {record.experimentId}
         </Link>
@@ -168,7 +131,7 @@ const CompareTable: React.FC<Props> = ({
     };
 
     const hpRenderer = (key: string) => {
-      return (_: string, record: TrialHParams) => {
+      return (_: string, record: V1AugmentedTrial) => {
         const value = record.hparams[key];
         const type = hyperparameters[key].type;
         const isValidType = [
@@ -186,7 +149,7 @@ const CompareTable: React.FC<Props> = ({
       };
     };
     const hpColumnSorter = (key: string) => {
-      return (recordA: TrialHParams, recordB: TrialHParams): number => {
+      return (recordA: V1AugmentedTrial, recordB: V1AugmentedTrial): number => {
         const a = recordA.hparams[key] as Primitive;
         const b = recordB.hparams[key] as Primitive;
         return primitiveSorter(a, b);
@@ -231,7 +194,6 @@ const CompareTable: React.FC<Props> = ({
       });
 
     const metricsColumns = metrics
-      .filter((metricEntry) => metricEntry.name !== metric.name)
       .map((metric) => {
         const key = metric.name;
         return {
@@ -244,21 +206,21 @@ const CompareTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns, ...metricsColumns ];
-  }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
+    return [ idColumn, experimentIdColumn, ...hpColumns, ...metricsColumns ];
+  }, [ hyperparameters, hpVals, filters, metrics ]);
 
   useEffect(() => {
     updateSettings({
       columns: columns.map((c) => c.dataIndex),
       columnWidths: columns.map(() => 100),
     });
-  }, [ columns ]);
+  }, [ columns, updateSettings ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     setPageSize(tablePagination.pageSize);
   }, []);
 
-  const handleTableRow = useCallback((record: TrialHParams) => ({
+  const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
     onMouseEnter: (event: React.MouseEvent) => {
       if (onMouseEnter) onMouseEnter(event, record);
     },
@@ -267,28 +229,28 @@ const CompareTable: React.FC<Props> = ({
     },
   }), [ onMouseEnter, onMouseLeave ]);
 
-  const rowClassName = useCallback((record: TrialHParams) => {
+  const rowClassName = useCallback((record: V1AugmentedTrial) => {
     return defaultRowClassName({
       clickable: false,
-      highlighted: record.id === highlightedTrialId,
+      highlighted: record.trialId === highlightedTrialId,
     });
   }, [ highlightedTrialId ]);
 
   return (
-    <InteractiveTable<TrialHParams>
+    <InteractiveTable<V1AugmentedTrial>
       columns={columns}
       containerRef={containerRef}
-      dataSource={dataSource}
-      pagination={getPaginationConfig(dataSource.length, pageSize)}
+      dataSource={trials}
+      pagination={getPaginationConfig(trials.length, pageSize)}
       rowClassName={rowClassName}
       rowKey="id"
       rowSelection={selection ? {
         getCheckboxProps: () => {
-          return { disabled: selectDisabled };
+          return { disabled: selectAllMatching };
         },
         onChange: handleTableRowSelect,
         preserveSelectedRowKeys: true,
-        selectedRowKeys,
+        selectedRowKeys: selectAllMatching ? trialIds : selectedTrialIds,
       } : undefined}
       scroll={{ x: 1000 }}
       settings={settings as InteractiveTableSettings}
@@ -302,4 +264,4 @@ const CompareTable: React.FC<Props> = ({
   );
 };
 
-export default CompareTable;
+export default TrialsTable;

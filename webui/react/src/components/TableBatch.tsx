@@ -3,11 +3,8 @@ import React, { PropsWithChildren, useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
-export enum SelectionMode {
-  SELECT_MATCHING= 'SELECT_MATCHING',
-  SELECT_INDIVIDUAL= 'SELECT_INDIVIDUAL'
-}
 interface Action {
+  bulk?: boolean;
   disabled?: boolean;
   label: string;
   value: string;
@@ -17,11 +14,10 @@ interface Props {
   actions?: Action[];
   ids?: string[];
   onAction?: (action: string) => void;
+  onChangeSelectionMode? : () => void;
   onClear?: () => void;
-  onSelectIndividual? : () => void
-  onSelectMatching? : () => void;
+  selectAllMatching?: boolean
   selectedRowCount?: number;
-  selectionMode?: SelectionMode
 }
 
 const defaultProps = {
@@ -32,11 +28,10 @@ const defaultProps = {
 const TableBatch: React.FC<Props> = ({
   actions,
   selectedRowCount,
-  selectionMode,
+  selectAllMatching,
   onAction,
   onClear,
-  onSelectMatching,
-  onSelectIndividual,
+  onChangeSelectionMode,
 }: PropsWithChildren<Props>) => {
   const [ action, setAction ] = useState<string>();
   const classes = [ css.base ];
@@ -76,18 +71,14 @@ const TableBatch: React.FC<Props> = ({
           />
         </div>
         <div className={css.message}>{message}</div>
-        {onSelectMatching && selectionMode !== SelectionMode.SELECT_MATCHING && (
-          <div className={css.selectMode}>
-            <Button onClick={onSelectMatching}>Select All Matching</Button>
-          </div>
-        )
-        }
-        {onSelectIndividual && selectionMode === SelectionMode.SELECT_MATCHING && (
-          <div className={css.selectMode}>
-            <Button onClick={onSelectIndividual}>Individual Selection</Button>
-          </div>
-        )
-        }
+        <div className={css.selectMode}>
+          <Button onClick={onChangeSelectionMode}>
+            {selectAllMatching ?
+              'Individual Selection'
+              : 'Select All Matching'
+            }
+          </Button>
+        </div>
         <div className={css.clear}>
           <Button onClick={handleClear}>Clear</Button>
         </div>
