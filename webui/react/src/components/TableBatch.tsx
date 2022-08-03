@@ -90,7 +90,6 @@ const TableBatch: React.FC<Props> = ({
             <Button onClick={handleClear}>Clear</Button>
           </div>
         )}
-
       </div>
     </div>
   );

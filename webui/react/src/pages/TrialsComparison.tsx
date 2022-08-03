@@ -60,7 +60,7 @@ const seq = (n: number) => [ ...Array(n) ].map((_, i) => i + 1);
 
 const getTrialId = (trial: V1AugmentedTrial): number => trial.trialId;
 
-const ExperimentComparison: React.FC = () => {
+const TrialsComparison: React.FC = () => {
   const location = useLocation();
   const [ trialsData, setTrialsData ] = useState<TrialsWithMetadata>(defaultTrialsData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
@@ -287,4 +287,4 @@ const ExperimentComparison: React.FC = () => {
   );
 };
 
-export default ExperimentComparison;
+export default TrialsComparison;
