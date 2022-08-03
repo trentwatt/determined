@@ -8,10 +8,6 @@ interface WithPagination {
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
-export interface QueryTrialsParams {
-  filters: V1TrialFilters
-}
-
 export interface User {
   displayName?: string;
   id: number;

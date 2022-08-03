@@ -1,19 +1,24 @@
 import { Select,} from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useEffect, useMemo} from 'react';
+import React, { useCallback, useEffect, useMemo, useState} from 'react';
+import { patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import EditableTagList from 'components/TagList';
 import css from './useModalTrialTag.module.scss';
+import { V1TrialTag } from 'services/api-ts-sdk';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import { number } from 'fp-ts';
+
 
 const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
-  trialIds?: number[];
+  trialIds: number[];
 }
 
 export interface ShowModalProps {
-  trialIds?: number[];
+  trialIds: number[];
   initialModalProps?: ModalFuncProps;
 }
 
@@ -22,7 +27,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
-
+  const [tags, setTags] = useState<string[]> ([]);
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
@@ -30,36 +35,44 @@ const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
+        Tags 
         <EditableTagList
           ghost={false}
-          tags={ []}
-          onChange={() => {}}
+          tags={tags}
+          onChange={(newTags) => {
+            setTags(newTags)}}
         />
       </div>
     );
-  }, [ trialIds ]);
+  }, [ trialIds, tags ]);
 
   const handleOk = useCallback(async () => {
+    const trialTags: V1TrialTag[] = tags.map(tag => { return {key:tag, value:tag}});
+    patchTrials(
+      {
+        trialIds: trialIds, 
+        patch: {tags: trialTags}
+      }
+      ).then(response => console.log(response))
+  .catch(err => console.log(err))  
+}, [tags]);
 
-    return;
-  }, []);
-
-  const getModalProps = useCallback((trialIds): ModalFuncProps => {
+  const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
       okText: `Add Tags`,
       onOk: handleOk,
-      title: `Add Tags to ${trialIds.length} Trials`,
+      title: trialIds.length > 1 ? `Add Tags to ${trialIds.length} Trials` : `Add Tags to Trial ID: ${trialIds[0]}`,
     };
-  }, [ handleOk, modalContent ]);
+  }, [ handleOk, modalContent, trialIds ]);
 
   const modalOpen = useCallback(
     ({
       initialModalProps,
       trialIds,
-    }: ShowModalProps = {}) => {
+    }: ShowModalProps) => {
       openOrUpdate({
         ...getModalProps(trialIds),
         ...initialModalProps,

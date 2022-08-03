@@ -114,6 +114,12 @@ export const queryTrials = generateDetApi<
   Api.V1QueryTrialsResponse
 >(Config.queryTrials);
 
+export const patchTrials = generateDetApi<
+  Api.V1PatchTrialsRequest,
+  Api.V1PatchTrialsResponse,
+  Api.V1PatchTrialsResponse
+>(Config.patchTrials);
+
 /* Experiments */
 
 export const getExperiments = generateDetApi<

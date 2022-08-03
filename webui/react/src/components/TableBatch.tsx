@@ -37,8 +37,6 @@ const TableBatch: React.FC<Props> = ({
   const classes = [ css.base ];
   const selectCount = selectedRowCount || 0;
 
-  const selectAllMatchingEnabled = useMemo(() => actions?.some((a) => !!a.bulk), [ actions ]);
-
   const message = selectAllMatching
     ? 'Apply batch operations to all matching items'
     : `Apply batch operations to ${selectCount}` +
@@ -76,7 +74,7 @@ const TableBatch: React.FC<Props> = ({
         </div>
         <div className={css.message}>{message}</div>
         <div className={css.selectMode}>
-          {selectAllMatchingEnabled && (
+          {onChangeSelectionMode && (
             <Button onClick={onChangeSelectionMode}>
               {selectAllMatching ?
                 'Individual Selection'

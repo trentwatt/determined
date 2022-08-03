@@ -261,6 +261,21 @@ export const queryTrials: DetApi<
   },
 };
 
+export const patchTrials: DetApi<
+  Api.V1PatchTrialsRequest, Api.V1PatchTrialsResponse, Api.V1PatchTrialsResponse
+> = {
+  name: 'patchTrials',
+  postProcess: (response: Api.V1PatchTrialsResponse) => {
+    return { trialIds: response.trialIds };
+  },
+  request: (params: Api.V1PatchTrialsRequest) => {
+    console.log(params);
+    return detApi.TrialsComparison.patchTrials(
+      { trialIds: params.trialIds, patch: params.patch},
+    );
+  },
+};
+
 /* Experiment */
 
 export const getExperiments: DetApi<

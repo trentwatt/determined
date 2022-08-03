@@ -5,9 +5,6 @@ import { DetailedUser, Job, Metadata, MetricName, MetricType, Note,
   Scale, TrialWorkloadFilter } from 'types';
 
 import * as Api from './api-ts-sdk/api';
-export interface QueryTrialsParams {
-  filters: Api.V1TrialFilters
-}
 export interface LoginResponse {
   token: string;
   user: DetailedUser;
