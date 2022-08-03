@@ -55,9 +55,28 @@ const metricInList = (metric: MetricName, metrics: MetricName[]): boolean => {
   return metrics.some((m) => m.type === metric.type && m.name === metric.name);
 };
 
+const aggregateHpVals (agg: HpValsMap, hparams)
+
+// const flatHParams = flattenObject(trial.hparams || {});
+// Object.keys(flatHParams).forEach(
+//   (hpParam) => {
+//     // distinguishing between constant vs not is irrelevant when constant
+//     // hps can vary across experiments. placeholder code
+//     (hyperparameters[hpParam] = { type: HyperparameterType.Constant });
+//     //
+//     if (hpValsMap[hpParam] == null) {
+//       hpValsMap[hpParam] = new Set([ flatHParams[hpParam] ]);
+//     } else {
+//       hpValsMap[hpParam].add(flatHParams[hpParam]);
+//     }
+//   },
+// );
+// setHyperparameters(hyperparameters);
+// const hasHParams = Object.keys(flatHParams).length !== 0;
+
 const aggregrateTrialsMetadata =
 (agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
-  hpVals: {},
+  hpVals: aggregateHpVals(agg.hpVals, trial.hparams),
   metrics: [
     ...agg.metrics,
     ...trial.validationMetrics.filter((m :MetricName) => !metricInList(m, agg.metrics)),
