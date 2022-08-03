@@ -66,9 +66,10 @@ const TrialsComparison: React.FC = () => {
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<V1TrialFilters>();
   const [ view, setView ] = useState<MetricView>();
-  const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
   const highlight = useHighlight(getTrialId);
+
+  const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
 
   const experimentIds: number[] = useMemo(() => {
@@ -142,6 +143,7 @@ const TrialsComparison: React.FC = () => {
   // to do: use polling
 
   useEffect(() => {
+    // set the default metric
     if (!view && trialsData.metrics.length) {
       const defaultMetric = trialsData.metrics
         .filter((m) => m.type === MetricType.Validation)[0]
@@ -156,9 +158,9 @@ const TrialsComparison: React.FC = () => {
     // preparing the new data structure
     const metricKeys = trialsData.metrics.map((metric: MetricName) => metricNameToValue(metric));
 
-    const metricValsMap = metricKeys
-      .map((key) => ({
-        [key]: emptyChartData(
+    const metricValsMap: Record<string, ChartData> = metricKeys
+      .map((metricKey) => ({
+        [metricKey]: emptyChartData(
           trialsData.trialIds.length,
           trialsData.maxBatch + BATCH_PADDING,
         ),

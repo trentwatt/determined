@@ -59,7 +59,7 @@ const reducer = (state: MetricView, action: Action) => {
   }
 };
 
-const TrialFilters: React.FC<Props> = ({
+const MetricsView: React.FC<Props> = ({
   view,
   metrics,
   onChange,
@@ -107,4 +107,4 @@ const TrialFilters: React.FC<Props> = ({
   );
 };
 
-export default TrialFilters;
+export default MetricsView;
