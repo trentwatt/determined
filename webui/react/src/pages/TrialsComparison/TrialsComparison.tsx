@@ -6,16 +6,12 @@ import { useLocation } from 'react-router';
 import { useStore } from 'contexts/Store';
 import { compareTrials, getExperimentDetails } from 'services/api';
 import { queryTrials } from 'services/api';
-import {
-  V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse,
-} from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { CompareTrialsParams } from 'services/types';
-import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { isEqual, isNumber } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
@@ -51,9 +47,8 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
   [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
 };
-const TrialsComparison: React.FC = () => {
 
-  const { ui } = useStore();
+const TrialsComparison: React.FC = () => {
 
   const fullHParams = useRef<string[]>(
     [],
@@ -101,12 +96,10 @@ const TrialsComparison: React.FC = () => {
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ trialHpMap, setTrialHpMap ] = useState<Record<number, TrialHParams>>({});
   const [ trialMetrics, setTrialMetrics ] = useState<Record<number, TrialMetrics>>({});
-  const [ colorMap, setColorMap ] = useState<Record<number, string>>({});
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
   const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
-  const hasLoaded = useMemo(() => !!(trialIds.length && metrics.length > 0), [ metrics, trialIds ]);
-
+  const hasLoaded = !!trialIds.length;
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
   }, [ ]);
@@ -115,156 +108,21 @@ const TrialsComparison: React.FC = () => {
     setFilters((filters) => ({ ...filters, metric }));
   }, []);
 
-  useEffect(() => {
-    queryTrials(
-      { filters: { experimentIds: experimentIds } },
-    ).then((response) => {
-      console.log(response);
-    }).catch((err) => {
-      console.log(err);
-    });
+  const fetchTrials = useCallback(async () => {
+    try {
+
+      const response = await queryTrials(
+        { filters: { experimentIds: experimentIds } },
+      );
+      setTrialIds(response?.trials?.map((t) => t.trialId).filter(isNumber) ?? []);
+    } catch (e){
+      console.error(e);
+    }
   }, [ experimentIds ]);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experimentIds.length || !filters.metric?.name) return;
-
-    const canceler = new AbortController();
-    const trialIdsMap: Record<number, number> = {};
-    const trialDataMap: Record<number, number[]> = {};
-    const trialHpMap: Record<number, TrialHParams> = {};
-    const hpValsMap: HpValsMap = {};
-    const batchesMap: Record<number, number> = {};
-    const metricsMap: Record<number, Record<number, number>> = {};
-    const hyperparameters: Record<string, Hyperparameter> = {};
-    const metricTypeParam = metricTypeParamMap[filters.metric.type];
-
-    readStream<V1ExpCompareTrialsSampleResponse>(
-      detApi.StreamingInternal.expCompareTrialsSample(
-        experimentIds,
-        filters.metric.name,
-        metricTypeParam,
-        filters.maxTrial,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        if (!event || !event.trials) return;
-
-        (event.promotedTrials || []).forEach((trialId) => trialIdsMap[trialId] = trialId);
-        // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
-        const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds((prevTrialIds) =>
-          isEqual(prevTrialIds, newTrialIds)
-            ? prevTrialIds
-            : newTrialIds);
-
-        (event.trials || []).forEach((trial) => {
-          const id = trial.trialId;
-          const flatHParams = flattenObject(trial.hparams || {});
-          Object.keys(flatHParams).forEach(
-            (hpParam) => {
-              // distinguishing between constant vs not is irrelevant when constant
-              // hps can vary across experiments. placeholder code
-              (hyperparameters[hpParam] = { type: HyperparameterType.Constant });
-              //
-              if (hpValsMap[hpParam] == null) {
-                hpValsMap[hpParam] = new Set([ flatHParams[hpParam] ]);
-              } else {
-                hpValsMap[hpParam].add(flatHParams[hpParam]);
-              }
-            },
-          );
-          setHyperparameters(hyperparameters);
-          const hasHParams = Object.keys(flatHParams).length !== 0;
-
-          if (hasHParams && !trialHpMap[id]) {
-            trialHpMap[id] = {
-              experimentId: trial.experimentId,
-              hparams: flatHParams,
-              id,
-              metric: null,
-              metrics: {},
-            };
-          }
-
-          trialDataMap[id] = trialDataMap[id] || [];
-          metricsMap[id] = metricsMap[id] || {};
-
-          trial.data.forEach((datapoint) => {
-            batchesMap[datapoint.batches] = datapoint.batches;
-            metricsMap[id][datapoint.batches] = datapoint.value;
-            trialHpMap[id].metric = datapoint.value;
-          });
-          if (trialMetrics[id]){
-            trialHpMap[id].metrics = trialMetrics[id].metrics;
-          }
-        });
-
-        Object.keys(hpValsMap).forEach((hpParam) => {
-          const hpVals = hpValsMap[hpParam];
-          if (!hpVals.has('-') && newTrialIds.some((id) => trialHpMap[id] == null)) {
-            hpValsMap[hpParam].add('-');
-          }
-        });
-        setHpVals(hpValsMap);
-
-        const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
-        setTrialHps(newTrialHps);
-        setTrialHpMap(trialHpMap);
-
-        const newBatches = Object.values(batchesMap);
-        const maxBatches = Math.max(...newBatches);
-        setBatches(newBatches);
-
-        const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
-          const value = metricsMap[trialId][batch];
-          return Number.isFinite(value) ? value : null;
-        }));
-        setChartData(newChartData);
-
-      },
-    ).catch((e) => {
-      setPageError(e);
-    });
-
-    return () => canceler.abort();
-  }, [ filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
-
-  useEffect(() => {
-    if (ui.isPageHidden || !trialIds?.length) return;
-
-    const canceler = new AbortController();
-    const trainingMetricsMap: Record<string, boolean> = {};
-    const validationMetricsMap: Record<string, boolean> = {};
-
-    readStream<V1ExpCompareMetricNamesResponse>(
-      detApi.StreamingInternal.expCompareMetricNames(
-        trialIds,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        if (!event) return;
-        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
-
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
-        const newMetrics = [
-          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
-        ];
-        setMetrics(newMetrics);
-      },
-    ).catch(() => {
-      setPageError(PageError.MetricNames);
-    });
-
-    return () => canceler.abort();
-  }, [ trialIds, ui.isPageHidden ]);
+    fetchTrials();
+  }, [ fetchTrials ]);
 
   useEffect(() => {
     if (!trialIds || !metrics.length) return;
@@ -293,30 +151,6 @@ const TrialsComparison: React.FC = () => {
     });
   }, [ trialIds, metrics ]);
 
-  useEffect(() => {
-    const newTrialHps: TrialHParams[] = [];
-    Object.keys(trialHpMap).forEach((trialId) => {
-      const metricsMapKey = Number(trialId);
-      if (trialMetrics[metricsMapKey]){
-        trialHpMap[metricsMapKey ].metrics = trialMetrics[metricsMapKey].metrics;
-      }
-      newTrialHps.push(trialHpMap[metricsMapKey]);
-    });
-    setTrialHps(newTrialHps);
-  }, [ trialHpMap, trialMetrics ]);
-
-  useEffect(() => {
-    if (!trialIds.length) return;
-    const newColorMap = Object.assign({}, colorMap);
-    trialIds.forEach((trialId) => {
-      if (!colorMap[trialId]){
-        const [ r, g, b ] = [ Math.random() * 255, Math.random() * 255, Math.random() * 255 ];
-        newColorMap[trialId] = `rgb(${r}, ${g}, ${b})`;
-      }
-    });
-    setColorMap(newColorMap);
-  }, [ trialIds ]);
-
   if (!experimentIds.length) {
     return (
       <div className={css.alert}>
@@ -327,13 +161,9 @@ const TrialsComparison: React.FC = () => {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   }
 
-  if (!metrics.length) {
-    return <Spinner tip="Fetching metrics..." />;
-  }
-
   const visualizationFilters = (
     <TrialFilters
-      batches={batches || []}
+      batches={[]}
       filters={filters}
       fullHParams={fullHParams.current}
       metrics={metrics || []}

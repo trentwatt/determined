@@ -1,11 +1,13 @@
 import { Alert } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 import { openCommand } from 'wait';
+import { openCommand } from 'wait';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import TableBatch, { SelectionMode } from 'components/TableBatch';
+import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
 import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -100,7 +102,7 @@ const Compare: React.FC<Props> = ({
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
-      if (action == TrialAction.BulkAddTags){
+      if (action === TrialAction.BulkAddTags){
         openModalCreate({ trialIds: trialIds });
       } else {
         const result = await sendBatchActions(action);
