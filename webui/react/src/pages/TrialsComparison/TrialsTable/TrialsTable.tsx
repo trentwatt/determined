@@ -32,15 +32,14 @@ interface Props {
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
   hpVals: HpValsMap
-  hyperparameters: HyperparametersFlattened;
   metrics: MetricName[];
   onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   selectAllMatching: boolean;
   selectedTrialIds?: number[];
   selection?: boolean;
-  trials: V1AugmentedTrial[];
   trialIds: number[];
+  trials: V1AugmentedTrial[];
 }
 
 export interface TrialMetrics {
@@ -49,7 +48,6 @@ export interface TrialMetrics {
 }
 
 const TrialsTable: React.FC<Props> = ({
-  hyperparameters,
   highlightedTrialId,
   hpVals,
   onMouseEnter,
@@ -133,14 +131,8 @@ const TrialsTable: React.FC<Props> = ({
     const hpRenderer = (key: string) => {
       return (_: string, record: V1AugmentedTrial) => {
         const value = record.hparams[key];
-        const type = hyperparameters[key].type;
-        const isValidType = [
-          HyperparameterType.Constant,
-          HyperparameterType.Double,
-          HyperparameterType.Int,
-          HyperparameterType.Log,
-        ].includes(type);
-        if (isNumber(value) && isValidType) {
+
+        if (isNumber(value)) {
           return <HumanReadableNumber num={value} />;
         } else if (!value) {
           return '-';
@@ -179,7 +171,7 @@ const TrialsTable: React.FC<Props> = ({
     };
 
     const hpColumns = Object
-      .keys(hyperparameters || {})
+      .keys(hpVals || {})
       .filter((hpParam) => hpVals[hpParam]?.size > 1)
       .map((key) => {
         return {
@@ -207,7 +199,7 @@ const TrialsTable: React.FC<Props> = ({
       });
 
     return [ idColumn, experimentIdColumn, ...hpColumns, ...metricsColumns ];
-  }, [ hyperparameters, hpVals, filters, metrics ]);
+  }, [ hpVals, filters, metrics ]);
 
   useEffect(() => {
     updateSettings({

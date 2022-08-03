@@ -17,7 +17,8 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CommandTask,
   ExperimentVisualizationType,
-  Hyperparameter, MetricName, Scale,
+  MetricName,
+  Scale,
   TrialAction,
 } from 'types';
 import handleError from 'utils/error';
@@ -38,7 +39,6 @@ const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 
 interface TrialsWithMetadata {
   hpVals: HpValsMap;
-  hyperparameters: Record<string, Hyperparameter>;
   metrics: MetricName[];
   trialIds: number[];
   trials: V1AugmentedTrial[];
@@ -46,16 +46,26 @@ interface TrialsWithMetadata {
 
 const defaultTrialsData: TrialsWithMetadata = {
   hpVals: {},
-  hyperparameters: {},
   metrics: [],
   trialIds: [],
   trials: [],
 };
 
-const aggregrateTrialsMetadata =
-(agg: TrialsWithMetadata, t: V1AugmentedTrial): TrialsWithMetadata => {
-  return agg;
+const metricInList = (metric: MetricName, metrics: MetricName[]): boolean => {
+  return metrics.some((m) => m.type === metric.type && m.name === metric.name);
 };
+
+const aggregrateTrialsMetadata =
+(agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
+  hpVals: {},
+  metrics: [
+    ...agg.metrics,
+    ...trial.validationMetrics.filter((m :MetricName) => !metricInList(m, agg.metrics)),
+    ...trial.trainingMetrics.filter((m :MetricName) => !metricInList(m, agg.metrics)),
+  ],
+  trialIds: [ ...agg.trialIds, trial.trialId ],
+  trials: [ ...agg.trials, trial ],
+});
 
 // `${MetricName.type}|${MetricName.name}`
 type Metric = string
@@ -249,7 +259,6 @@ const ExperimentComparison: React.FC = () => {
                         handleTableRowSelect={handleTableRowSelect}
                         highlightedTrialId={highlightedTrialId}
                         hpVals={trialsData.hpVals}
-                        hyperparameters={trialsData.hyperparameters}
                         metrics={trialsData.metrics}
                         selectAllMatching={selectAllMatching}
                         selectedTrialIds={selectedTrialIds}
