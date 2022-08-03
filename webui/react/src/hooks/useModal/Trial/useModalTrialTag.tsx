@@ -9,11 +9,11 @@ import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import css from './useModalTrialTag.module.scss';
 interface Props {
   onClose?: () => void;
-  trialIds: number[];
+  trialIds?: number[];
 }
 
 export interface ShowModalProps {
-  trialIds: number[];
+  trialIds?: number[];
   initialModalProps?: ModalFuncProps;
 }
 
@@ -70,7 +70,7 @@ const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
       trialIds,
     }: ShowModalProps) => {
       openOrUpdate({
-        ...getModalProps(trialIds),
+        ...getModalProps(trialIds || []),
         ...initialModalProps,
       });
     },
@@ -85,7 +85,7 @@ const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(trialIds));
+    if (modalRef.current) openOrUpdate(getModalProps(trialIds || []));
   }, [ getModalProps, modalRef, openOrUpdate, trialIds ]);
 
   return { modalOpen, modalRef, ...modalHook };

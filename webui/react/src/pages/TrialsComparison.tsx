@@ -87,12 +87,12 @@ const TrialsComparison: React.FC = () => {
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
-  } = useModalTrialTag({ trialIds: selectAllMatching ? trialsData.trialIds : selectedTrialIds });
+  } = useModalTrialTag({});
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
-        openTagModal({ trialIds: trialsData.trialIds });
+        openTagModal({ trialIds: selectAllMatching ? trialsData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);
