@@ -755,6 +755,7 @@ class v1AugmentedTrial:
         startTime: str,
         state: str,
         tags: "typing.Dict[str, typing.Any]",
+        totalBatches: int,
         trainingMetrics: "typing.Dict[str, typing.Any]",
         trialId: int,
         userId: int,
@@ -779,6 +780,7 @@ class v1AugmentedTrial:
         self.userId = userId
         self.projectId = projectId
         self.workspaceId = workspaceId
+        self.totalBatches = totalBatches
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AugmentedTrial":
@@ -800,6 +802,7 @@ class v1AugmentedTrial:
             userId=obj["userId"],
             projectId=obj["projectId"],
             workspaceId=obj["workspaceId"],
+            totalBatches=obj["totalBatches"],
         )
 
     def to_json(self) -> typing.Any:
@@ -821,6 +824,7 @@ class v1AugmentedTrial:
             "userId": self.userId,
             "projectId": self.projectId,
             "workspaceId": self.workspaceId,
+            "totalBatches": self.totalBatches,
         }
 
 class v1AwsCustomTag:

@@ -116,7 +116,8 @@ message AugmentedTrial {
         "experiment_labels",
         "user_id",
         "project_id",
-        "workspace_id"
+        "workspace_id",
+        "total_batches"
       ]
     }
   };
@@ -137,6 +138,7 @@ message AugmentedTrial {
   int32 user_id                             = 15;
   int32 project_id                          = 16;
   int32 workspace_id                        = 17;
+  int32 total_batches = 18;
 }
 
 message QueryTrialsResponse {

@@ -1282,6 +1282,12 @@ export interface V1AugmentedTrial {
      * @memberof V1AugmentedTrial
      */
     workspaceId: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    totalBatches: number;
 }
 
 /**

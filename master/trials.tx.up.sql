@@ -26,7 +26,7 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
       t.id AS trial_id,
       t.state AS state,
       t.hparams AS hparams,
-      s.metrics->'avg_metrics' AS training_metrics,
+      s1.metrics->'avg_metrics' AS training_metrics,
       v.metrics->'validation_metrics' AS validation_metrics,
       t.tags AS tags,
       t.start_time AS start_time,
@@ -38,12 +38,16 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
       e.config->'labels' AS experiment_labels,
       e.owner_id AS user_id,
       e.project_id AS project_id,
-      p.workspace_id AS workspace_id
+      p.workspace_id AS workspace_id,
+      max(s2.total_batches) as total_batches
   FROM trials t
   LEFT JOIN experiments e ON t.experiment_id = e.id
   LEFT JOIN projects p ON e.project_id = p.id
   LEFT JOIN validations v ON t.id = v.trial_id AND v.id = t.best_validation_id
-  LEFT JOIN steps s on t.id = s.trial_id AND v.total_batches = s.total_batches;
+  LEFT JOIN steps s1 on t.id = s1.trial_id AND v.total_batches = s1.total_batches
+  -- find other subquery way to do this??
+  LEFT JOIN steps s2 on t.id = s2.trial_id
+  group by t.id, training_metrics, validation_metrics, e.id, searcher_type, p.workspace_id
 
 -- is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
 -- does avg_metrics correspond to the actual state at that batch?

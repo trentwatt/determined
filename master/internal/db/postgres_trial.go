@@ -465,6 +465,8 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 		UserId:                t.UserId,
 		ProjectId:             t.ProjectId,
 		WorkspaceId:           t.WorkspaceId,
+		TotalBatches:          t.TotalBatches,
+
 		// RankWithinExp:         t.RankWithinExp,
 	}
 }
@@ -488,6 +490,7 @@ type TrialsAugmented struct {
 	UserId                int32              `bun:"user_id"`
 	ProjectId             int32              `bun:"project_id"`
 	WorkspaceId           int32              `bun:"workspace_id"`
+	TotalBatches          int32              `bun:"total_batches"`
 	// RankWithinExp         int32              `bun:"RankWithinExp"`
 }
 type TrialsCollection struct {
