@@ -27,6 +27,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CommandTask,
   MetricName,
+  MetricType,
   Scale,
   TrialAction,
 } from 'types';
@@ -39,12 +40,12 @@ import useHighlight from './TrialsComparison/hooks/useHighlight';
 
 type Metric = string
 
+const BATCH_PADDING = 50;
+
 const batchActions = [
   { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard },
   { bulk: true, label: TrialAction.AddTags, value: TrialAction.AddTags },
 ];
-
-const BATCHES_TEMP = 1000;
 
 type ChartData = (number | null)[][]
 interface SeriesData {
@@ -64,7 +65,7 @@ const ExperimentComparison: React.FC = () => {
   const [ trialsData, setTrialsData ] = useState<TrialsWithMetadata>(defaultTrialsData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<V1TrialFilters>();
-  const [ view, setView ] = useState<MetricView>({ scale: Scale.Linear, view: ViewType.Grid });
+  const [ view, setView ] = useState<MetricView>();
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
   const highlight = useHighlight(getTrialId);
@@ -141,11 +142,13 @@ const ExperimentComparison: React.FC = () => {
   // to do: use polling
 
   useEffect(() => {
-    if (!view.metric && trialsData.metrics.length) {
-      setView((view) => ({ ...view, metric: trialsData.metrics[0] }));
+    if (!view && trialsData.metrics.length) {
+      const defaultMetric = trialsData.metrics
+        .filter((m) => m.type === MetricType.Validation)[0]
+        ?? trialsData.metrics[0];
+      setView({ metric: defaultMetric, scale: Scale.Linear, view: ViewType.Grid });
     }
-
-  }, [ view.metric, trialsData.metrics ]);
+  }, [ view, trialsData.metrics ]);
 
   const fetchSeriesData = useCallback(async () => {
     if (!trialsData.trialIds || !trialsData.metrics.length) return;
@@ -154,10 +157,17 @@ const ExperimentComparison: React.FC = () => {
     const metricKeys = trialsData.metrics.map((metric: MetricName) => metricNameToValue(metric));
 
     const metricValsMap = metricKeys
-      .map((key) => ({ [key]: emptyChartData(trialsData.trialIds.length, BATCHES_TEMP) }))
-      .reduce((a, b) => ({ ...a, ...b }), {});
+      .map((key) => ({
+        [key]: emptyChartData(
+          trialsData.trialIds.length,
+          trialsData.maxBatch + BATCH_PADDING,
+        ),
+      })).reduce((a, b) => ({ ...a, ...b }), {});
 
-    const newSeriesData: SeriesData = { batches: seq(BATCHES_TEMP), metrics: metricValsMap };
+    const newSeriesData: SeriesData = {
+      batches: seq(trialsData.maxBatch + BATCH_PADDING),
+      metrics: metricValsMap,
+    };
 
     // calling the api
 
@@ -190,18 +200,18 @@ const ExperimentComparison: React.FC = () => {
 
   const hasLoaded = !!trialsData.trialIds.length;
 
-  const chartData = view.metric
+  const chartData = view?.metric
     && metricNameToValue(view.metric)
     && seriesData?.metrics?.[metricNameToValue(view.metric)];
 
-  console.log(chartData);
-
   const metricsViewSelect = (
-    <MetricsView
-      metrics={trialsData.metrics}
-      view={view}
-      onChange={handleViewChange}
-    />
+    view && (
+      <MetricsView
+        metrics={trialsData.metrics}
+        view={view}
+        onChange={handleViewChange}
+      />
+    )
   );
 
   return (
@@ -230,7 +240,7 @@ const ExperimentComparison: React.FC = () => {
                   loading={!hasLoaded}>
                   <div className={css.container}>
                     <div className={css.chart}>
-                      {view.metric && chartData && (
+                      {view?.metric && chartData && (
                         <LearningCurveChart
                           data={chartData}
                           focusedTrialId={highlight.id}

@@ -19,7 +19,7 @@ export enum ViewType {
 }
 
 export interface MetricView {
-  metric?: MetricName;
+  metric: MetricName;
   scale: Scale;
   view: ViewType;
 }

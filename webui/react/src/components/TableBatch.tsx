@@ -39,7 +39,9 @@ const TableBatch: React.FC<Props> = ({
 
   const selectAllMatchingEnabled = useMemo(() => actions?.some((a) => !!a.bulk), [ actions ]);
 
-  const message = `Apply batch operations to ${selectCount}` +
+  const message = selectAllMatching
+    ? 'Apply batch operations to all matching items'
+    : `Apply batch operations to ${selectCount}` +
     ` item${selectCount === 1 ? '' : 's'}`;
 
   if (selectCount > 0) classes.push(css.show);

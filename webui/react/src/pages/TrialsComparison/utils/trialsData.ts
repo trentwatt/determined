@@ -7,11 +7,6 @@ import {
   MetricType,
 } from 'types';
 
-function log<T>(x: T): T {
-  console.log(x);
-  return x;
-}
-
 function mergeLists<T>(A: Array<T>, B: Array<T>, equalFn = (x: T, y: T) => x === y): Array<T> {
   return [ ...A, ...B.filter((b) => !A.some((a) => equalFn(a, b))) ];
 }
@@ -35,7 +30,7 @@ const aggregateHpVals = (agg: HpValsMap, hparams: RawJson) =>
   mergeHpValMaps(agg, valMapForHParams(hparams));
 
 const namesForMetrics = (trainingMetrics: RawJson, validationMetrics: RawJson): MetricName[] =>
-  [ ...Object.keys(log(trainingMetrics))
+  [ ...Object.keys(trainingMetrics)
     .map((name) => ({ name, type: MetricType.Training } as MetricName)),
   ...Object.keys(validationMetrics)
     .map((name) => ({ name, type: MetricType.Validation } as MetricName)),
@@ -54,11 +49,7 @@ export interface TrialsWithMetadata {
 export const aggregrateTrialsMetadata =
 (agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
   hpVals: aggregateHpVals(agg.hpVals, trial.hparams),
-  maxBatch: Math.max(
-    agg.maxBatch,
-    // trial.maxBatch   need to add this to API
-    0,
-  ),
+  maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
   metrics: mergeLists(
     agg.metrics,
     namesForMetrics(trial.trainingMetrics, trial.validationMetrics),
@@ -70,7 +61,7 @@ export const aggregrateTrialsMetadata =
 
 export const defaultTrialsData: TrialsWithMetadata = {
   hpVals: {},
-  maxBatch: 100,
+  maxBatch: 1,
   metrics: [],
   trialIds: [],
   trials: [],
