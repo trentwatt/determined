@@ -269,9 +269,22 @@ export const patchTrials: DetApi<
     return { trialIds: response.trialIds };
   },
   request: (params: Api.V1PatchTrialsRequest) => {
-    console.log(params);
     return detApi.TrialsComparison.patchTrials(
       { patch: params.patch, trialIds: params.trialIds },
+    );
+  },
+};
+
+export const patchBulkTrials: DetApi<
+  Api.V1BulkPatchTrialsRequest, Api.V1BulkPatchTrialsResponse, Api.V1BulkPatchTrialsResponse
+> = {
+  name: 'patchBulkTrials',
+  postProcess: (response: Api.V1BulkPatchTrialsResponse) => {
+    return { rowsAffected: response.rowsAffected };
+  },
+  request: (params: Api.V1BulkPatchTrialsRequest) => {
+    return detApi.TrialsComparison.bulkPatchTrials(
+      { patch: params.patch, filters: params.filters },
     );
   },
 };

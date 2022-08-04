@@ -102,7 +102,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
-  } = useModalTrialTag({});
+  } = useModalTrialTag({selectAllMatching, filters});
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {

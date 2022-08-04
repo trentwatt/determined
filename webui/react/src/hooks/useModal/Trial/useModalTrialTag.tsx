@@ -2,14 +2,18 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import EditableTagList from 'components/TagList';
-import { patchTrials } from 'services/api';
-import { V1TrialTag } from 'services/api-ts-sdk';
+import { TrialFilters } from 'pages/TrialsComparison/types';
+import { patchTrials, patchBulkTrials } from 'services/api';
+import { V1TrialFilters, V1TrialTag } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
 import css from './useModalTrialTag.module.scss';
+
 interface Props {
   onClose?: () => void;
   trialIds?: number[];
+  selectAllMatching: boolean;
+  filters: TrialFilters
 }
 
 export interface ShowModalProps {
@@ -21,7 +25,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
+const useModalTrialTag = ({ onClose, trialIds, selectAllMatching, filters }: Props): ModalHooks => {
   const [ tags, setTags ] = useState<string[]> ([]);
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
@@ -44,13 +48,24 @@ const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     const trialTags: V1TrialTag[] = tags.map((tag) => { return { key: tag, value: tag }; });
-    patchTrials(
-      {
-        patch: { tags: trialTags },
-        trialIds: trialIds ?? [],
-      },
-    ).then((response) => console.log(response))
-      .catch((err) => console.log(err));
+    if(selectAllMatching){
+      const requestTrialFilters = filters as V1TrialFilters
+      patchBulkTrials(
+        {
+          patch: { tags: trialTags },
+          filters: requestTrialFilters,
+        },
+      ).then((response) => console.log("select all response", response))
+        .catch((err) => console.log(err));
+    } else {
+      patchTrials(
+        {
+          patch: { tags: trialTags },
+          trialIds: trialIds ?? [],
+        },
+      ).then((response) => console.log(response))
+        .catch((err) => console.log(err));
+    }
   }, [ tags, trialIds ]);
 
   const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
