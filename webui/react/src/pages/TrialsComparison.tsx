@@ -16,7 +16,7 @@ import TrialsTable from 'pages/TrialsComparison/TrialsTable/TrialsTable';
 import { TrialFilters } from 'pages/TrialsComparison/types';
 import {
   aggregrateTrialsMetadata,
-  defaultTrialsData,
+  defaultTrialData,
   TrialsWithMetadata,
 } from 'pages/TrialsComparison/utils/trialData';
 import { compareTrials, openOrCreateTensorBoard, queryTrials } from 'services/api';
@@ -31,20 +31,18 @@ import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   CommandTask,
-  MetricName,
+  Metric,
   MetricType,
   Scale,
   TrialAction,
 } from 'types';
 import handleError from 'utils/error';
-import { metricNameToValue } from 'utils/metric';
+import { metricToKey } from 'utils/metric';
 import { openCommand } from 'wait';
 
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
 import { encodeFilters } from './TrialsComparison/utils/trialFilters';
-
-type Metric = string
 
 const BATCH_PADDING = 50;
 
@@ -56,7 +54,7 @@ const batchActions = [
 type ChartData = (number | null)[][]
 interface SeriesData {
   batches: number[];
-  metrics: Record<Metric, ChartData>
+  metrics: Record<string, ChartData>
 }
 
 const emptyChartData = (rows: number, columns: number): ChartData =>
@@ -70,9 +68,15 @@ interface Props {
   projectId?: number;
 }
 
+function log<T>(x: T): T {
+  console.log(x);
+  return x;
+}
+
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
+
   const location = useLocation();
-  const [ trialsData, setTrialsData ] = useState<TrialsWithMetadata>(defaultTrialsData);
+  const [ trialData, settrialData ] = useState<TrialsWithMetadata>(defaultTrialData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<TrialFilters>({
     projectIds: projectId
@@ -103,7 +107,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
-        openTagModal({ trialIds: selectAllMatching ? trialsData.trialIds : selectedTrialIds });
+        openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);
@@ -120,7 +124,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
         type: ErrorType.Server,
       });
     }
-  }, [ selectedTrialIds, openTagModal, trialsData.trialIds, selectAllMatching ]);
+  }, [ selectedTrialIds, openTagModal, trialData.trialIds, selectAllMatching ]);
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
 
@@ -141,8 +145,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
       const response = await queryTrials(
         { filters: encodeFilters(filters, sorter) },
       );
-      setTrialsData((prev) =>
-        response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialsData))
+      settrialData((prev) =>
+        response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialData))
        ?? prev);
 
     } catch (e) {
@@ -158,48 +162,48 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   useEffect(() => {
     // set the default metric
-    if (!view && trialsData.metrics.length) {
-      const defaultMetric = trialsData.metrics
+    if (!view && trialData.metrics.length) {
+      const defaultMetric = trialData.metrics
         .filter((m) => m.type === MetricType.Validation)[0]
-        ?? trialsData.metrics[0];
+        ?? trialData.metrics[0];
       setView({ layout: Layout.Grid, metric: defaultMetric, scale: Scale.Linear });
     }
-  }, [ view, trialsData.metrics ]);
+  }, [ view, trialData.metrics ]);
 
   const fetchSeriesData = useCallback(async () => {
-    if (!trialsData.trialIds || !trialsData.metrics.length) return;
+    if (!trialData.trialIds || !trialData.metrics.length) return;
 
-    // preparing the new data structure
-    const metricKeys = trialsData.metrics.map((metric: MetricName) => metricNameToValue(metric));
+    // preparing the new data structure to store API response
+    const metricKeys = trialData.metrics.map((metric: Metric) => metricToKey(metric));
 
     const metricValsMap: Record<string, ChartData> = metricKeys
       .map((metricKey) => ({
         [metricKey]: emptyChartData(
-          trialsData.trialIds.length,
-          trialsData.maxBatch + BATCH_PADDING,
+          trialData.trialIds.length,
+          trialData.maxBatch + BATCH_PADDING,
         ),
       })).reduce((a, b) => ({ ...a, ...b }), {});
 
     const newSeriesData: SeriesData = {
-      batches: seq(trialsData.maxBatch + BATCH_PADDING),
+      batches: seq(trialData.maxBatch + BATCH_PADDING),
       metrics: metricValsMap,
     };
 
-    // calling the api
+    // calling the API
 
     const trials = await compareTrials({
       maxDatapoints: 1000,
-      metricNames: trialsData.metrics,
-      trialIds: trialsData.trialIds,
+      metricNames: trialData.metrics,
+      trialIds: trialData.trialIds,
     });
 
     // populating the data structure with the API results
 
     trials.forEach((trial) => {
-      const trialRowIndex = trialsData.trialIds.indexOf(trial.id);
+      const trialRowIndex = trialData.trialIds.indexOf(trial.id);
       if (trialRowIndex === -1) return;
       trial.metrics.forEach((metric) => {
-        const metricKey = metricNameToValue(metric);
+        const metricKey = metricToKey(metric);
         if (!newSeriesData.metrics[metricKey]) return;
         metric.data.forEach(({ batches, value }) => {
           newSeriesData.metrics[metricKey][trialRowIndex][batches] = value;
@@ -208,22 +212,22 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     });
     setSeriesData(newSeriesData);
 
-  }, [ trialsData.trialIds, trialsData.metrics, trialsData.maxBatch ]);
+  }, [ trialData.trialIds, trialData.metrics, trialData.maxBatch ]);
 
   useEffect(() => {
     fetchSeriesData();
   }, [ fetchSeriesData ]);
 
-  const hasLoaded = !!trialsData.trialIds.length;
+  const hasLoaded = !!trialData.trialIds.length;
 
   const chartData = view?.metric
-    && metricNameToValue(view.metric)
-    && seriesData?.metrics?.[metricNameToValue(view.metric)];
+    && metricToKey(view.metric)
+    && seriesData?.metrics?.[metricToKey(view.metric)];
 
   const metricsViewSelect = (
     view && (
       <MetricsView
-        metrics={trialsData.metrics}
+        metrics={trialData.metrics}
         view={view}
         onChange={handleViewChange}
       />
@@ -263,7 +267,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                           selectedMetric={view.metric}
                           selectedScale={view.scale}
                           selectedTrialIds={selectedTrialIds}
-                          trialIds={trialsData.trialIds}
+                          trialIds={trialData.trialIds}
                           xValues={seriesData.batches}
                           onTrialFocus={highlight.focus}
                         />
@@ -281,13 +285,13 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                       containerRef={containerRef}
                       handleTableRowSelect={handleTableRowSelect}
                       highlightedTrialId={highlight.id}
-                      hpVals={trialsData.hpVals}
-                      metrics={trialsData.metrics}
+                      hpVals={trialData.hpVals}
+                      metrics={trialData.metrics}
                       selectAllMatching={selectAllMatching}
                       selectedTrialIds={selectedTrialIds}
                       selection={true}
-                      trialIds={trialsData.trialIds}
-                      trials={trialsData.trials}
+                      trialIds={trialData.trialIds}
+                      trials={trialData.trials}
                       onFilterChange={handleFilterChange}
                       onMouseEnter={highlight.mouseEnter}
                       onMouseLeave={highlight.mouseLeave}

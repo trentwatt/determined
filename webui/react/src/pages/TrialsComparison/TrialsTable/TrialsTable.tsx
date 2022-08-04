@@ -1,6 +1,5 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react';
-import { alphaNumericSorter, primitiveSorter } from 'utils/sort';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
@@ -15,8 +14,9 @@ import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
-import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
-import { MetricName } from 'types';
+import { alphaNumericSorter, primitiveSorter } from 'shared/utils/sort';
+import { Metric } from 'types';
+import { metricToKey } from 'utils/metric';
 
 import css from './TrialsTable.module.scss';
 import settingsConfig, {
@@ -30,7 +30,7 @@ interface Props {
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
   hpVals: HpValsMap
-  metrics: MetricName[];
+  metrics: Metric[];
   onFilterChange?: (filters: TrialFilters) => void;
   onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
@@ -99,6 +99,7 @@ const TrialsTable: React.FC<Props> = ({
     };
 
     const metricsRenderer = (key: string) => {
+      console.log(key);
       return (_: string, record: V1AugmentedTrial) => {
         if (record.validationMetrics && isNumber(record.validationMetrics[key])){
           const value = record.validationMetrics[key] as number;
@@ -188,7 +189,7 @@ const TrialsTable: React.FC<Props> = ({
 
     const metricsColumns = metrics
       .map((metric) => {
-        const key = metric.name;
+        const key = metricToKey(metric);
         return {
           dataIndex: key,
           defaultWidth: 60,

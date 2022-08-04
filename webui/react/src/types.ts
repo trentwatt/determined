@@ -364,7 +364,7 @@ export const metricTypeParamMap: Record<string, MetricTypeParam> = {
   [MetricType.Validation]: 'METRIC_TYPE_VALIDATION',
 };
 
-export interface MetricName {
+export interface Metric {
   name: string;
   type: MetricType;
 }

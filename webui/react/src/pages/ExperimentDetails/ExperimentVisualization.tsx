@@ -19,7 +19,7 @@ import { hasObjectKeys } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
-  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
+  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, Metric, MetricType, RunState,
   Scale,
 } from 'types';
 
@@ -81,7 +81,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
-  const searcherMetric = useRef<MetricName>({
+  const searcherMetric = useRef<Metric>({
     name: experiment.config.searcher.metric,
     type: MetricType.Validation,
   });
@@ -108,9 +108,9 @@ const ExperimentVisualization: React.FC<Props> = ({
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
-  const [ activeMetric, setActiveMetric ] = useState<MetricName>(initFilters.metric);
+  const [ activeMetric, setActiveMetric ] = useState<Metric>(initFilters.metric);
   const [ batches, setBatches ] = useState<number[]>();
-  const [ metrics, setMetrics ] = useState<MetricName[]>();
+  const [ metrics, setMetrics ] = useState<Metric[]>();
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -140,7 +140,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     storage.remove(STORAGE_FILTERS_KEY);
   }, [ storage ]);
 
-  const handleMetricChange = useCallback((metric: MetricName) => {
+  const handleMetricChange = useCallback((metric: Metric) => {
     setActiveMetric(metric);
   }, []);
 

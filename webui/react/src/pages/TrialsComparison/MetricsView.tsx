@@ -5,14 +5,9 @@ import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { Scale } from 'types';
-import { MetricName } from 'types';
+import { Metric } from 'types';
 
 import css from './MetricsView.module.scss';
-
-export enum FilterError {
-  MetricBatches,
-  MetricNames,
-}
 
 export enum Layout {
   Grid = 'grid',
@@ -21,12 +16,12 @@ export enum Layout {
 
 export interface MetricView {
   layout: Layout;
-  metric: MetricName;
+  metric: Metric;
   scale: Scale;
 }
 
 interface Props {
-  metrics: MetricName[];
+  metrics: Metric[];
   onChange?: (view: MetricView) => void;
   onReset?: () => void;
   view: MetricView;
@@ -40,7 +35,7 @@ enum ActionType {
 }
 type Action =
 | { type: ActionType.Set; value: MetricView }
-| { type: ActionType.SetMetric; value: MetricName }
+| { type: ActionType.SetMetric; value: Metric }
 | { type: ActionType.SetLayout; value: Layout }
 | { type: ActionType.SetScale; value: Scale }
 
@@ -75,7 +70,7 @@ const MetricsView: React.FC<Props> = ({
     dispatch({ type: ActionType.SetScale, value: scale });
   }, []);
 
-  const handleMetricChange = useCallback((metric: MetricName) => {
+  const handleMetricChange = useCallback((metric: Metric) => {
     dispatch({ type: ActionType.SetMetric, value: metric });
   }, [ ]);
 
@@ -91,9 +86,9 @@ const MetricsView: React.FC<Props> = ({
   return (
     <>
       <MetricSelectFilter
-        defaultMetricNames={metrics}
+        defaultMetrics={metrics}
         label="Metric"
-        metricNames={metrics}
+        metrics={metrics}
         multiple={false}
         value={localView.metric}
         width={'100%'}

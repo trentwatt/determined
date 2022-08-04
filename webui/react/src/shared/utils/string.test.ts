@@ -33,10 +33,10 @@ describe('String Utilities', () => {
   });
 
   describe('camelCaseToSnake', () => {
-    it('should convert camel case to a kebab', () => {
-      expect(utils.camelCaseToKebab('hello')).toBe('hello');
-      expect(utils.camelCaseToKebab('camelCase')).toBe('camel_case');
-      expect(utils.camelCaseToKebab(' carJumpStart ')).toBe('car_jump_start');
+    it('should convert camel case to a snake', () => {
+      expect(utils.camelCaseToSnake('hello')).toBe('hello');
+      expect(utils.camelCaseToSnake('camelCase')).toBe('camel_case');
+      expect(utils.camelCaseToSnake(' carJumpStart ')).toBe('car_jump_start');
     });
   });
 
