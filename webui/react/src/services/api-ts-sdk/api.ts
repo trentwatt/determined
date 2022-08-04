@@ -662,10 +662,10 @@ export enum TrialEarlyExitExitedReason {
 export interface TrialFiltersRankWithinExp {
     /**
      * 
-     * @type {V1TrialsSorter}
+     * @type {V1TrialSorter}
      * @memberof TrialFiltersRankWithinExp
      */
-    sorter?: V1TrialsSorter;
+    sorter?: V1TrialSorter;
     /**
      * 
      * @type {number}
@@ -711,7 +711,7 @@ export enum TrialProfilerMetricLabelsProfilerMetricType {
  * @export
  * @enum {string}
  */
-export enum TrialsSorterNamespace {
+export enum TrialSorterNamespace {
     TRIALS = <any> 'TRIALS',
     HPARAMS = <any> 'HPARAMS',
     TRAININGMETRICS = <any> 'TRAINING_METRICS',
@@ -1321,13 +1321,13 @@ export interface V1BulkPatchTrialsRequest {
      * @type {V1TrialFilters}
      * @memberof V1BulkPatchTrialsRequest
      */
-    filters?: V1TrialFilters;
+    filters: V1TrialFilters;
     /**
      * 
      * @type {V1TrialPatch}
      * @memberof V1BulkPatchTrialsRequest
      */
-    patch?: V1TrialPatch;
+    patch: V1TrialPatch;
 }
 
 /**
@@ -4614,19 +4614,19 @@ export interface V1NumberRangeFilter {
      * @type {string}
      * @memberof V1NumberRangeFilter
      */
-    name?: string;
+    name: string;
     /**
      * 
      * @type {number}
      * @memberof V1NumberRangeFilter
      */
-    min?: number;
+    min: number;
     /**
      * 
      * @type {number}
      * @memberof V1NumberRangeFilter
      */
-    max?: number;
+    max: number;
 }
 
 /**
@@ -4933,7 +4933,7 @@ export interface V1PatchTrialsRequest {
      * @type {Array<number>}
      * @memberof V1PatchTrialsRequest
      */
-    trialIds?: Array<number>;
+    trialIds: Array<number>;
     /**
      * 
      * @type {V1TrialPatch}
@@ -5539,13 +5539,13 @@ export interface V1QueryTrialsRequest {
      * @type {V1TrialFilters}
      * @memberof V1QueryTrialsRequest
      */
-    filters?: V1TrialFilters;
+    filters: V1TrialFilters;
     /**
      * Sort trials by the given field.
-     * @type {V1TrialsSorter}
+     * @type {V1TrialSorter}
      * @memberof V1QueryTrialsRequest
      */
-    sorter?: V1TrialsSorter;
+    sorter?: V1TrialSorter;
     /**
      * 
      * @type {number}
@@ -7335,7 +7335,7 @@ export interface V1TrialTag {
      * @type {string}
      * @memberof V1TrialTag
      */
-    key?: string;
+    key: string;
     /**
      * 
      * @type {string}
@@ -7483,25 +7483,25 @@ export interface V1TrialsSnapshotResponseTrial {
 /**
  * 
  * @export
- * @interface V1TrialsSorter
+ * @interface V1TrialSorter
  */
-export interface V1TrialsSorter {
+export interface V1TrialSorter {
     /**
      * 
-     * @type {TrialsSorterNamespace}
-     * @memberof V1TrialsSorter
+     * @type {TrialSorterNamespace}
+     * @memberof V1TrialSorter
      */
-    namespace?: TrialsSorterNamespace;
+    namespace: TrialSorterNamespace;
     /**
      * 
      * @type {string}
-     * @memberof V1TrialsSorter
+     * @memberof V1TrialSorter
      */
-    field?: string;
+    field: string;
     /**
      * 
      * @type {V1OrderBy}
-     * @memberof V1TrialsSorter
+     * @memberof V1TrialSorter
      */
     orderBy?: V1OrderBy;
 }

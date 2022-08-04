@@ -8,7 +8,8 @@ import Link from 'components/Link';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import TableFilterRange from 'components/TableFilterRange';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { HpValsMap } from 'pages/TrialsComparison/utils/trialsData';
+import { TrialFilters } from 'pages/TrialsComparison/types';
+import { HpValsMap } from 'pages/TrialsComparison/utils/trialData';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
@@ -30,6 +31,7 @@ interface Props {
   highlightedTrialId?: number;
   hpVals: HpValsMap
   metrics: MetricName[];
+  onFilterChange?: (filters: TrialFilters) => void;
   onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   selectAllMatching: boolean;
@@ -52,6 +54,7 @@ const TrialsTable: React.FC<Props> = ({
   trials,
   selection,
   handleTableRowSelect,
+  onFilterChange,
   selectedTrialIds,
   selectAllMatching,
   metrics,

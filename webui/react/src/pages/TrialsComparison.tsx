@@ -1,6 +1,5 @@
 import { Tabs } from 'antd';
-import queryString from 'query-string';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import LearningCurveChart from 'components/LearningCurveChart';
@@ -9,18 +8,24 @@ import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
 import MetricsView, {
+  Layout,
   MetricView,
-  ViewType,
 } from 'pages/TrialsComparison/MetricsView';
 import ComparisonHeader from 'pages/TrialsComparison/TrialsComparisonHeader';
 import TrialsTable from 'pages/TrialsComparison/TrialsTable/TrialsTable';
+import { TrialFilters } from 'pages/TrialsComparison/types';
 import {
   aggregrateTrialsMetadata,
   defaultTrialsData,
   TrialsWithMetadata,
-} from 'pages/TrialsComparison/utils/trialsData';
+} from 'pages/TrialsComparison/utils/trialData';
 import { compareTrials, openOrCreateTensorBoard, queryTrials } from 'services/api';
-import { V1AugmentedTrial, V1TrialFilters } from 'services/api-ts-sdk';
+import {
+  TrialSorterNamespace,
+  V1AugmentedTrial,
+  V1OrderBy,
+  V1TrialSorter,
+} from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -37,6 +42,7 @@ import { openCommand } from 'wait';
 
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
+import { encodeFilters } from './TrialsComparison/utils/trialFilters';
 
 type Metric = string
 
@@ -60,27 +66,31 @@ const seq = (n: number) => [ ...Array(n) ].map((_, i) => i + 1);
 
 const getTrialId = (trial: V1AugmentedTrial): number => trial.trialId;
 
-const TrialsComparison: React.FC = () => {
+interface Props {
+  projectId?: number;
+}
+
+const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const location = useLocation();
   const [ trialsData, setTrialsData ] = useState<TrialsWithMetadata>(defaultTrialsData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
-  const [ filters, setFilters ] = useState<V1TrialFilters>();
+  const [ filters, setFilters ] = useState<TrialFilters>({
+    projectIds: projectId
+      ? [ projectId ]
+      : [ 1 ],
+  });
+  const [ sorter, setSorter ] = useState<V1TrialSorter>({
+    field: 'trialId',
+    namespace: TrialSorterNamespace.TRIALS,
+    orderBy: V1OrderBy.ASC,
+  });
   const [ view, setView ] = useState<MetricView>();
   const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
+
   const highlight = useHighlight(getTrialId);
 
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
-
-  const experimentIds: number[] = useMemo(() => {
-    const query = queryString.parse(location.search);
-    if (query.id && typeof query.id === 'string'){
-      return [ parseInt(query.id) ];
-    } else if (Array.isArray(query.id)) {
-      return query.id.map((x) => parseInt(x));
-    }
-    return [];
-  }, [ location.search ]);
 
   const pageRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLElement>(null);
@@ -110,22 +120,26 @@ const TrialsComparison: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ selectedTrialIds, openTagModal, trialsData.trialIds ]);
+  }, [ selectedTrialIds, openTagModal, trialsData.trialIds, selectAllMatching ]);
+
+  const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
 
   const clearSelected = useCallback(() => {
     setSelectedTrialIds([]);
   }, []);
 
-  const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
-
   const handleViewChange = useCallback((view: MetricView) => {
     setView(view);
+  }, []);
+
+  const handleFilterChange = useCallback((filters: TrialFilters) => {
+    setFilters(filters);
   }, []);
 
   const fetchTrials = useCallback(async () => {
     try {
       const response = await queryTrials(
-        { filters: { experimentIds: experimentIds } },
+        { filters: encodeFilters(filters, sorter) },
       );
       setTrialsData((prev) =>
         response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialsData))
@@ -134,7 +148,7 @@ const TrialsComparison: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
-  }, [ experimentIds ]);
+  }, [ filters, sorter ]);
 
   useEffect(() => {
     fetchTrials();
@@ -148,7 +162,7 @@ const TrialsComparison: React.FC = () => {
       const defaultMetric = trialsData.metrics
         .filter((m) => m.type === MetricType.Validation)[0]
         ?? trialsData.metrics[0];
-      setView({ metric: defaultMetric, scale: Scale.Linear, view: ViewType.Grid });
+      setView({ layout: Layout.Grid, metric: defaultMetric, scale: Scale.Linear });
     }
   }, [ view, trialsData.metrics ]);
 
@@ -192,8 +206,8 @@ const TrialsComparison: React.FC = () => {
         });
       });
     });
-
     setSeriesData(newSeriesData);
+
   }, [ trialsData.trialIds, trialsData.metrics, trialsData.maxBatch ]);
 
   useEffect(() => {
@@ -274,6 +288,7 @@ const TrialsComparison: React.FC = () => {
                       selection={true}
                       trialIds={trialsData.trialIds}
                       trials={trialsData.trials}
+                      onFilterChange={handleFilterChange}
                       onMouseEnter={highlight.mouseEnter}
                       onMouseLeave={highlight.mouseLeave}
                     />

@@ -40,18 +40,18 @@ const useModalTrialTag = ({ onClose, trialIds }: Props): ModalHooks => {
         />
       </div>
     );
-  }, [ trialIds, tags ]);
+  }, [ tags ]);
 
   const handleOk = useCallback(async () => {
     const trialTags: V1TrialTag[] = tags.map((tag) => { return { key: tag, value: tag }; });
     patchTrials(
       {
         patch: { tags: trialTags },
-        trialIds: trialIds,
+        trialIds: trialIds ?? [],
       },
     ).then((response) => console.log(response))
       .catch((err) => console.log(err));
-  }, [ tags ]);
+  }, [ tags, trialIds ]);
 
   const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
     return {

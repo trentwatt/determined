@@ -45,17 +45,27 @@ message WorkloadContainer {
 }
 
 message NumberRangeFilter {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name", "min", "max" ] }
+  };
   string name = 1;
   float min   = 2;
   float max   = 3;
 }
 
 message TrialTag {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "key"] }
+  };
   string key   = 1;
   string value = 2;
 }
 
-message TrialsSorter {
+message TrialSorter {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    // or maybe instead just make sure safe defaults?
+    json_schema: { required: [ "namespace", "field"] }
+  };
   enum Namespace {
     TRIALS             = 0;
     HPARAMS            = 1;
@@ -78,23 +88,35 @@ message TrialFilters {
   repeated int32 user_ids                       = 8;
   repeated TrialTag tags                        = 9;
   message RankWithinExp {
-    TrialsSorter sorter = 1;
+    TrialSorter sorter = 1;
     int32 rank          = 2;
   }
   RankWithinExp rank_within_exp = 10;
 }
 
 message QueryTrialsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "filters"] }
+  };
   TrialFilters filters = 1;
   // Sort trials by the given field.
-  TrialsSorter sorter = 2;
+  TrialSorter sorter = 2;
   int32 offset        = 3;
   // Limit the number of trials. A value of 0 denotes no limit.
   int32 limit = 4;
 }
 
 message ExportTrialsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "filters"] }
+  };
   TrialFilters filters = 1;
+}
+
+message ExportTrialsSeriesRequest {
+  // reuse compare trials request
+  repeated int32 filters = 1;
+
 }
 
 message AugmentedTrial {
@@ -154,6 +176,9 @@ message TrialPatch {
 }
 
 message BulkPatchTrialsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "filters", "patch"] }
+  };
   // the filters
   TrialFilters filters = 1;
   // the patch
@@ -165,6 +190,9 @@ message BulkPatchTrialsResponse {
 }
 
 message PatchTrialsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "filters", "trial_ids"] }
+  };
   repeated int32 trial_ids = 1;
   TrialPatch patch         = 2;
 }
@@ -173,12 +201,18 @@ message PatchTrialsResponse {
   repeated int32 trial_ids = 1;
 }
 
-message TrialsCollection {
+message TrialsCollection {  
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  // TODO: specify required fields. Is there a way of 
+  // allowing a partial message for patch requests?
+    json_schema: { required: [ ] }
+};
   int32 id             = 1;
   int32 user_id        = 2;
   int32 project_id     = 3;
   string name          = 4;
   TrialFilters filters = 5;
+  TrialSorter sorter = 6;
 }
 
 message GetTrialsCollectionsRequest {
@@ -189,9 +223,13 @@ message GetTrialsCollectionsResponse {
 }
 
 message CreateTrialsCollectionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: ["name", "project_id", "filters", "sorter" ] }
+  };
   string name          = 1;
   int32 project_id     = 2;
   TrialFilters filters = 3;
+  TrialSorter sorter = 4;
 }
 message CreateTrialsCollectionResponse {
   TrialsCollection collection = 1;

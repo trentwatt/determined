@@ -852,8 +852,8 @@ class v1AwsCustomTag:
 class v1BulkPatchTrialsRequest:
     def __init__(
         self,
-        filters: "typing.Optional[v1TrialFilters]" = None,
-        patch: "typing.Optional[v1TrialPatch]" = None,
+        filters: "v1TrialFilters",
+        patch: "v1TrialPatch",
     ):
         self.filters = filters
         self.patch = patch
@@ -861,14 +861,14 @@ class v1BulkPatchTrialsRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1BulkPatchTrialsRequest":
         return cls(
-            filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
-            patch=v1TrialPatch.from_json(obj["patch"]) if obj.get("patch", None) is not None else None,
+            filters=v1TrialFilters.from_json(obj["filters"]),
+            patch=v1TrialPatch.from_json(obj["patch"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "filters": self.filters.to_json() if self.filters is not None else None,
-            "patch": self.patch.to_json() if self.patch is not None else None,
+            "filters": self.filters.to_json(),
+            "patch": self.patch.to_json(),
         }
 
 class v1BulkPatchTrialsResponse:
@@ -3937,9 +3937,9 @@ class v1Notebook:
 class v1NumberRangeFilter:
     def __init__(
         self,
-        max: "typing.Optional[float]" = None,
-        min: "typing.Optional[float]" = None,
-        name: "typing.Optional[str]" = None,
+        max: float,
+        min: float,
+        name: str,
     ):
         self.name = name
         self.min = min
@@ -3948,16 +3948,16 @@ class v1NumberRangeFilter:
     @classmethod
     def from_json(cls, obj: Json) -> "v1NumberRangeFilter":
         return cls(
-            name=obj.get("name", None),
-            min=float(obj["min"]) if obj.get("min", None) is not None else None,
-            max=float(obj["max"]) if obj.get("max", None) is not None else None,
+            name=obj["name"],
+            min=float(obj["min"]),
+            max=float(obj["max"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "name": self.name if self.name is not None else None,
-            "min": dump_float(self.min) if self.min is not None else None,
-            "max": dump_float(self.max) if self.max is not None else None,
+            "name": self.name,
+            "min": dump_float(self.min),
+            "max": dump_float(self.max),
         }
 
 class v1OrderBy(enum.Enum):
@@ -4260,8 +4260,8 @@ class v1PatchTrialsCollectionResponse:
 class v1PatchTrialsRequest:
     def __init__(
         self,
+        trialIds: "typing.Sequence[int]",
         patch: "typing.Optional[v1TrialPatch]" = None,
-        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.trialIds = trialIds
         self.patch = patch
@@ -4269,13 +4269,13 @@ class v1PatchTrialsRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchTrialsRequest":
         return cls(
-            trialIds=obj.get("trialIds", None),
+            trialIds=obj["trialIds"],
             patch=v1TrialPatch.from_json(obj["patch"]) if obj.get("patch", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "trialIds": self.trialIds if self.trialIds is not None else None,
+            "trialIds": self.trialIds,
             "patch": self.patch.to_json() if self.patch is not None else None,
         }
 
@@ -4866,7 +4866,7 @@ class v1PutTemplateResponse:
 class v1QueryTrialsRequest:
     def __init__(
         self,
-        filters: "typing.Optional[v1TrialFilters]" = None,
+        filters: "v1TrialFilters",
         limit: "typing.Optional[int]" = None,
         offset: "typing.Optional[int]" = None,
         sorter: "typing.Optional[v1TrialsSorter]" = None,
@@ -4879,7 +4879,7 @@ class v1QueryTrialsRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsRequest":
         return cls(
-            filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            filters=v1TrialFilters.from_json(obj["filters"]),
             sorter=v1TrialsSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
             offset=obj.get("offset", None),
             limit=obj.get("limit", None),
@@ -4887,7 +4887,7 @@ class v1QueryTrialsRequest:
 
     def to_json(self) -> typing.Any:
         return {
-            "filters": self.filters.to_json() if self.filters is not None else None,
+            "filters": self.filters.to_json(),
             "sorter": self.sorter.to_json() if self.sorter is not None else None,
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit if self.limit is not None else None,
@@ -6420,7 +6420,7 @@ class v1TrialSimulation:
 class v1TrialTag:
     def __init__(
         self,
-        key: "typing.Optional[str]" = None,
+        key: str,
         value: "typing.Optional[str]" = None,
     ):
         self.key = key
@@ -6429,13 +6429,13 @@ class v1TrialTag:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialTag":
         return cls(
-            key=obj.get("key", None),
+            key=obj["key"],
             value=obj.get("value", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "key": self.key if self.key is not None else None,
+            "key": self.key,
             "value": self.value if self.value is not None else None,
         }
 
@@ -6576,8 +6576,8 @@ class v1TrialsSnapshotResponseTrial:
 class v1TrialsSorter:
     def __init__(
         self,
-        field: "typing.Optional[str]" = None,
-        namespace: "typing.Optional[TrialsSorterNamespace]" = None,
+        field: str,
+        namespace: "TrialsSorterNamespace",
         orderBy: "typing.Optional[v1OrderBy]" = None,
     ):
         self.namespace = namespace
@@ -6587,15 +6587,15 @@ class v1TrialsSorter:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSorter":
         return cls(
-            namespace=TrialsSorterNamespace(obj["namespace"]) if obj.get("namespace", None) is not None else None,
-            field=obj.get("field", None),
+            namespace=TrialsSorterNamespace(obj["namespace"]),
+            field=obj["field"],
             orderBy=v1OrderBy(obj["orderBy"]) if obj.get("orderBy", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "namespace": self.namespace.value if self.namespace is not None else None,
-            "field": self.field if self.field is not None else None,
+            "namespace": self.namespace.value,
+            "field": self.field,
             "orderBy": self.orderBy.value if self.orderBy is not None else None,
         }
 

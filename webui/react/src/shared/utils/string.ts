@@ -24,6 +24,12 @@ export const camelCaseToSentence = (text: string): string => {
   return result.charAt(0).toUpperCase() + result.slice(1);
 };
 
+export const camelCaseToSnake = (text: string): string => {
+  return text.trim().split('').map((char, index) => {
+    return char === char.toUpperCase() ? `${index !== 0 ? '_' : ''}${char.toLowerCase()}` : char;
+  }).join('');
+};
+
 export const kebabToCamelCase = (text: string): string => {
   return text.trim().split('-').map((word, index) => {
     return index === 0 ? word.toLowerCase() : capitalizeWord(word);
