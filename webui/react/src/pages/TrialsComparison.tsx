@@ -80,8 +80,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<TrialFilters>({
     projectIds: projectId
-      ? [ projectId ]
-      : [ 1 ],
+      ? [ String(projectId) ]
+      : [ '1' ],
   });
   const [ sorter, setSorter ] = useState<V1TrialSorter>({
     field: 'trialId',
@@ -252,8 +252,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                 <Section
                   bodyBorder
                   bodyScroll
-                  filters={metricsViewSelect}
-                  loading={!hasLoaded}>
+                  filters={metricsViewSelect}>
                   <div className={css.container}>
                     <div className={css.chart}>
                       {view?.metric && chartData && (

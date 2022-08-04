@@ -520,7 +520,7 @@ var QueryTrialsOrderMap = map[apiv1.OrderBy]SortDirection{
 }
 
 // This allows dot on top of whats allowed in existing regex validField.
-var alphaNumericalWithUnderscoreAndDots = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
+var safeString = regexp.MustCompile(`^[a-zA-Z0-9_\.\-]+$`)
 
 func hParamAccessor(hp string) string {
 	nesting := strings.Split(hp, ".")
@@ -537,11 +537,11 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (
 		addTagsPhrase := "tags"
 		removeTagsPhrase := ""
 		for _, tag := range payload.Tags {
-			if !alphaNumericalWithUnderscoreAndDots.MatchString(tag.Key + tag.Value) {
+			if !safeString.MatchString(tag.Key + tag.Value) {
 				return nil, fmt.Errorf("tag patch {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
 			}
 			if tag.Value == "" {
-				removeTagsPhrase += fmt.Sprintf(" - %s ", tag.Key)
+				removeTagsPhrase += fmt.Sprintf(" - '%s' ", tag.Key)
 			} else {
 				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
 			}
@@ -553,7 +553,7 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (
 }
 
 func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace, field string) (string, error) {
-	if !alphaNumericalWithUnderscoreAndDots.MatchString(field) {
+	if !safeString.MatchString(field) {
 		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
 	}
 	switch namespace {
@@ -612,7 +612,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
-			if !alphaNumericalWithUnderscoreAndDots.MatchString(tag.Key + tag.Value) {
+			if !safeString.MatchString(tag.Key + tag.Value) {
 				return nil, fmt.Errorf("tag filter {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
 			}
 			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
@@ -631,7 +631,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	}
 
 	for _, f := range filters.ValidationMetrics {
-		if !alphaNumericalWithUnderscoreAndDots.MatchString(f.Name) {
+		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
 		conditional := conditionalForNumberRange(f.Min, f.Max)
@@ -640,7 +640,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	}
 
 	for _, f := range filters.TrainingMetrics {
-		if !alphaNumericalWithUnderscoreAndDots.MatchString(f.Name) {
+		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
 		conditional := conditionalForNumberRange(f.Min, f.Max)

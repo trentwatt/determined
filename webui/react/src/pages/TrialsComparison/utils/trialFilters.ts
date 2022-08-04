@@ -2,7 +2,7 @@ import { NumberRangeDict, TrialFilters } from 'pages/TrialsComparison/types';
 import { V1NumberRangeFilter,
   V1TrialFilters,
   V1TrialSorter } from 'services/api-ts-sdk';
-import { numberElseUndefined } from 'shared/utils/data';
+import { isNumber, numberElseUndefined } from 'shared/utils/data';
 import { camelCaseToSnake } from 'shared/utils/string';
 
 const encodeNumberRangeDict = (d :NumberRangeDict): Array<V1NumberRangeFilter> =>
@@ -19,18 +19,20 @@ export const encodeTrialSorter = (s: V1TrialSorter): V1TrialSorter => ({
   orderBy: s.orderBy,
 });
 
+const encodeIdList = (l?: string[]): number[] | undefined => l?.map(parseInt).filter(isNumber);
+
 export const encodeFilters = (f: TrialFilters, s: V1TrialSorter): V1TrialFilters => {
   console.log(f);
   return {
-    experimentIds: f.experimentIds,
+    experimentIds: encodeIdList(f.experimentIds),
     hparams: encodeNumberRangeDict(f.hparams ?? {}),
-    projectIds: f.projectIds,
+    projectIds: encodeIdList(f.projectIds),
     rankWithinExp: { rank: f.rankWithinExp, sorter: encodeTrialSorter(s) },
     searcher: f.searcher,
     tags: f.tags?.map((tag) => ({ key: tag })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
-    userIds: f.userIds,
+    userIds: encodeIdList(f.userIds),
     validationMetrics: encodeNumberRangeDict(f.validationMetrics ?? {}),
-    workspaceIds: f.workspaceIds,
+    workspaceIds: encodeIdList(f.workspaceIds),
   };
 };

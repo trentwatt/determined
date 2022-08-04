@@ -1,6 +1,7 @@
 import { Button, Input } from 'antd';
 import type { InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import { filter } from 'fp-ts/lib/Filterable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
@@ -9,11 +10,16 @@ import usePrevious from 'shared/hooks/usePrevious';
 
 import css from './TableFilterDropdown.module.scss';
 
+export const nonDigits = /\D/;
+
 interface Props extends FilterDropdownProps {
   multiple?: boolean;
+  onAddFilter?: (key: string) => void;
   onFilter?: (keys: string[]) => void;
+  onRemoveFilter?: (key: string) => void;
   onReset?: () => void;
   searchable?: boolean;
+  validatorRegex?: RegExp;
   values?: string[];
   width?: number;
 }
@@ -33,6 +39,8 @@ const TableFilterDropdown: React.FC<Props> = ({
   onFilter,
   onReset,
   searchable,
+  onAddFilter,
+  validatorRegex,
   values = [],
   visible,
   width = 160,
@@ -43,12 +51,13 @@ const TableFilterDropdown: React.FC<Props> = ({
   const prevVisible = usePrevious(visible, undefined);
 
   const filteredOptions = useMemo(() => {
+    if (validatorRegex) return values.map((v) => ({ text: v, value: v }));
     const searchString = search.toLocaleLowerCase();
     return (filters || []).filter((filter) => {
       return filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
         filter.text?.toString().toLocaleLowerCase().includes(searchString);
     });
-  }, [ filters, search ]);
+  }, [ filters, search, validatorRegex, values ]);
 
   const listHeight = useMemo(() => {
     if (filteredOptions.length < 10) return ITEM_HEIGHT * filteredOptions.length;
@@ -59,14 +68,12 @@ const TableFilterDropdown: React.FC<Props> = ({
     setSearch(e.target.value || '');
   }, []);
 
-  const handleOptionClick = useCallback((e: React.MouseEvent) => {
-    const value = (e.target as HTMLDivElement).getAttribute('data-value');
-    if (!value) return;
-
+  const handleOptionSelect = useCallback((value: string, metaKey?: boolean) => {
+    console.log({ value });
     setSelectedMap((prev) => {
       if (multiple) {
         // Support for using CMD + Click to select every option EXCEPT the selected option.
-        if (e.metaKey && filters) {
+        if (metaKey && filters) {
           return filters.reduce((acc, filter) => {
             if (filter.value !== value) acc[filter.value as string] = true;
             return acc;
@@ -82,6 +89,27 @@ const TableFilterDropdown: React.FC<Props> = ({
     });
   }, [ filters, multiple ]);
 
+  const handleOptionClick = useCallback((e: React.MouseEvent) => {
+    const value = (e.target as HTMLDivElement).getAttribute('data-value');
+    if (value) handleOptionSelect(value, e.metaKey);
+
+  }, [ handleOptionSelect ]);
+
+  const handlePressEnter = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (validatorRegex) {
+      const validatedInput = inputRef.current?.input.value?.replace(validatorRegex, '');
+      if (validatedInput) {
+        onAddFilter?.(validatedInput);
+        setSelectedMap((m) => ({ ...m, [validatedInput]: true }));
+        setSearch('');
+      }
+    } else {
+      if (filteredOptions.length) {
+        handleOptionSelect(filteredOptions[0].value as string, e.metaKey);
+      }
+    }
+  }, [ validatorRegex, filteredOptions, onAddFilter, handleOptionSelect ]);
+
   const handleReset = useCallback(() => {
     setSelectedMap({});
     if (onReset) onReset();
@@ -89,13 +117,22 @@ const TableFilterDropdown: React.FC<Props> = ({
   }, [ clearFilters, onReset ]);
 
   const handleFilter = useCallback(() => {
-    if (onFilter) onFilter(Object.keys(selectedMap));
+    const filters = Object.keys(selectedMap);
+    if (validatorRegex) {
+      const validatedInput = inputRef.current?.input.value?.replace(validatorRegex, '');
+      if (validatedInput) {
+        onAddFilter?.(validatedInput);
+        filters.push(validatedInput);
+        setSelectedMap((m) => ({ ...m, [validatedInput]: true }));
+      }
+    }
+    onFilter?.(filters);
     confirm();
-  }, [ confirm, onFilter, selectedMap ]);
+  }, [ confirm, onFilter, selectedMap, validatorRegex, onAddFilter ]);
 
   const OptionRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
     const classes = [ css.option ];
-    const isSelected = selectedMap[data[index].value];
+    const isSelected = validatorRegex || selectedMap[data[index].value];
     const isJSX = typeof data[index].text !== 'string';
     if (isSelected) classes.push(css.selected);
     return (
@@ -108,7 +145,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         <Icon name="checkmark" />
       </div>
     );
-  }, [ handleOptionClick, selectedMap ]);
+  }, [ handleOptionClick, selectedMap, validatorRegex ]);
 
   /*
    * Detect when filter dropdown is being shown and
@@ -139,11 +176,12 @@ const TableFilterDropdown: React.FC<Props> = ({
             allowClear
             aria-label={ARIA_LABEL_INPUT}
             bordered={false}
-            placeholder="search filters"
+            placeholder={validatorRegex ? 'search filters' : 'enter a number'}
             prefix={<Icon name="search" size="tiny" />}
             ref={inputRef}
             value={search}
             onChange={handleSearchChange}
+            onPressEnter={handlePressEnter}
           />
         </div>
       )}

@@ -8,16 +8,16 @@ interface NumberRange {
 export type NumberRangeDict = Record<string, NumberRange>
 
 export interface TrialFilters {
-  experimentIds?: Array<number>;
+  experimentIds?: Array<string>;
   hparams?: NumberRangeDict;
-  projectIds?: Array<number>;
+  projectIds?: Array<string>;
   rankWithinExp?: number;
   searcher?: string;
   tags?: string[];
   trainingMetrics?: NumberRangeDict;
-  userIds?: Array<number>;
+  userIds?: Array<string>;
   validationMetrics?:NumberRangeDict;
-  workspaceIds?: Array<number>;
+  workspaceIds?: Array<string>;
 }
 
 export type FilterSetter = Dispatch<SetStateAction<TrialFilters>>

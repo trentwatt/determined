@@ -9,7 +9,7 @@ import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './TagList.module.scss';
 
-enum TagAction {
+export enum TagAction {
   Add = 'Add',
   Remove = 'Remove',
 }
@@ -32,7 +32,7 @@ export const ARIA_LABEL_INPUT = 'new-tag-input';
 const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
-const EditableTagList: React.FC<Props> = (
+const TagList: React.FC<Props> = (
   { compact, disabled = false, ghost, tags, onAction, onChange }: Props,
 ) => {
   const initialState = {
@@ -172,4 +172,4 @@ const EditableTagList: React.FC<Props> = (
   );
 };
 
-export default EditableTagList;
+export default TagList;

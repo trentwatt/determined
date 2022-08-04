@@ -45,7 +45,7 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
       max(e.config->>'name') AS experiment_name,
       max(e.config->>'description') AS experiment_description,
       -- there's only one
-      jsonb_agg(e.config->>'labels')->0 AS experiment_labels,
+      jsonb_agg(e.config ->> 'labels'::text) AS experiment_labels,
       max(e.owner_id) AS user_id,
       max(e.project_id) AS project_id,
       max(p.workspace_id) AS workspace_id,

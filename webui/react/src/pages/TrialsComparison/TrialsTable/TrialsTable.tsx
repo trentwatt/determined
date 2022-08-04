@@ -1,3 +1,5 @@
+import { FilterDropdownProps } from 'antd/lib/table/interface';
+import { record } from 'io-ts';
 import React, { Dispatch, MutableRefObject, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -5,10 +7,13 @@ import InteractiveTable, { InteractiveTableSettings } from 'components/Interacti
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import TableFilterDropdown from 'components/TableFilterDropdown';
+import TagList, { TagAction } from 'components/TagList';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { FilterSetter, TrialFilters } from 'pages/TrialsComparison/types';
 import { HpValsMap } from 'pages/TrialsComparison/utils/trialData';
 import { paths } from 'routes/utils';
+import { patchTrials } from 'services/api';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
@@ -122,9 +127,27 @@ const TrialsTable: React.FC<Props> = ({
       };
     };
 
+    const experimentFilterDropdown = (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+
+        multiple
+        searchable
+        validatorRegex={/\D/}
+        values={filters.experimentIds}
+        onAddFilter={(experimentId: string) => setFilters?.((filters) =>
+          ({
+            ...filters,
+            experimentIds: [ experimentId, ...(filters.experimentIds ?? []) ],
+          }))}
+        onReset={() => setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
+      />
+    );
+
     const experimentIdColumn = {
       dataIndex: 'experimentId',
       defaultWidth: 60,
+      filterDropdown: experimentFilterDropdown,
       key: 'experimentId',
       render: (_: string, record: V1AugmentedTrial) => (
         <Link path={paths.experimentDetails(record.experimentId)}>
@@ -156,6 +179,58 @@ const TrialsTable: React.FC<Props> = ({
     };
 
     const hpFilterRange = rangeFilterForPrefix('hparams', filters, setFilters);
+
+    const tagFilterDropdown = (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+
+        multiple
+        searchable
+        validatorRegex={/[^a-zA-Z0-9]+$/} // need fix
+        values={filters.tags}
+        onAddFilter={(tag: string) => setFilters?.((filters) =>
+          ({
+            ...filters,
+            tags: [ tag, ...(filters.tags ?? []) ],
+          }))}
+        onReset={() => setFilters?.((filters) => ({ ...filters, tags: [] }))}
+      />
+    );
+
+    const tagsRenderer = (value: string, record: V1AugmentedTrial) => {
+      const handleTagAction = async (action: TagAction, tag: string) => {
+        try {
+          if (action === TagAction.Add) {
+            await patchTrials({
+              patch: { tags: [ { key: tag, value: '1' } ] },
+              trialIds: [ record.trialId ],
+            });
+          } else if (action === TagAction.Remove) {
+            patchTrials({
+              patch: { tags: [ { key: tag, value: '' } ] },
+              trialIds: [ record.trialId ],
+            });
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      return (
+        <TagList
+          tags={Object.keys(record.tags)}
+          onAction={handleTagAction}
+        />
+      );
+    };
+
+    const tagColumn = {
+      dataIndex: 'tags',
+      defaultWidth: 60,
+      filterDropdown: tagFilterDropdown,
+      key: 'labels',
+      render: tagsRenderer,
+      title: 'Tags',
+    };
 
     const validationMetricFilterRange =
       rangeFilterForPrefix(
@@ -204,7 +279,7 @@ const TrialsTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, experimentIdColumn, ...hpColumns, ...metricsColumns ];
+    return [ idColumn, experimentIdColumn, tagColumn, ...hpColumns, ...metricsColumns ];
   }, [ hpVals, filters, metrics, setFilters ]);
 
   useEffect(() => {
