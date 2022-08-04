@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -568,9 +570,20 @@ func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace, 
 	}
 }
 
+func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleValue) string {
+	if min != nil && max != nil {
+		return fmt.Sprintf("BETWEEN %f %f", min.Value, max.Value)
+	} else if min != nil {
+		return fmt.Sprintf(" > %f", min.Value)
+	} else if max != nil {
+		return fmt.Sprintf(" < %f", max.Value)
+	}
+	return "IS NOT NULL"
+
+}
+
 func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
-	fmt.Println("In Filter")
 
 	if filters.RankWithinExp != nil && filters.RankWithinExp.Rank != 0 {
 		r := filters.RankWithinExp
@@ -618,18 +631,30 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 	}
 
 	for _, f := range filters.ValidationMetrics {
-		q = q.Where("(validation_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+		if !alphaNumericalWithUnderscoreAndDots.MatchString(f.Name) {
+			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
+		}
+		conditional := conditionalForNumberRange(f.Min, f.Max)
+		wherePhrase := fmt.Sprintf("(validation_metrics->>'%s')::float8 %s", f.Name, conditional)
+		q = q.Where(wherePhrase)
 	}
 
 	for _, f := range filters.TrainingMetrics {
-		q = q.Where("(training_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+		if !alphaNumericalWithUnderscoreAndDots.MatchString(f.Name) {
+			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
+		}
+		conditional := conditionalForNumberRange(f.Min, f.Max)
+		wherePhrase := fmt.Sprintf("(training_metrics->>'%s')::float8 %s", f.Name, conditional)
+		q = q.Where(wherePhrase)
 	}
 
-	for _, hp := range filters.Hparams {
+	for _, f := range filters.Hparams {
+
+		conditional := conditionalForNumberRange(f.Min, f.Max)
 		// this will fail for non-coerceable strings
 		// a request where you ask for string hps in a range is a "Bad Request"
-		whereHParam := fmt.Sprintf("(%s)::float8 BETWEEN ? AND ?", hParamAccessor(hp.Name))
-		q = q.Where(whereHParam, hp.Min, hp.Max)
+		wherePhrase := fmt.Sprintf("(%s)::float8 %s", hParamAccessor(f.Name), conditional)
+		q = q.Where(wherePhrase)
 	}
 
 	if filters.Searcher != "" {

@@ -1747,19 +1747,25 @@ export interface V1CreateTrialsCollectionRequest {
      * @type {string}
      * @memberof V1CreateTrialsCollectionRequest
      */
-    name?: string;
+    name: string;
     /**
      * 
      * @type {number}
      * @memberof V1CreateTrialsCollectionRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * 
      * @type {V1TrialFilters}
      * @memberof V1CreateTrialsCollectionRequest
      */
-    filters?: V1TrialFilters;
+    filters: V1TrialFilters;
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    sorter: V1TrialSorter;
 }
 
 /**
@@ -4620,13 +4626,13 @@ export interface V1NumberRangeFilter {
      * @type {number}
      * @memberof V1NumberRangeFilter
      */
-    min: number;
+    min?: number;
     /**
      * 
      * @type {number}
      * @memberof V1NumberRangeFilter
      */
-    max: number;
+    max?: number;
 }
 
 /**
@@ -7327,6 +7333,32 @@ export interface V1TrialSimulation {
 /**
  * 
  * @export
+ * @interface V1TrialSorter
+ */
+export interface V1TrialSorter {
+    /**
+     * 
+     * @type {TrialSorterNamespace}
+     * @memberof V1TrialSorter
+     */
+    namespace: TrialSorterNamespace;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialSorter
+     */
+    field: string;
+    /**
+     * 
+     * @type {V1OrderBy}
+     * @memberof V1TrialSorter
+     */
+    orderBy?: V1OrderBy;
+}
+
+/**
+ * 
+ * @export
  * @interface V1TrialTag
  */
 export interface V1TrialTag {
@@ -7380,6 +7412,12 @@ export interface V1TrialsCollection {
      * @memberof V1TrialsCollection
      */
     filters?: V1TrialFilters;
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof V1TrialsCollection
+     */
+    sorter?: V1TrialSorter;
 }
 
 /**
@@ -7478,32 +7516,6 @@ export interface V1TrialsSnapshotResponseTrial {
      * @memberof V1TrialsSnapshotResponseTrial
      */
     batchesProcessed: number;
-}
-
-/**
- * 
- * @export
- * @interface V1TrialSorter
- */
-export interface V1TrialSorter {
-    /**
-     * 
-     * @type {TrialSorterNamespace}
-     * @memberof V1TrialSorter
-     */
-    namespace: TrialSorterNamespace;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1TrialSorter
-     */
-    field: string;
-    /**
-     * 
-     * @type {V1OrderBy}
-     * @memberof V1TrialSorter
-     */
-    orderBy?: V1OrderBy;
 }
 
 /**

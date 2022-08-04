@@ -13,6 +13,13 @@ export const isNumber = (data: unknown): data is number => typeof data === 'numb
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
+
+export const numberElseUndefined = (data: string | undefined): number | undefined => {
+  if (data === undefined) return undefined;
+  const x = parseFloat(data);
+  return isNumber(x) ? x : undefined;
+};
+
 export const isPrimitive = (data: unknown): boolean => (
   isBigInt(data) ||
   isBoolean(data) ||

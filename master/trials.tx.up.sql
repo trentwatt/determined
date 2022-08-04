@@ -21,33 +21,45 @@ ALTER TABLE raw_validations DROP CONSTRAINT validations_trial_id_run_id_total_ba
 CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_unique ON raw_validations(trial_id, total_batches, trial_run_id);
 
 
+CREATE AGGREGATE jsonb_collect(jsonb) (
+  SFUNC = 'jsonb_concat',
+  STYPE = jsonb,
+  INITCOND = '{}'
+);
+
 CREATE OR REPLACE VIEW public.trials_augmented_view AS 
+  WITH b AS (
+    select trial_id, max(total_batches) total_batches from steps group by trial_id
+  )
   SELECT
       t.id AS trial_id,
       t.state AS state,
       t.hparams AS hparams,
-      s1.metrics->'avg_metrics' AS training_metrics,
-      v.metrics->'validation_metrics' AS validation_metrics,
+      jsonb_collect(s.metrics->'avg_metrics') AS training_metrics,
+      jsonb_collect(v.metrics->'validation_metrics') AS validation_metrics,
       t.tags AS tags,
       t.start_time AS start_time,
       t.end_time AS end_time,
-      e.config->'searcher'->>'name' as searcher_type,
-      e.id AS experiment_id,
-      e.config->>'name' AS experiment_name,
-      e.config->>'description' AS experiment_description,
-      e.config->'labels' AS experiment_labels,
-      e.owner_id AS user_id,
-      e.project_id AS project_id,
-      p.workspace_id AS workspace_id,
-      max(s2.total_batches) as total_batches
+      max(e.config->'searcher'->>'name') as searcher_type,
+      max(e.id) AS experiment_id,
+      max(e.config->>'name') AS experiment_name,
+      max(e.config->>'description') AS experiment_description,
+      -- there's only one
+      jsonb_agg(e.config->>'labels')->0 AS experiment_labels,
+      max(e.owner_id) AS user_id,
+      max(e.project_id) AS project_id,
+      max(p.workspace_id) AS workspace_id,
+      -- temporary
+      max(b.total_batches) as total_batches
   FROM trials t
   LEFT JOIN experiments e ON t.experiment_id = e.id
   LEFT JOIN projects p ON e.project_id = p.id
   LEFT JOIN validations v ON t.id = v.trial_id AND v.id = t.best_validation_id
-  LEFT JOIN steps s1 on t.id = s1.trial_id AND v.total_batches = s1.total_batches
+  LEFT JOIN steps s on t.id = s.trial_id AND v.total_batches = s.total_batches
+  LEFT JOIN b on t.id = b.trial_id 
+  group by t.id
   -- find other subquery way to do this??
-  LEFT JOIN steps s2 on t.id = s2.trial_id
-  group by t.id, training_metrics, validation_metrics, e.id, searcher_type, p.workspace_id
+
 
 -- is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
 -- does avg_metrics correspond to the actual state at that batch?

@@ -118,16 +118,16 @@ describe('Metric Utilities', () => {
     });
   });
 
-  describe('valueToMetric', () => {
+  describe('metricKeyToMetric', () => {
     it('should convert value to metric name', () => {
       metrics.forEach((metric) => {
-        expect(utils.valueToMetric(metric.value)).toStrictEqual(metric.metric);
+        expect(utils.metricKeyToMetric(metric.value)).toStrictEqual(metric.metric);
       });
     });
 
     it('should handle invalid metric name value', () => {
-      expect(utils.valueToMetric('invalidMetricValue')).toBeUndefined();
-      expect(utils.valueToMetric('fauxMetricType|loss')).toBeUndefined();
+      expect(utils.metricKeyToMetric('invalidMetricValue')).toBeUndefined();
+      expect(utils.metricKeyToMetric('fauxMetricType|loss')).toBeUndefined();
     });
   });
 });

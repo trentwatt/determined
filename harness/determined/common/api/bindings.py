@@ -143,7 +143,7 @@ class TrialFiltersRankWithinExp:
     def __init__(
         self,
         rank: "typing.Optional[int]" = None,
-        sorter: "typing.Optional[v1TrialsSorter]" = None,
+        sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
         self.sorter = sorter
         self.rank = rank
@@ -151,7 +151,7 @@ class TrialFiltersRankWithinExp:
     @classmethod
     def from_json(cls, obj: Json) -> "TrialFiltersRankWithinExp":
         return cls(
-            sorter=v1TrialsSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
+            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
             rank=obj.get("rank", None),
 >>>>>>> 2ff1f3f8a (tags and query updates)
         )
@@ -211,7 +211,7 @@ class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
     PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
 
-class TrialsSorterNamespace(enum.Enum):
+class TrialSorterNamespace(enum.Enum):
     TRIALS = "TRIALS"
     HPARAMS = "HPARAMS"
     TRAINING_METRICS = "TRAINING_METRICS"
@@ -1224,27 +1224,31 @@ class v1CreateExperimentResponse:
 class v1CreateTrialsCollectionRequest:
     def __init__(
         self,
-        filters: "typing.Optional[v1TrialFilters]" = None,
-        name: "typing.Optional[str]" = None,
-        projectId: "typing.Optional[int]" = None,
+        filters: "v1TrialFilters",
+        name: str,
+        projectId: int,
+        sorter: "v1TrialSorter",
     ):
         self.name = name
         self.projectId = projectId
         self.filters = filters
+        self.sorter = sorter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateTrialsCollectionRequest":
         return cls(
-            name=obj.get("name", None),
-            projectId=obj.get("projectId", None),
-            filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            name=obj["name"],
+            projectId=obj["projectId"],
+            filters=v1TrialFilters.from_json(obj["filters"]),
+            sorter=v1TrialSorter.from_json(obj["sorter"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "name": self.name if self.name is not None else None,
-            "projectId": self.projectId if self.projectId is not None else None,
-            "filters": self.filters.to_json() if self.filters is not None else None,
+            "name": self.name,
+            "projectId": self.projectId,
+            "filters": self.filters.to_json(),
+            "sorter": self.sorter.to_json(),
         }
 
 class v1CreateTrialsCollectionResponse:
@@ -3937,9 +3941,9 @@ class v1Notebook:
 class v1NumberRangeFilter:
     def __init__(
         self,
-        max: float,
-        min: float,
         name: str,
+        max: "typing.Optional[float]" = None,
+        min: "typing.Optional[float]" = None,
     ):
         self.name = name
         self.min = min
@@ -3949,15 +3953,15 @@ class v1NumberRangeFilter:
     def from_json(cls, obj: Json) -> "v1NumberRangeFilter":
         return cls(
             name=obj["name"],
-            min=float(obj["min"]),
-            max=float(obj["max"]),
+            min=float(obj["min"]) if obj.get("min", None) is not None else None,
+            max=float(obj["max"]) if obj.get("max", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name,
-            "min": dump_float(self.min),
-            "max": dump_float(self.max),
+            "min": dump_float(self.min) if self.min is not None else None,
+            "max": dump_float(self.max) if self.max is not None else None,
         }
 
 class v1OrderBy(enum.Enum):
@@ -4869,7 +4873,7 @@ class v1QueryTrialsRequest:
         filters: "v1TrialFilters",
         limit: "typing.Optional[int]" = None,
         offset: "typing.Optional[int]" = None,
-        sorter: "typing.Optional[v1TrialsSorter]" = None,
+        sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
         self.filters = filters
         self.sorter = sorter
@@ -4880,7 +4884,7 @@ class v1QueryTrialsRequest:
     def from_json(cls, obj: Json) -> "v1QueryTrialsRequest":
         return cls(
             filters=v1TrialFilters.from_json(obj["filters"]),
-            sorter=v1TrialsSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
+            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
             offset=obj.get("offset", None),
             limit=obj.get("limit", None),
         )
@@ -6417,6 +6421,32 @@ class v1TrialSimulation:
             "occurrences": self.occurrences if self.occurrences is not None else None,
         }
 
+class v1TrialSorter:
+    def __init__(
+        self,
+        field: str,
+        namespace: "TrialSorterNamespace",
+        orderBy: "typing.Optional[v1OrderBy]" = None,
+    ):
+        self.namespace = namespace
+        self.field = field
+        self.orderBy = orderBy
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialSorter":
+        return cls(
+            namespace=TrialSorterNamespace(obj["namespace"]),
+            field=obj["field"],
+            orderBy=v1OrderBy(obj["orderBy"]) if obj.get("orderBy", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "namespace": self.namespace.value,
+            "field": self.field,
+            "orderBy": self.orderBy.value if self.orderBy is not None else None,
+        }
+
 class v1TrialTag:
     def __init__(
         self,
@@ -6446,6 +6476,7 @@ class v1TrialsCollection:
         id: "typing.Optional[int]" = None,
         name: "typing.Optional[str]" = None,
         projectId: "typing.Optional[int]" = None,
+        sorter: "typing.Optional[v1TrialSorter]" = None,
         userId: "typing.Optional[int]" = None,
     ):
         self.id = id
@@ -6453,6 +6484,7 @@ class v1TrialsCollection:
         self.projectId = projectId
         self.name = name
         self.filters = filters
+        self.sorter = sorter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsCollection":
@@ -6462,6 +6494,7 @@ class v1TrialsCollection:
             projectId=obj.get("projectId", None),
             name=obj.get("name", None),
             filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -6471,6 +6504,7 @@ class v1TrialsCollection:
             "projectId": self.projectId if self.projectId is not None else None,
             "name": self.name if self.name is not None else None,
             "filters": self.filters.to_json() if self.filters is not None else None,
+            "sorter": self.sorter.to_json() if self.sorter is not None else None,
         }
 
 class v1TrialsSampleResponse:
@@ -6571,32 +6605,6 @@ class v1TrialsSnapshotResponseTrial:
             "hparams": self.hparams,
             "metric": dump_float(self.metric),
             "batchesProcessed": self.batchesProcessed,
-        }
-
-class v1TrialsSorter:
-    def __init__(
-        self,
-        field: str,
-        namespace: "TrialsSorterNamespace",
-        orderBy: "typing.Optional[v1OrderBy]" = None,
-    ):
-        self.namespace = namespace
-        self.field = field
-        self.orderBy = orderBy
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialsSorter":
-        return cls(
-            namespace=TrialsSorterNamespace(obj["namespace"]),
-            field=obj["field"],
-            orderBy=v1OrderBy(obj["orderBy"]) if obj.get("orderBy", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "namespace": self.namespace.value,
-            "field": self.field,
-            "orderBy": self.orderBy.value if self.orderBy is not None else None,
         }
 
 class v1UpdateJobQueueRequest:

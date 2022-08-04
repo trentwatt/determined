@@ -136,10 +136,6 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     setView(view);
   }, []);
 
-  const handleFilterChange = useCallback((filters: TrialFilters) => {
-    setFilters(filters);
-  }, []);
-
   const fetchTrials = useCallback(async () => {
     try {
       const response = await queryTrials(
@@ -283,6 +279,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                     />
                     <TrialsTable
                       containerRef={containerRef}
+                      filters={filters}
                       handleTableRowSelect={handleTableRowSelect}
                       highlightedTrialId={highlight.id}
                       hpVals={trialData.hpVals}
@@ -290,9 +287,9 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                       selectAllMatching={selectAllMatching}
                       selectedTrialIds={selectedTrialIds}
                       selection={true}
+                      setFilters={setFilters}
                       trialIds={trialData.trialIds}
                       trials={trialData.trials}
-                      onFilterChange={handleFilterChange}
                       onMouseEnter={highlight.mouseEnter}
                       onMouseLeave={highlight.mouseLeave}
                     />

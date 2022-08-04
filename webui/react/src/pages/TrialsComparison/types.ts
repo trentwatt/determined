@@ -1,6 +1,11 @@
-import { Range } from 'shared/types';
+import { Dispatch, SetStateAction } from 'react';
 
-export type NumberRangeDict = Record<string, Range<number>>
+interface NumberRange {
+  max?: string;
+  min?: string;
+}
+
+export type NumberRangeDict = Record<string, NumberRange>
 
 export interface TrialFilters {
   experimentIds?: Array<number>;
@@ -14,3 +19,5 @@ export interface TrialFilters {
   validationMetrics?:NumberRangeDict;
   workspaceIds?: Array<number>;
 }
+
+export type FilterSetter = Dispatch<SetStateAction<TrialFilters>>

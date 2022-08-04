@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
@@ -46,11 +47,11 @@ message WorkloadContainer {
 
 message NumberRangeFilter {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "min", "max" ] }
+    json_schema: { required: [ "name"] }
   };
   string name = 1;
-  float min   = 2;
-  float max   = 3;
+  google.protobuf.DoubleValue min   = 2;
+  google.protobuf.DoubleValue max   = 3;
 }
 
 message TrialTag {

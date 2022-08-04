@@ -405,7 +405,6 @@ func checkTrialPatchEmpty(p *apiv1.TrialPatch) error {
 }
 
 func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
-	fmt.Println("In API")
 	err := checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
 		return nil, fmt.Errorf("error querying tags for trials %w", err)

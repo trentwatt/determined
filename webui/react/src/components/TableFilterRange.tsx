@@ -5,10 +5,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import css from './TableFilterSearch.module.scss';
 
 interface Props extends FilterDropdownProps {
-  max: string;
-  min: string;
+  max?: string;
+  min?: string;
   onReset?: () => void;
-  onSet?: (min: string, max: string) => void;
+  onSet?: (min?: string, max?: string) => void;
 }
 
 const TableFilterRange: React.FC<Props> = ({

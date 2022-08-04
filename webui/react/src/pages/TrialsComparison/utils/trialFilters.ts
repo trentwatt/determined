@@ -2,10 +2,16 @@ import { NumberRangeDict, TrialFilters } from 'pages/TrialsComparison/types';
 import { V1NumberRangeFilter,
   V1TrialFilters,
   V1TrialSorter } from 'services/api-ts-sdk';
+import { numberElseUndefined } from 'shared/utils/data';
 import { camelCaseToSnake } from 'shared/utils/string';
 
 const encodeNumberRangeDict = (d :NumberRangeDict): Array<V1NumberRangeFilter> =>
-  Object.entries(d).map(([ key, range ]) => ({ max: range[1], min: range[0], name: key }));
+  Object.entries(d).map(([ key, range ]) =>
+    ({
+      max: numberElseUndefined(range.max),
+      min: numberElseUndefined(range.min),
+      name: key,
+    }));
 
 export const encodeTrialSorter = (s: V1TrialSorter): V1TrialSorter => ({
   field: camelCaseToSnake(s.field),
@@ -14,6 +20,7 @@ export const encodeTrialSorter = (s: V1TrialSorter): V1TrialSorter => ({
 });
 
 export const encodeFilters = (f: TrialFilters, s: V1TrialSorter): V1TrialFilters => {
+  console.log(f);
   return {
     experimentIds: f.experimentIds,
     hparams: encodeNumberRangeDict(f.hparams ?? {}),

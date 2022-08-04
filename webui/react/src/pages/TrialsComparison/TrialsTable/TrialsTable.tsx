@@ -1,23 +1,23 @@
-import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Dispatch, MutableRefObject, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
-import TableFilterRange from 'components/TableFilterRange';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { TrialFilters } from 'pages/TrialsComparison/types';
+import { FilterSetter, TrialFilters } from 'pages/TrialsComparison/types';
 import { HpValsMap } from 'pages/TrialsComparison/utils/trialData';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
-import { Primitive, RawJson, RecordKey } from 'shared/types';
+import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, primitiveSorter } from 'shared/utils/sort';
-import { Metric } from 'types';
-import { metricToKey } from 'utils/metric';
+import { Metric, MetricType } from 'types';
+import { metricKeyToName, metricKeyToType, metricToKey } from 'utils/metric';
 
+import rangeFilterForPrefix from './rangeFilter';
 import css from './TrialsTable.module.scss';
 import settingsConfig, {
   CompareTableSettings,
@@ -27,16 +27,17 @@ interface Props {
   colorScale?: ColorScale[];
   containerRef: MutableRefObject<HTMLElement | null>,
   filteredTrialIdMap?: Record<number, boolean>;
+  filters: TrialFilters;
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
   hpVals: HpValsMap
   metrics: Metric[];
-  onFilterChange?: (filters: TrialFilters) => void;
   onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   selectAllMatching: boolean;
   selectedTrialIds?: number[];
   selection?: boolean;
+  setFilters?: FilterSetter;
   trialIds: number[];
   trials: V1AugmentedTrial[];
 }
@@ -47,6 +48,7 @@ export interface TrialMetrics {
 }
 
 const TrialsTable: React.FC<Props> = ({
+  filters,
   highlightedTrialId,
   hpVals,
   onMouseEnter,
@@ -54,7 +56,7 @@ const TrialsTable: React.FC<Props> = ({
   trials,
   selection,
   handleTableRowSelect,
-  onFilterChange,
+  setFilters,
   selectedTrialIds,
   selectAllMatching,
   metrics,
@@ -65,7 +67,7 @@ const TrialsTable: React.FC<Props> = ({
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
   // PLACHOLDER, would actually be passed in
-  const [ filters, setFilters ] = useState<RawJson>({});
+  type FilterPrefix = 'hparams' | 'trainingMetrics' | 'validationMetrics'
 
   const { settings, updateSettings } = useSettings<CompareTableSettings>(settingsConfig);
 
@@ -99,13 +101,16 @@ const TrialsTable: React.FC<Props> = ({
     };
 
     const metricsRenderer = (key: string) => {
-      console.log(key);
       return (_: string, record: V1AugmentedTrial) => {
-        if (record.validationMetrics && isNumber(record.validationMetrics[key])){
-          const value = record.validationMetrics[key] as number;
-          return <HumanReadableNumber num={value} />;
+        const metricName = metricKeyToName(key);
+        const metricType = metricKeyToType(key);
+        let value;
+        if (metricType === MetricType.Validation) {
+          value = record.validationMetrics?.[metricName];
+        } else if (metricType === MetricType.Training) {
+          value = record.trainingMetrics?.[metricName];
         }
-        return '-' ;
+        return isNumber(value) ? <HumanReadableNumber num={value} /> : '-';
       };
     };
 
@@ -150,27 +155,20 @@ const TrialsTable: React.FC<Props> = ({
       };
     };
 
-    const hpFilterRange = (hp: string) => (filterProps: FilterDropdownProps) => {
+    const hpFilterRange = rangeFilterForPrefix('hparams', filters, setFilters);
 
-      const handleHpRangeApply = (min: string, max: string) => {
-        filters[hp] = { max, min };
-      };
-
-      const handleHpRangeReset = () => {
-        filters[hp] = undefined;
-        setFilters(filters);
-      };
-
-      return (
-        <TableFilterRange
-          {...filterProps}
-          max={filters[hp]?.max}
-          min={filters[hp]?.min}
-          onReset={handleHpRangeReset}
-          onSet={handleHpRangeApply}
-        />
+    const validationMetricFilterRange =
+      rangeFilterForPrefix(
+        'validationMetrics',
+        filters,
+        setFilters,
       );
-    };
+
+    const trainingMetricFilterRange = rangeFilterForPrefix(
+      'trainingMetrics',
+      filters,
+      setFilters,
+    );
 
     const hpColumns = Object
       .keys(hpVals || {})
@@ -193,15 +191,21 @@ const TrialsTable: React.FC<Props> = ({
         return {
           dataIndex: key,
           defaultWidth: 60,
+          filterDropdown: metric.type === MetricType.Training
+            ? trainingMetricFilterRange(metric.name)
+            : metric.type === MetricType.Validation
+              ? validationMetricFilterRange(metric.name)
+              : undefined,
           key,
           render: metricsRenderer(key),
           sorter: metricsSorter(key),
-          title: key,
+          title: <MetricBadgeTag metric={metric} />,
+
         };
       });
 
     return [ idColumn, experimentIdColumn, ...hpColumns, ...metricsColumns ];
-  }, [ hpVals, filters, metrics ]);
+  }, [ hpVals, filters, metrics, setFilters ]);
 
   useEffect(() => {
     updateSettings({
@@ -210,8 +214,8 @@ const TrialsTable: React.FC<Props> = ({
     });
   }, [ columns, updateSettings ]);
 
-  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    setPageSize(tablePagination.pageSize);
+  const handleTableChange = useCallback((_, tableFilters, tableSorter) => {
+    // console.log(tableFilters, tableSorter);
   }, []);
 
   const handleTableRow = useCallback((record: V1AugmentedTrial) => ({

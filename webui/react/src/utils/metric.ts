@@ -1,6 +1,5 @@
 import { RecordKey } from 'shared/types';
 import { Metric, MetricType, WorkloadGroup } from 'types';
-import { metricSorter } from 'utils/sort';
 
 import { alphaNumericSorter } from '../shared/utils/sort';
 
@@ -9,7 +8,7 @@ import { alphaNumericSorter } from '../shared/utils/sort';
  * Within each type of metric, sort in the order they appear in the `MetricNames` array.
  * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
  */
-export const metricNameSorter = (a: Metric, b: Metric): number => {
+export const metricSorter = (a: Metric, b: Metric): number => {
   const isAValidation = a.type === MetricType.Validation;
   const isBValidation = b.type === MetricType.Validation;
   if (isAValidation && !isBValidation) return -1;
@@ -74,9 +73,20 @@ export const metricToKey = (metric: Metric): string => {
   return `${metric.type}|${metric.name}`;
 };
 
-export const valueToMetric = (value: string): Metric | undefined => {
+export const metricKeyToMetric = (value: string): Metric | undefined => {
   const parts = value.split('|');
   if (parts.length !== 2) return;
   if (![ MetricType.Training, MetricType.Validation ].includes(parts[0] as MetricType)) return;
   return { name: parts[1], type: parts[0] as MetricType };
+};
+
+export const metricKeyToName = (key: string): string =>
+  metricKeyToMetric(key)?.name ?? '';
+
+export const metricKeyToType = (key: string): MetricType | undefined =>
+  metricKeyToMetric(key)?.type;
+
+export const metricKeyToStr = (key: string): string => {
+  const metric = metricKeyToMetric(key);
+  return metric ? metricToStr(metric) : '';
 };

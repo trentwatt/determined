@@ -3,7 +3,7 @@ import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Metric, MetricType } from 'types';
-import { metricSorter, metricToKey, valueToMetric } from 'utils/metric';
+import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
@@ -86,7 +86,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       return;
     }
 
-    const metric = valueToMetric(newValue as string);
+    const metric = metricKeyToMetric(newValue as string);
     if (!metric) return;
 
     if (multiple) {
@@ -112,7 +112,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     if (option.key === allOptionId || option.key === resetOptionId) return true;
     if (!option.value) return false;
 
-    const metric = valueToMetric(option.value);
+    const metric = metricKeyToMetric(option.value);
     if (metric === undefined) return false;
 
     return filterFn(search, metric.name);
