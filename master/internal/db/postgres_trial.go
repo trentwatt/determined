@@ -572,7 +572,7 @@ func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace, 
 
 func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleValue) string {
 	if min != nil && max != nil {
-		return fmt.Sprintf("BETWEEN %f %f", min.Value, max.Value)
+		return fmt.Sprintf("BETWEEN %f AND %f", min.Value, max.Value)
 	} else if min != nil {
 		return fmt.Sprintf(" > %f", min.Value)
 	} else if max != nil {
