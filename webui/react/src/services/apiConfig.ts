@@ -284,7 +284,7 @@ export const patchBulkTrials: DetApi<
   },
   request: (params: Api.V1BulkPatchTrialsRequest) => {
     return detApi.TrialsComparison.bulkPatchTrials(
-      { patch: params.patch, filters: params.filters },
+      { filters: params.filters, patch: params.patch },
     );
   },
 };

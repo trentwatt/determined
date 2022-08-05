@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
+import queryString from 'query-string';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
-import queryString from 'query-string';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
@@ -79,8 +79,8 @@ const TrialsComparison: React.FC<Props> = () => {
   const location = useLocation();
   const queries = queryString.parse(location.search);
   let experimentIds: string[];
-  if(queries.id && typeof queries.id === 'string'){
-    experimentIds = [queries.id]
+  if (queries.id && typeof queries.id === 'string'){
+    experimentIds = [ queries.id ];
   } else if (queries.id && typeof queries.id === 'object') {
     experimentIds = queries.id;
   } else {
@@ -88,9 +88,7 @@ const TrialsComparison: React.FC<Props> = () => {
   }
   const [ trialData, settrialData ] = useState<TrialsWithMetadata>(defaultTrialData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
-  const [ filters, setFilters ] = useState<TrialFilters>({
-    experimentIds 
-  });
+  const [ filters, setFilters ] = useState<TrialFilters>({ experimentIds });
   const [ sorter, setSorter ] = useState<V1TrialSorter>({
     field: 'trialId',
     namespace: TrialSorterNamespace.TRIALS,
@@ -110,7 +108,7 @@ const TrialsComparison: React.FC<Props> = () => {
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
-  } = useModalTrialTag({selectAllMatching, filters});
+  } = useModalTrialTag({ filters, selectAllMatching });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {

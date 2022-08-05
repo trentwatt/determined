@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import EditableTagList from 'components/TagList';
 import { TrialFilters } from 'pages/TrialsComparison/types';
-import { patchTrials, patchBulkTrials } from 'services/api';
+import { patchBulkTrials, patchTrials } from 'services/api';
 import { V1TrialFilters, V1TrialTag } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
@@ -48,14 +48,14 @@ const useModalTrialTag = ({ onClose, trialIds, selectAllMatching, filters }: Pro
 
   const handleOk = useCallback(async () => {
     const trialTags: V1TrialTag[] = tags.map((tag) => { return { key: tag, value: tag }; });
-    if(selectAllMatching){
-      const requestTrialFilters = filters as V1TrialFilters
+    if (selectAllMatching){
+      const requestTrialFilters = filters as V1TrialFilters;
       patchBulkTrials(
         {
-          patch: { tags: trialTags },
           filters: requestTrialFilters,
+          patch: { tags: trialTags },
         },
-      ).then((response) => console.log("select all response", response))
+      ).then((response) => console.log(response))
         .catch((err) => console.log(err));
     } else {
       patchTrials(

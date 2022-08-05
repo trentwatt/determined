@@ -119,10 +119,12 @@ const TrialsTable: React.FC<Props> = ({
       };
     };
 
-    const metricsSorter = (key: string) => {
+    const metricsSorter = (metric: Metric) => {
+      const type = metric.type;
+      const key = metric.name;
       return (recordA: V1AugmentedTrial, recordB: V1AugmentedTrial): number => {
-        const a = recordA.validationMetrics[key] as Primitive;
-        const b = recordB.validationMetrics[key] as Primitive;
+        const a = type == MetricType.Validation ? recordA.validationMetrics[key] : recordA.trainingMetrics[key] as Primitive;
+        const b = type == MetricType.Validation ? recordB.validationMetrics[key] : recordB.trainingMetrics[key] as Primitive;
         return primitiveSorter(a, b);
       };
     };
@@ -198,7 +200,7 @@ const TrialsTable: React.FC<Props> = ({
     );
 
     const tagsRenderer = (value: string, record: V1AugmentedTrial) => {
-      const [tags, setTags] = useState(Object.keys(record.tags));
+      const [ tags, setTags ] = useState(Object.keys(record.tags));
       const handleTagAction = async (action: TagAction, tag: string) => {
         try {
           if (action === TagAction.Add) {
@@ -206,7 +208,7 @@ const TrialsTable: React.FC<Props> = ({
               patch: { tags: [ { key: tag, value: '1' } ] },
               trialIds: [ record.trialId ],
             });
-            setTags([tag, ...tags])
+            setTags([ tag, ...tags ]);
           } else if (action === TagAction.Remove) {
             patchTrials({
               patch: { tags: [ { key: tag, value: '' } ] },
@@ -275,7 +277,7 @@ const TrialsTable: React.FC<Props> = ({
               : undefined,
           key,
           render: metricsRenderer(key),
-          sorter: metricsSorter(key),
+          sorter: metricsSorter(metric),
           title: <MetricBadgeTag metric={metric} />,
 
         };
