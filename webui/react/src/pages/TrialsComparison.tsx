@@ -44,12 +44,14 @@ import { openCommand } from 'wait';
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
 import { encodeFilters } from './TrialsComparison/utils/trialFilters';
+import useModalTrialCollection from 'hooks/useModal/Trial/useModalTrialCollection';
 
 const BATCH_PADDING = 50;
 
 const batchActions = [
   { label: TrialAction.OpenTensorBoard, value: TrialAction.OpenTensorBoard },
   { label: TrialAction.AddTags, value: TrialAction.AddTags },
+  { label: TrialAction.CreateCollection, value: TrialAction.CreateCollection },
 ];
 
 type ChartData = (number | null)[][]
@@ -110,10 +112,17 @@ const TrialsComparison: React.FC<Props> = () => {
     modalOpen: openTagModal,
   } = useModalTrialTag({ filters, selectAllMatching });
 
+  const {
+    contextHolder: modalTrialCollectionContextHolder,
+    modalOpen: openCreateCollectionModal,
+  } = useModalTrialCollection({filters});
+
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
         openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+      } else if (action === TrialAction.CreateCollection) {
+        openCreateCollectionModal({ filters, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);
@@ -300,6 +309,7 @@ const TrialsComparison: React.FC<Props> = () => {
                   </div>
                 </Section>
                 {modalTrialTagContextHolder}
+                {modalTrialCollectionContextHolder}
               </Page>
             </Tabs.TabPane>
           </Tabs>

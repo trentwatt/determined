@@ -315,6 +315,7 @@ export enum ExperimentAction {
 
 export enum TrialAction {
   AddTags = 'Add Tags',
+  CreateCollection = 'Create Collection',
   OpenTensorBoard = 'View in TensorBoard',
 }
 
