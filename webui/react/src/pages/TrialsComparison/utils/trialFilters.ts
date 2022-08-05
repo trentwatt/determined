@@ -19,7 +19,7 @@ export const encodeTrialSorter = (s: V1TrialSorter): V1TrialSorter => ({
   orderBy: s.orderBy,
 });
 
-const encodeIdList = (l?: string[]): number[] | undefined => l?.map(i => parseInt(i)).filter(i => isNumber(i));
+const encodeIdList = (l?: string[]): number[] | undefined => l?.map((i) => parseInt(i)).filter((i) => isNumber(i));
 export const encodeFilters = (f: TrialFilters, s: V1TrialSorter): V1TrialFilters => {
   return {
     experimentIds: encodeIdList(f.experimentIds),

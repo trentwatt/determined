@@ -7,6 +7,7 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
+import useModalTrialCollection from 'hooks/useModal/Trial/useModalTrialCollection';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
 import MetricsView, {
   Layout,
@@ -44,7 +45,6 @@ import { openCommand } from 'wait';
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
 import { encodeFilters } from './TrialsComparison/utils/trialFilters';
-import useModalTrialCollection from 'hooks/useModal/Trial/useModalTrialCollection';
 
 const BATCH_PADDING = 50;
 
@@ -115,7 +115,7 @@ const TrialsComparison: React.FC<Props> = () => {
   const {
     contextHolder: modalTrialCollectionContextHolder,
     modalOpen: openCreateCollectionModal,
-  } = useModalTrialCollection({filters});
+  } = useModalTrialCollection({ filters });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {

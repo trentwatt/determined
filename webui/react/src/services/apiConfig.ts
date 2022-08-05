@@ -289,6 +289,20 @@ export const patchBulkTrials: DetApi<
   },
 };
 
+export const createTrialCollection: DetApi<
+  Api.V1CreateTrialsCollectionRequest, Api.V1CreateTrialsCollectionResponse, Api.V1CreateTrialsCollectionResponse
+> = {
+  name: 'createTrialsCollection',
+  postProcess: (response: Api.V1CreateTrialsCollectionResponse) => {
+    return { collection: response.collection };
+  },
+  request: (params: Api.V1CreateTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.createTrialsCollection(
+      { filters: params.filters, name: params.name, projectId: params.projectId, sorter: params.sorter },
+    );
+  },
+};
+
 /* Experiment */
 
 export const getExperiments: DetApi<

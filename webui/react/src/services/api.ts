@@ -126,6 +126,12 @@ export const patchBulkTrials = generateDetApi<
   Api.V1BulkPatchTrialsResponse
 >(Config.patchBulkTrials);
 
+export const createTrialCollection = generateDetApi<
+  Api.V1CreateTrialsCollectionRequest,
+  Api.V1CreateTrialsCollectionResponse,
+  Api.V1CreateTrialsCollectionResponse
+>(Config.createTrialCollection);
+
 /* Experiments */
 
 export const getExperiments = generateDetApi<

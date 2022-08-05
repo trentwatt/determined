@@ -1,8 +1,9 @@
-import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { Input } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { ModalFuncProps } from 'antd/es/modal/Modal';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TrialFilters } from 'pages/TrialsComparison/types';
+import { createTrialCollection } from 'services/api';
 import { V1TrialFilters } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
@@ -26,7 +27,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const useModalTrialCollection = ({ onClose, trialIds, filters }: Props): ModalHooks => {
   const inputRef = useRef<Input>(null);
-  const [name, setName] = useState('');
+  const [ name, setName ] = useState('');
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
@@ -46,7 +47,10 @@ const useModalTrialCollection = ({ onClose, trialIds, filters }: Props): ModalHo
     );
   }, []);
 
-  const handleOk = useCallback(async () => {}, []);
+  const handleOk = useCallback(async () => {
+    // const requestFilters = filters as V1TrialFilters
+    // createTrialCollection({filters: requestFilters, name, projectId, sorter}).then().catch()
+  }, []);
 
   const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
     return {
