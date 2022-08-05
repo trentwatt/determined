@@ -545,9 +545,9 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (
 			} else {
 				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
 			}
-			setPhrase := fmt.Sprintf("tags = %s %s", addTagsPhrase, removeTagsPhrase)
-			q = q.Set(setPhrase)
 		}
+		setPhrase := fmt.Sprintf("tags = %s %s", addTagsPhrase, removeTagsPhrase)
+		q = q.Set(setPhrase)
 	}
 	return q, nil
 }
