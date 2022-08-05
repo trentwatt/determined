@@ -19,10 +19,8 @@ export const encodeTrialSorter = (s: V1TrialSorter): V1TrialSorter => ({
   orderBy: s.orderBy,
 });
 
-const encodeIdList = (l?: string[]): number[] | undefined => l?.map(parseInt).filter(isNumber);
-
+const encodeIdList = (l?: string[]): number[] | undefined => l?.map(i => parseInt(i)).filter(i => isNumber(i));
 export const encodeFilters = (f: TrialFilters, s: V1TrialSorter): V1TrialFilters => {
-  console.log(f);
   return {
     experimentIds: encodeIdList(f.experimentIds),
     hparams: encodeNumberRangeDict(f.hparams ?? {}),
