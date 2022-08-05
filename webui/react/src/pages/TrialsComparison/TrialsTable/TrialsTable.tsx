@@ -198,6 +198,7 @@ const TrialsTable: React.FC<Props> = ({
     );
 
     const tagsRenderer = (value: string, record: V1AugmentedTrial) => {
+      const [tags, setTags] = useState(Object.keys(record.tags));
       const handleTagAction = async (action: TagAction, tag: string) => {
         try {
           if (action === TagAction.Add) {
@@ -205,6 +206,7 @@ const TrialsTable: React.FC<Props> = ({
               patch: { tags: [ { key: tag, value: '1' } ] },
               trialIds: [ record.trialId ],
             });
+            setTags([tag, ...tags])
           } else if (action === TagAction.Remove) {
             patchTrials({
               patch: { tags: [ { key: tag, value: '' } ] },
@@ -217,7 +219,7 @@ const TrialsTable: React.FC<Props> = ({
       };
       return (
         <TagList
-          tags={Object.keys(record.tags)}
+          tags={tags}
           onAction={handleTagAction}
         />
       );
