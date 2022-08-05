@@ -143,12 +143,10 @@ const TrialsComparison: React.FC<Props> = () => {
   }, []);
 
   const fetchTrials = useCallback(async () => {
-    console.log("fetching useing filers", filters);
     try {
       const response = await queryTrials(
         { filters: encodeFilters(filters, sorter) },
       );
-      console.log("resp", response);
       settrialData((prev) =>
         response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialData))
        ?? prev);
@@ -194,7 +192,6 @@ const TrialsComparison: React.FC<Props> = () => {
     };
 
     // calling the API
-    console.log("TrialData", trialData);
     const trials = await compareTrials({
       maxDatapoints: 1000,
       metricNames: trialData.metrics,
