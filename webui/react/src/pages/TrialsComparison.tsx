@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
+import queryString from 'query-string';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
@@ -73,15 +74,22 @@ function log<T>(x: T): T {
   return x;
 }
 
-const TrialsComparison: React.FC<Props> = ({ projectId }) => {
+const TrialsComparison: React.FC<Props> = () => {
 
   const location = useLocation();
+  const queries = queryString.parse(location.search);
+  let experimentIds: string[];
+  if(queries.id && typeof queries.id === 'string'){
+    experimentIds = [queries.id]
+  } else if (queries.id && typeof queries.id === 'object') {
+    experimentIds = queries.id;
+  } else {
+    experimentIds = [];
+  }
   const [ trialData, settrialData ] = useState<TrialsWithMetadata>(defaultTrialData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
   const [ filters, setFilters ] = useState<TrialFilters>({
-    projectIds: projectId
-      ? [ String(projectId) ]
-      : [ '1' ],
+    experimentIds 
   });
   const [ sorter, setSorter ] = useState<V1TrialSorter>({
     field: 'trialId',

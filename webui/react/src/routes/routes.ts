@@ -60,7 +60,7 @@ const routes: RouteConfig[] = [
     id: 'experimentComparison',
     needAuth: true,
     path: '/experiment-compare',
-    title: 'Experiment',
+    title: 'Experiment Comparison',
   },
   {
     id: 'experimentDetails',
