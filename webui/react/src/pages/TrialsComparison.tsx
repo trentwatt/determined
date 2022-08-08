@@ -76,7 +76,7 @@ function log<T>(x: T): T {
   return x;
 }
 
-const TrialsComparison: React.FC<Props> = ({projectId}) => {
+const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const location = useLocation();
   const queries = queryString.parse(location.search);
@@ -122,7 +122,7 @@ const TrialsComparison: React.FC<Props> = ({projectId}) => {
       if (action === TrialAction.AddTags){
         openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.CreateCollection) {
-        openCreateCollectionModal({ projectId: projId, filters, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+        openCreateCollectionModal({ filters, projectId: projId, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);

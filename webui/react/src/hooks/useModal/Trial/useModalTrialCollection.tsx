@@ -50,18 +50,18 @@ const useModalTrialCollection = ({ onClose, trialIds, filters, projectId }: Prop
         />
       </div>
     );
-  }, [name, handleChange]);
+  }, [ name, handleChange ]);
 
   const handleOk = useCallback(async () => {
-    const requestFilters = filters as V1TrialFilters
+    const requestFilters = filters as V1TrialFilters;
     const sorter: V1TrialSorter = {
+      field: '',
       namespace: TrialSorterNamespace.TRIALS,
-      field: ''
-    } 
-    createTrialCollection({filters: requestFilters, name, projectId, sorter}).then(
-      response => console.log(response)
-    ).catch(err => console.log(err))
-  }, [name, filters, projectId]);
+    };
+    createTrialCollection({ filters: requestFilters, name, projectId, sorter }).then(
+      (response) => console.log(response),
+    ).catch((err) => console.log(err));
+  }, [ name, filters, projectId ]);
 
   const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
     return {
