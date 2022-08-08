@@ -16,6 +16,7 @@ import MetricsView, {
 import ComparisonHeader from 'pages/TrialsComparison/TrialsComparisonHeader';
 import TrialsTable from 'pages/TrialsComparison/TrialsTable/TrialsTable';
 import { TrialFilters } from 'pages/TrialsComparison/types';
+import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import {
   aggregrateTrialsMetadata,
   defaultTrialData,
@@ -97,6 +98,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     orderBy: V1OrderBy.ASC,
   });
   const [ view, setView ] = useState<MetricView>();
+  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
 
   const highlight = useHighlight(getTrialId);
@@ -142,6 +144,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   }, [ selectedTrialIds, openTagModal, trialData.trialIds, selectAllMatching ]);
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
+  const handleTableChange = useCallback((pageSize) => setPageSize(pageSize), []);
 
   const clearSelected = useCallback(() => {
     setSelectedTrialIds([]);
@@ -154,7 +157,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const fetchTrials = useCallback(async () => {
     try {
       const response = await queryTrials(
-        { filters: encodeFilters(filters, sorter) },
+        { filters: encodeFilters(filters, sorter), limit: pageSize},
       );
       settrialData((prev) =>
         response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialData))
@@ -294,6 +297,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                       containerRef={containerRef}
                       filters={filters}
                       handleTableRowSelect={handleTableRowSelect}
+                      handleTableChange={handleTableChange}
+                      pageSize={pageSize}
                       highlightedTrialId={highlight.id}
                       hpVals={trialData.hpVals}
                       metrics={trialData.metrics}

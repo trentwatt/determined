@@ -6,7 +6,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TagList, { TagAction } from 'components/TagList';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -34,11 +34,13 @@ interface Props {
   filteredTrialIdMap?: Record<number, boolean>;
   filters: TrialFilters;
   handleTableRowSelect?: (rowKeys: unknown) => void;
+  handleTableChange : (pageSize: any) => void;
   highlightedTrialId?: number;
   hpVals: HpValsMap
   metrics: Metric[];
   onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
   onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
+  pageSize: number;
   selectAllMatching: boolean;
   selectedTrialIds?: number[];
   selection?: boolean;
@@ -61,15 +63,16 @@ const TrialsTable: React.FC<Props> = ({
   trials,
   selection,
   handleTableRowSelect,
+  handleTableChange,
   setFilters,
   selectedTrialIds,
   selectAllMatching,
   metrics,
   trialIds,
   containerRef,
+  pageSize
 }: Props) => {
   // console.log(selectedTrialIds, trialIds);
-  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
   // PLACHOLDER, would actually be passed in
   type FilterPrefix = 'hparams' | 'trainingMetrics' | 'validationMetrics'
@@ -293,8 +296,9 @@ const TrialsTable: React.FC<Props> = ({
     });
   }, [ columns, updateSettings ]);
 
-  const handleTableChange = useCallback((_, tableFilters, tableSorter) => {
-    // console.log(tableFilters, tableSorter);
+  const OnTableChange = useCallback((paginationConfig, tableFilters, tableSorter) => {
+    console.log(tableFilters, tableSorter);
+   handleTableChange(paginationConfig.pageSize);
   }, []);
 
   const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
@@ -335,7 +339,7 @@ const TrialsTable: React.FC<Props> = ({
       size="small"
       sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      // onChange={handleTableChange}
+      onChange={OnTableChange}
       onRow={handleTableRow}
     />
   );
