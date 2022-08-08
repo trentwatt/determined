@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TrialFilters } from 'pages/TrialsComparison/types';
 import { createTrialCollection } from 'services/api';
-import { V1TrialFilters } from 'services/api-ts-sdk';
+import { TrialSorterNamespace, V1TrialFilters, V1TrialSorter } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
 import css from './useModalTrialCollection.module.scss';
@@ -12,24 +12,29 @@ import css from './useModalTrialCollection.module.scss';
 interface Props {
   onClose?: () => void;
   trialIds?: number[];
-  filters: TrialFilters
+  filters: TrialFilters;
+  projectId: number;
 }
 
 export interface ShowModalProps {
   trialIds?: number[];
   initialModalProps?: ModalFuncProps;
   filters?: TrialFilters
+  projectId: number;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalTrialCollection = ({ onClose, trialIds, filters }: Props): ModalHooks => {
+const useModalTrialCollection = ({ onClose, trialIds, filters, projectId }: Props): ModalHooks => {
   const inputRef = useRef<Input>(null);
   const [ name, setName ] = useState('');
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
-
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+  }, []);
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const modalContent = useMemo(() => {
@@ -41,16 +46,22 @@ const useModalTrialCollection = ({ onClose, trialIds, filters }: Props): ModalHo
           placeholder="collection name"
           ref={inputRef}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleChange}
         />
       </div>
     );
-  }, []);
+  }, [name, handleChange]);
 
   const handleOk = useCallback(async () => {
-    // const requestFilters = filters as V1TrialFilters
-    // createTrialCollection({filters: requestFilters, name, projectId, sorter}).then().catch()
-  }, []);
+    const requestFilters = filters as V1TrialFilters
+    const sorter: V1TrialSorter = {
+      namespace: TrialSorterNamespace.TRIALS,
+      field: ''
+    } 
+    createTrialCollection({filters: requestFilters, name, projectId, sorter}).then(
+      response => console.log(response)
+    ).catch(err => console.log(err))
+  }, [name, filters, projectId]);
 
   const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
     return {

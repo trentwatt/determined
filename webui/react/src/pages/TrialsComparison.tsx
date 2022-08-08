@@ -76,7 +76,7 @@ function log<T>(x: T): T {
   return x;
 }
 
-const TrialsComparison: React.FC<Props> = () => {
+const TrialsComparison: React.FC<Props> = ({projectId}) => {
 
   const location = useLocation();
   const queries = queryString.parse(location.search);
@@ -106,7 +106,7 @@ const TrialsComparison: React.FC<Props> = () => {
 
   const pageRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-
+  const projId = projectId ? projectId : 1;
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
@@ -115,14 +115,14 @@ const TrialsComparison: React.FC<Props> = () => {
   const {
     contextHolder: modalTrialCollectionContextHolder,
     modalOpen: openCreateCollectionModal,
-  } = useModalTrialCollection({ filters });
+  } = useModalTrialCollection({ filters, projectId: projId });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
         openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.CreateCollection) {
-        openCreateCollectionModal({ filters, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+        openCreateCollectionModal({ projectId: projId, filters, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);
