@@ -166,7 +166,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
-  }, [ filters, sorter ]);
+  }, [ filters, sorter, pageSize ]);
 
   useEffect(() => {
     fetchTrials();
