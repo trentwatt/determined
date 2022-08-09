@@ -117,14 +117,14 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const {
     contextHolder: modalTrialCollectionContextHolder,
     modalOpen: openCreateCollectionModal,
-  } = useModalTrialCollection({ filters, projectId: projId });
+  } = useModalTrialCollection({ filters, projectId: projId, selectAllMatching });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
         openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.CreateCollection) {
-        openCreateCollectionModal({ filters, projectId: projId, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+        openCreateCollectionModal({ selectAllMatching ,filters, projectId: projId, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);

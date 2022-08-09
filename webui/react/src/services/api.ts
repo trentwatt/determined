@@ -132,6 +132,12 @@ export const createTrialCollection = generateDetApi<
   Api.V1CreateTrialsCollectionResponse
 >(Config.createTrialCollection);
 
+export const getTrialCollection = generateDetApi<
+  number,
+  Api.V1GetTrialsCollectionsResponse,
+  Api.V1GetTrialsCollectionsResponse
+>(Config.getTrialCollection);
+
 /* Experiments */
 
 export const getExperiments = generateDetApi<

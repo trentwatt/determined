@@ -303,6 +303,20 @@ export const createTrialCollection: DetApi<
   },
 };
 
+export const getTrialCollection: DetApi<
+  number, Api.V1GetTrialsCollectionsResponse, Api.V1GetTrialsCollectionsResponse
+> = {
+  name: 'getTrialsCollection',
+  postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
+    return { collection: response?.collections };
+  },
+  request: (projectId: number) => {
+    return detApi.TrialsComparison.getTrialsCollections(
+      projectId
+    );
+  },
+};
+
 /* Experiment */
 
 export const getExperiments: DetApi<
