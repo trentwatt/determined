@@ -862,8 +862,7 @@ const ProjectDetails: React.FC = () => {
               <Menu>
                 {collections?.map((collection) => (
                   <Menu.Item
-                    key={`collection-${collection.id}`}
-                    onClick={() => switchShowArchived(!settings.archived)}>
+                    key={`collection-${collection.id}`}>
                     {collection.name}
                   </Menu.Item>
                 ))}
