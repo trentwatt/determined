@@ -308,7 +308,7 @@ export const getTrialCollection: DetApi<
 > = {
   name: 'getTrialsCollection',
   postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
-    return { collection: response?.collections };
+    return { collections: response.collections };
   },
   request: (projectId: number) => {
     return detApi.TrialsComparison.getTrialsCollections(
