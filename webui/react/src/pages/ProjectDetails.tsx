@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Button, Dropdown, Menu, Modal, Select, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -41,7 +41,9 @@ import {
   getExperimentLabels, getExperiments, getProject, killExperiment, openOrCreateTensorBoard,
   patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
 } from 'services/api';
+import { getTrialCollection } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { V1TrialsCollection } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
@@ -105,8 +107,8 @@ const ProjectDetails: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
+  const [ collections, setCollections ] = useState<V1TrialsCollection[]>();
   const pageRef = useRef<HTMLElement>(null);
-
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
   );
@@ -116,6 +118,13 @@ const ProjectDetails: React.FC = () => {
   }, [ updateDestinationSettings, project?.workspaceId ]);
 
   const id = parseInt(projectId);
+
+  useEffect(() => {
+    getTrialCollection(id).then((response) => {
+      if (!response.collections) return;
+      setCollections(response.collections);
+    }).catch((err) => console.log(err));
+  }, [ project ]);
 
   const {
     settings,
@@ -848,11 +857,42 @@ const ProjectDetails: React.FC = () => {
             onChange={switchShowArchived}
           />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <Dropdown
+            overlay={(
+              <Menu>
+                {collections?.map((collection) => (
+                  <Menu.Item
+                    key={`collection-${collection.id}`}
+                    onClick={() => switchShowArchived(!settings.archived)}>
+                    {collection.name}
+                  </Menu.Item>
+                ))}
+              </Menu>
+            )}
+            trigger={[ 'click' ]}>
+            <div>
+              <Button>Collections</Button>
+            </div>
+          </Dropdown>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown
-            overlay={<Menu {...getMenuProps()} />}
+            overlay={(
+              <Menu>
+                <Menu.Item
+                  key="switchArchive"
+                  onClick={() => switchShowArchived(!settings.archived)}>
+                  {settings.archived ? 'Hide Archived' : 'Show Archived'}
+                </Menu.Item>
+                <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
+                {filterCount > 0 && (
+                  <Menu.Item key="resetFilters" onClick={resetFilters}>
+                    Clear Filters ({filterCount})
+                  </Menu.Item>
+                )}
+              </Menu>
+            )}
             placement="bottomRight"
             trigger={[ 'click' ]}>
             <div>

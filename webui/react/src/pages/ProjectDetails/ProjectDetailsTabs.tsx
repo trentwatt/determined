@@ -5,14 +5,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
-import { getWorkspace, getTrialCollection } from 'services/api';
+import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { sentenceToCamelCase } from 'shared/utils/string';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './ProjectDetailsTabs.module.scss';
-import { V1TrialsCollection } from 'services/api-ts-sdk';
+
 
 const { TabPane } = Tabs;
 
@@ -34,7 +34,6 @@ const ProjectDetailsTabs: React.FC<Props> = (
 ) => {
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
-  const [collections, setCollections] = useState<V1TrialsCollection[]>();
   const fetchWorkspace = useCallback(async () => {
     try {
       const response = await getWorkspace({ id: project.workspaceId });
@@ -59,13 +58,6 @@ const ProjectDetailsTabs: React.FC<Props> = (
   useEffect(() => {
     fetchWorkspace();
   }, [ fetchWorkspace ]);
-
-  useEffect(() => {
-    getTrialCollection(project.id).then(response => {
-      if (!response.collections) return;
-      setCollections(response.collections);
-    }).catch(err => console.log(err))
-  }, [ project ]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
