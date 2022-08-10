@@ -67,7 +67,6 @@ const TableFilterDropdown: React.FC<Props> = ({
   }, []);
 
   const handleOptionSelect = useCallback((value: string, metaKey?: boolean) => {
-    console.log({ value });
     setSelectedMap((prev) => {
       if (multiple) {
         // Support for using CMD + Click to select every option EXCEPT the selected option.

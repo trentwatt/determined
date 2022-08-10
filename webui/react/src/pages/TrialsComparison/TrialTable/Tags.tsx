@@ -32,7 +32,7 @@ const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
         setTags((tags) => tags.filter((t) => t !== tag));
       }
     } catch (error) {
-      console.error(error);
+      // duly noted
     }
   };
 

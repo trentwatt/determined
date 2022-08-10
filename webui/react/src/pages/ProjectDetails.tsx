@@ -1,6 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Select, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -42,8 +41,11 @@ import {
   patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
 } from 'services/api';
 import { getTrialCollection } from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
-import { V1TrialsCollection } from 'services/api-ts-sdk';
+import {
+  Determinedexperimentv1State,
+  V1GetExperimentsRequestSortBy,
+  V1TrialsCollection,
+} from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
@@ -120,12 +122,11 @@ const ProjectDetails: React.FC = () => {
 
   const id = parseInt(projectId);
 
-  useEffect(() => {
-    getTrialCollection(id).then((response) => {
-      if (!response.collections) return;
-      setCollections(response.collections);
-    }).catch((err) => console.log(err));
-  }, [ project ]);
+  const fetchTrialsCollections = useCallback(async () => {
+    const response = await getTrialCollection(id);
+    setCollections(response.collections);
+
+  }, [ id ]);
 
   const {
     settings,
@@ -219,8 +220,8 @@ const ProjectDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
-  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
+      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels(), fetchTrialsCollections() ]);
+  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels, fetchTrialsCollections ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -819,36 +820,6 @@ const ProjectDetails: React.FC = () => {
   );
 
   const ExperimentTabOptions = useMemo(() => {
-    const getMenuProps = ():{items: MenuProps['items'], onClick: MenuProps['onClick']} => {
-      enum MenuKey {
-        SWITCH_ARCHIVED = 'switchArchive',
-        COLUMNS = 'columns',
-        RESULT_FILTER = 'resetFilters',
-      }
-
-      const funcs = {
-        [MenuKey.SWITCH_ARCHIVED]: () => { switchShowArchived(!settings.archived); },
-        [MenuKey.COLUMNS]: () => { handleCustomizeColumnsClick(); },
-        [MenuKey.RESULT_FILTER]: () => { resetFilters(); },
-      };
-
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
-      };
-
-      const menuItems: MenuProps['items'] = [
-        {
-          key: MenuKey.SWITCH_ARCHIVED,
-          label: settings.archived ? 'Hide Archived' : 'Show Archived',
-        },
-        { key: MenuKey.COLUMNS, label: 'Columns' },
-      ];
-      if (filterCount > 0) {
-        menuItems.push({ key: MenuKey.RESULT_FILTER, label: `Clear Filters (${filterCount})` });
-      }
-      return { items: menuItems, onClick: onItemClick };
-    };
-
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -902,11 +873,14 @@ const ProjectDetails: React.FC = () => {
         </div>
       </div>
     );
-  }, [ filterCount,
+  }, [
+    filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
-    switchShowArchived ]);
+    switchShowArchived,
+    collections,
+  ]);
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([
@@ -953,22 +927,22 @@ const ProjectDetails: React.FC = () => {
         options: ExperimentTabOptions,
         title: 'Experiments',
       },
-      // {
-      //   body: (
-      //     <PaginatedNotesCard
-      //       disabled={project?.archived}
-      //       notes={project?.notes ?? []}
-      //       onDelete={handleDeleteNote}
-      //       onNewPage={handleNewNotesPage}
-      //       onSave={handleSaveNotes}
-      //     />),
-      //   key: 'trials',
-      //   options: (
-      //     <div className={css.tabOptions}>
-      //       <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
-      //     </div>),
-      //   title: 'Notes',
-      // }
+      {
+        body: (
+          <PaginatedNotesCard
+            disabled={project?.archived}
+            notes={project?.notes ?? []}
+            onDelete={handleDeleteNote}
+            onNewPage={handleNewNotesPage}
+            onSave={handleSaveNotes}
+          />),
+        key: 'trials',
+        options: (
+          <div className={css.tabOptions}>
+            <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+          </div>),
+        title: 'Notes',
+      },
     ]);
   }, [ ContextMenu,
     ExperimentTabOptions,

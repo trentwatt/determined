@@ -73,7 +73,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const [ trialData, settrialData ] = useState<TrialsWithMetadata>(defaultTrialData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
-  const [ sorter, setSorter ] = useState<V1TrialSorter>({
+  const [ sorter ] = useState<V1TrialSorter>({
     field: 'trialId',
     namespace: TrialSorterNamespace.TRIALS,
     orderBy: V1OrderBy.ASC,
@@ -95,27 +95,26 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
-  } = useModalTrialTag({ filters, selectAllMatching });
+  } = useModalTrialTag({});
 
   const {
     contextHolder: modalTrialCollectionContextHolder,
     modalOpen: openCreateCollectionModal,
-  } = useModalTrialCollection({
-    filters,
-    projectId,
-    selectAllMatching,
-  });
+  } = useModalTrialCollection({ projectId });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
-        openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+        openTagModal({
+          trials: selectAllMatching
+            ? { filters, sorter }
+            : { trialIds: selectedTrialIds },
+        });
       } else if (action === TrialAction.CreateCollection) {
         openCreateCollectionModal({
-          filters,
-          projectId,
-          selectAllMatching,
-          trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds,
+          trials: selectAllMatching
+            ? { filters, sorter }
+            : { trialIds: selectedTrialIds },
         });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
@@ -135,11 +134,10 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     }
   }, [ selectedTrialIds,
     openTagModal,
-    trialData.trialIds,
     selectAllMatching,
     openCreateCollectionModal,
+    sorter,
     filters,
-    projectId,
   ]);
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
@@ -156,7 +154,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const fetchTrials = useCallback(async () => {
     try {
       const response = await queryTrials({
-        filters: encodeFilters(filters, sorter),
+        filters: encodeFilters(filters),
         // limit: pageSize,
         sorter: encodeTrialSorter(sorter),
       });

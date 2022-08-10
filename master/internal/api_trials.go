@@ -533,7 +533,6 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 	}
 
 	rowsAffected, err := res.RowsAffected()
-
 	if err != nil {
 		log.Warn("unable to determined number of rows affected")
 	}

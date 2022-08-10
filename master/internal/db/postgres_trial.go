@@ -558,7 +558,6 @@ func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleVa
 		return fmt.Sprintf(" < %f", max.Value)
 	}
 	return "IS NOT NULL"
-
 }
 
 type TrialsAugmented struct {

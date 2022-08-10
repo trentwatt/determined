@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
-import { getUserSetting, updateUserSetting } from 'services/api';
+import { getUserSetting } from 'services/api';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -232,7 +232,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     }, [] as string[]);
   }, [ config.settings, settings ]);
 
-  const updateSettings = useCallback(async (partialSettings: Partial<T>, push = false) => {
+  const updateSettings = useCallback((partialSettings: Partial<T>, push = false) => {
     if (!location.pathname.includes(config.applicableRoutespace ?? '')) return;
 
     const changes = Object.keys(partialSettings) as (keyof T)[];

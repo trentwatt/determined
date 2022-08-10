@@ -134,18 +134,18 @@ const TrialTable: React.FC<Props> = ({
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={filters.rankWithinExp || ''}
+        value={filters.ranker?.rank || ''}
         onReset={() => setFilters?.((filters) => ({ ...filters, rankWithinExp: '' }))}
         onSearch={(r) => setFilters?.((filters) => ({ ...filters, rankWithinExp: r }))}
       />
     ),
-    isFiltered: () => !!filters.rankWithinExp,
+    isFiltered: () => !!filters.ranker?.rank,
     key: 'rank',
     render: (_: string, record: V1AugmentedTrial) => (
       <div className={css.idLayout}>{record.rankWithinExp}</div>
     ),
     title: 'Rank in Exp',
-  }), [ filters.rankWithinExp, setFilters ]);
+  }), [ filters.ranker?.rank, setFilters ]);
 
   const hpColumns = useMemo(() => Object
     .keys(hpVals || {})
@@ -275,16 +275,16 @@ const TrialTable: React.FC<Props> = ({
     //        .map((c) => c.dataIndex),
 
     // ];
-    updateSettings({
-      columns: columns.map((c) => c.dataIndex),
-      columnWidths: columns.map((c) => c.defaultWidth),
-    });
+    // updateSettings({
+    //   columns: columns.map((c) => c.dataIndex),
+    //   columnWidths: columns.map((c) => c.defaultWidth),
+    // });
   }, [ columns.length ]);
 
-  const handleTableChange = useCallback((paginationConfig, tableFilters, tableSorter) => {
-    console.log(tableFilters, tableSorter);
-    // handleTableChange(paginationConfig.pageSize);
-  }, []);
+  // const handleTableChange = useCallback((paginationConfig, tableFilters, tableSorter) => {
+  //   // console.log(tableFilters, tableSorter);
+  //   // handleTableChange(paginationConfig.pageSize);
+  // }, []);
   const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
     onMouseEnter: (event: React.MouseEvent) => {
       if (onMouseEnter) onMouseEnter(event, record);
@@ -323,7 +323,7 @@ const TrialTable: React.FC<Props> = ({
       size="small"
       sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      onChange={handleTableChange}
+      // onChange={handleTableChange}
       onRow={handleTableRow}
     />
   );

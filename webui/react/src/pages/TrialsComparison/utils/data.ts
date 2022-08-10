@@ -8,6 +8,7 @@ import {
 } from 'types';
 
 function log<T>(x: T, annotation?: string): T {
+  /* eslint-disable-next-line no-console */
   if (annotation) console.log(annotation, x);
   return x;
 }
@@ -24,7 +25,7 @@ export function mergeLists<T>(
   const e = (a: T, b: T) => a === b;
   const eq = equalFn ?? e;
   const res = [ ...A, ...B.filter((b) => A.every((a) => !eq(a, b))) ];
-  if (equalFn) console.log({ A, B, eq, res });
+  // if (equalFn) console.log({ A, B, eq, res });
   return res;
 }
 

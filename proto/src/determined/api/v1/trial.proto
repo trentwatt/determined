@@ -225,7 +225,7 @@ message GetTrialsCollectionsResponse {
 
 message CreateTrialsCollectionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: ["name", "project_id", "filters", "sorter" ] }
+    json_schema: { required: ["name", "project_id", "filters" ] }
   };
   string name          = 1;
   int32 project_id     = 2;

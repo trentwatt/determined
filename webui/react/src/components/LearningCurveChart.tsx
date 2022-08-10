@@ -80,7 +80,7 @@ const LearningCurveChart: React.FC<Props> = ({
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'batches' },
-        ...trialIds.map((trialId, index) => ({
+        ...trialIds.map((trialId) => ({
           label: `trial ${trialId}`,
           scale: 'y',
           show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),

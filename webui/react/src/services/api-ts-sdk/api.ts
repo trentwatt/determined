@@ -1765,7 +1765,7 @@ export interface V1CreateTrialsCollectionRequest {
      * @type {V1TrialSorter}
      * @memberof V1CreateTrialsCollectionRequest
      */
-    sorter: V1TrialSorter;
+    sorter?: V1TrialSorter;
 }
 
 /**

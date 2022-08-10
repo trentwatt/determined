@@ -14,11 +14,16 @@ interface NumberRange {
 
 export type NumberRangeDict = Record<string, NumberRange>
 
+interface ranker {
+  rank?: string;
+  sorter: V1TrialSorter;
+}
+
 export interface TrialFilters {
   experimentIds?: Array<string>;
   hparams?: NumberRangeDict;
   projectIds?: Array<string>;
-  rankWithinExp?: string;
+  ranker?: ranker;
   searcher?: string;
   tags?: string[];
   trainingMetrics?: NumberRangeDict;
@@ -28,6 +33,30 @@ export interface TrialFilters {
 }
 
 export type FilterSetter = (prev: TrialFilters) => TrialFilters
+
+export interface TrialsSelection {
+  sorter?: V1TrialSorter;
+  trialIds: number[];
+}
+export interface TrialsCollectionSpec {
+  filters: TrialFilters;
+  sorter?: V1TrialSorter;
+}
+
+export type TrialsSelectionOrCollection = TrialsSelection | TrialsCollectionSpec
+
+export const isTrialsSelection = (t: TrialsSelectionOrCollection): t is TrialsSelection =>
+  ('trialIds' in t);
+
+export const isTrialsCollectionSpec = (t: TrialsSelectionOrCollection): t is TrialsCollectionSpec =>
+  ('filters' in t);
+
+export const getDescriptionText = (t: TrialsSelectionOrCollection): string =>
+  isTrialsCollectionSpec(t)
+    ? 'filtered trials'
+    : t.trialIds.length === 1
+      ? `trial ${t.trialIds[0]}`
+      : `${t.trialIds.length} trials`;
 
 const encodeNumberRangeDict = (d :NumberRangeDict): Array<V1NumberRangeFilter> =>
   Object.entries(d).map(([ key, range ]) =>
@@ -47,12 +76,15 @@ const encodeIdList = (l?: string[]): number[] | undefined =>
   l?.map((i) => parseInt(i))
     .filter((i) => isNumber(i));
 
-export const encodeFilters = (f: TrialFilters, s: V1TrialSorter): V1TrialFilters => {
+export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
   return {
     experimentIds: encodeIdList(f.experimentIds),
     hparams: encodeNumberRangeDict(f.hparams ?? {}),
     projectIds: encodeIdList(f.projectIds),
-    rankWithinExp: { rank: numberElseUndefined(f.rankWithinExp), sorter: encodeTrialSorter(s) },
+    rankWithinExp:
+      (f.ranker?.rank)
+        ? { rank: numberElseUndefined(f.ranker.rank), sorter: encodeTrialSorter(f.ranker.sorter) }
+        : undefined,
     searcher: f.searcher,
     tags: f.tags?.map((tag: string) => ({ key: tag, value: '1' })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
@@ -71,11 +103,7 @@ interface TrialFiltersInterface {
 }
 
 const getDefaultFilters = (projectId: string) => (
-  {
-    projectIds: projectId
-      ? [ String(projectId) ]
-      : [ '1' ],
-  }
+  { projectIds: [ String(projectId) ] }
 );
 
 export const useTrialFilters = (projectId: string): TrialFiltersInterface => {

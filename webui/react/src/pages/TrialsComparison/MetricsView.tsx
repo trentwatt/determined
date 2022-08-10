@@ -1,4 +1,3 @@
-import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useReducer } from 'react';
 
 import IconButton from 'components/IconButton';

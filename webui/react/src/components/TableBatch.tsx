@@ -1,5 +1,5 @@
 import { Button, Select } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
