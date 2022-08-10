@@ -108,30 +108,12 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 class GetTrialWorkloadsRequestFilterOption(enum.Enum):
     FILTER_OPTION_UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
     FILTER_OPTION_CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
     FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
     FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
-=======
-class QueryTrialsRequestQueryFilters:
-    def __init__(
-        self,
-        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
-    ):
-        self.experimentIds = experimentIds
 
-    @classmethod
-    def from_json(cls, obj: Json) -> "QueryTrialsRequestQueryFilters":
-        return cls(
-            experimentIds=obj.get("experimentIds", None),
-=======
-class QueryFiltersExpRank:
-=======
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -139,7 +121,6 @@ class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
 
 class TrialFiltersRankWithinExp:
->>>>>>> f7e05a507 (make -C proto bindings)
     def __init__(
         self,
         rank: "typing.Optional[int]" = None,
@@ -153,24 +134,11 @@ class TrialFiltersRankWithinExp:
         return cls(
             sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
             rank=obj.get("rank", None),
->>>>>>> 2ff1f3f8a (tags and query updates)
         )
 
     def to_json(self) -> typing.Any:
         return {
-<<<<<<< HEAD
-<<<<<<< HEAD
-            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
-        }
->>>>>>> 141b83653 (semi-functioning api)
-
-=======
->>>>>>> 99b9cba07 (WIP: query trials endpoint)
-=======
-            "sortBy": self.sortBy.to_json() if self.sortBy is not None else None,
-=======
             "sorter": self.sorter.to_json() if self.sorter is not None else None,
->>>>>>> f7e05a507 (make -C proto bindings)
             "rank": self.rank if self.rank is not None else None,
         }
 
@@ -183,14 +151,6 @@ class TrialPatchSetTag:
         self.key = key
         self.value = value
 
-<<<<<<< HEAD
->>>>>>> 2ff1f3f8a (tags and query updates)
-class TrialEarlyExitExitedReason(enum.Enum):
-    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
-=======
     @classmethod
     def from_json(cls, obj: Json) -> "TrialPatchSetTag":
         return cls(
@@ -203,7 +163,6 @@ class TrialEarlyExitExitedReason(enum.Enum):
             "key": self.key if self.key is not None else None,
             "value": self.value if self.value is not None else None,
         }
->>>>>>> f7e05a507 (make -C proto bindings)
 
 class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
@@ -1964,7 +1923,7 @@ class v1GetExperimentCheckpointsResponse:
 
 class v1GetExperimentLabelsResponse:
     def __init__(
-  ,      self,
+        self,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.labels = labels
@@ -5900,7 +5859,7 @@ class v1Slot:
         }
 
 class v1SummarizeTrialResponse:
-    def __init__,(
+    def __init__(
         self,
         metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
@@ -9571,7 +9530,7 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
-,
+
 def post_SetCommandPriority(
     session: "client.Session",
     *,
