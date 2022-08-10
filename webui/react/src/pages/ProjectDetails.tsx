@@ -77,6 +77,7 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
+import TrialsComparison from './TrialsComparison';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -639,7 +640,7 @@ const ProjectDetails: React.FC = () => {
         silent: false,
       });
     }
-  }, [ fetchExperiments, sendBatchActions, updateSettings ]);
+  }, [ fetchExperiments, sendBatchActions, updateSettings, settings.row ]);
 
   const showConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -908,61 +909,67 @@ const ProjectDetails: React.FC = () => {
     switchShowArchived ]);
 
   const tabs: TabInfo[] = useMemo(() => {
-    return ([ {
-      body: (
-        <div className={css.experimentTab}>
-          <TableBatch
-            actions={batchActions.map((action) => ({
-              disabled: !availableBatchActions.includes(action),
-              label: action,
-              value: action,
-            }))}
-            selectedRowCount={(settings.row ?? []).length}
-            onAction={handleBatchAction}
-            onClear={clearSelected}
-          />
-          <InteractiveTable
-            areRowsSelected={!!settings.row}
-            columns={columns}
-            containerRef={pageRef}
-            ContextMenu={ContextMenu}
-            dataSource={experiments}
-            loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
-            rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="id"
-            rowSelection={{
-              onChange: handleTableRowSelect,
-              preserveSelectedRowKeys: true,
-              selectedRowKeys: settings.row ?? [],
-            }}
-            settings={settings as InteractiveTableSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          />
-        </div>
-      ),
-      options: ExperimentTabOptions,
-      title: 'Experiments',
-    }, {
-      body: (
-        <PaginatedNotesCard
-          disabled={project?.archived}
-          notes={project?.notes ?? []}
-          onDelete={handleDeleteNote}
-          onNewPage={handleNewNotesPage}
-          onSave={handleSaveNotes}
-        />),
-      options: (
-        <div className={css.tabOptions}>
-          <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
-        </div>),
-      title: 'Notes',
-    } ]);
+    return ([
+      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
+      {
+        body: (
+          <div className={css.experimentTab}>
+            <TableBatch
+              actions={batchActions.map((action) => ({
+                disabled: !availableBatchActions.includes(action),
+                label: action,
+                value: action,
+              }))}
+              selectedRowCount={(settings.row ?? []).length}
+              onAction={handleBatchAction}
+              onClear={clearSelected}
+            />
+            <InteractiveTable
+              areRowsSelected={!!settings.row}
+              columns={columns}
+              containerRef={pageRef}
+              ContextMenu={ContextMenu}
+              dataSource={experiments}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              rowClassName={defaultRowClassName({ clickable: false })}
+              rowKey="id"
+              rowSelection={{
+                onChange: handleTableRowSelect,
+                preserveSelectedRowKeys: true,
+                selectedRowKeys: settings.row ?? [],
+              }}
+              settings={settings as InteractiveTableSettings}
+              showSorterTooltip={false}
+              size="small"
+              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            />
+          </div>
+        ),
+        key: 'experiments',
+        options: ExperimentTabOptions,
+        title: 'Experiments',
+      },
+      // {
+      //   body: (
+      //     <PaginatedNotesCard
+      //       disabled={project?.archived}
+      //       notes={project?.notes ?? []}
+      //       onDelete={handleDeleteNote}
+      //       onNewPage={handleNewNotesPage}
+      //       onSave={handleSaveNotes}
+      //     />),
+      //   key: 'trials',
+      //   options: (
+      //     <div className={css.tabOptions}>
+      //       <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+      //     </div>),
+      //   title: 'Notes',
+      // }
+    ]);
   }, [ ContextMenu,
     ExperimentTabOptions,
     clearSelected,
@@ -979,7 +986,9 @@ const ProjectDetails: React.FC = () => {
     project?.archived,
     settings,
     total,
-    updateSettings ]);
+    updateSettings,
+    projectId,
+  ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;

@@ -1,11 +1,9 @@
-import { Tabs } from 'antd';
-import queryString from 'query-string';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
+import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import useModalTrialCollection from 'hooks/useModal/Trial/useModalTrialCollection';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
@@ -13,15 +11,12 @@ import MetricsView, {
   Layout,
   MetricView,
 } from 'pages/TrialsComparison/MetricsView';
-import ComparisonHeader from 'pages/TrialsComparison/TrialsComparisonHeader';
-import TrialsTable from 'pages/TrialsComparison/TrialsTable/TrialsTable';
-import { TrialFilters } from 'pages/TrialsComparison/types';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import TrialTable from 'pages/TrialsComparison/TrialTable/TrialTable';
 import {
   aggregrateTrialsMetadata,
   defaultTrialData,
   TrialsWithMetadata,
-} from 'pages/TrialsComparison/utils/trialData';
+} from 'pages/TrialsComparison/utils/data';
 import { compareTrials, openOrCreateTensorBoard, queryTrials } from 'services/api';
 import {
   TrialSorterNamespace,
@@ -29,7 +24,6 @@ import {
   V1OrderBy,
   V1TrialSorter,
 } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
@@ -45,7 +39,11 @@ import { openCommand } from 'wait';
 
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
-import { encodeFilters } from './TrialsComparison/utils/trialFilters';
+import {
+  encodeFilters,
+  encodeTrialSorter,
+  useTrialFilters,
+} from './TrialsComparison/utils/filters';
 
 const BATCH_PADDING = 50;
 
@@ -69,36 +67,23 @@ const seq = (n: number) => [ ...Array(n) ].map((_, i) => i + 1);
 const getTrialId = (trial: V1AugmentedTrial): number => trial.trialId;
 
 interface Props {
-  projectId?: number;
-}
-
-function log<T>(x: T): T {
-  console.log(x);
-  return x;
+  projectId: string;
 }
 
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
-  const location = useLocation();
-  const queries = queryString.parse(location.search);
-  let experimentIds: string[];
-  if (queries.id && typeof queries.id === 'string'){
-    experimentIds = [ queries.id ];
-  } else if (queries.id && typeof queries.id === 'object') {
-    experimentIds = queries.id;
-  } else {
-    experimentIds = [];
-  }
   const [ trialData, settrialData ] = useState<TrialsWithMetadata>(defaultTrialData);
   const [ seriesData, setSeriesData ] = useState<SeriesData>();
-  const [ filters, setFilters ] = useState<TrialFilters>({ experimentIds });
   const [ sorter, setSorter ] = useState<V1TrialSorter>({
     field: 'trialId',
     namespace: TrialSorterNamespace.TRIALS,
     orderBy: V1OrderBy.ASC,
   });
+
+  const { filters, setFilters } = useTrialFilters(projectId ?? '1');
+
   const [ view, setView ] = useState<MetricView>();
-  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+  // const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const [ selectedTrialIds, setSelectedTrialIds ] = useState<number[]>([]);
 
   const highlight = useHighlight(getTrialId);
@@ -106,9 +91,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
 
-  const pageRef = useRef<HTMLElement>(null);
+  // const pageRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLElement>(null);
-  const projId = projectId ? projectId : 1;
   const {
     contextHolder: modalTrialTagContextHolder,
     modalOpen: openTagModal,
@@ -117,14 +101,23 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const {
     contextHolder: modalTrialCollectionContextHolder,
     modalOpen: openCreateCollectionModal,
-  } = useModalTrialCollection({ filters, projectId: projId, selectAllMatching });
+  } = useModalTrialCollection({
+    filters,
+    projectId,
+    selectAllMatching,
+  });
 
   const submitBatchAction = useCallback(async (action: TrialAction) => {
     try {
       if (action === TrialAction.AddTags){
         openTagModal({ trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
       } else if (action === TrialAction.CreateCollection) {
-        openCreateCollectionModal({ selectAllMatching ,filters, projectId: projId, trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds });
+        openCreateCollectionModal({
+          filters,
+          projectId,
+          selectAllMatching,
+          trialIds: selectAllMatching ? trialData.trialIds : selectedTrialIds,
+        });
       } else if (action === TrialAction.OpenTensorBoard) {
         const result = await openOrCreateTensorBoard({ trialIds: selectedTrialIds });
         if (result) openCommand(result as CommandTask);
@@ -141,10 +134,17 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
         type: ErrorType.Server,
       });
     }
-  }, [ selectedTrialIds, openTagModal, trialData.trialIds, selectAllMatching ]);
+  }, [ selectedTrialIds,
+    openTagModal,
+    trialData.trialIds,
+    selectAllMatching,
+    openCreateCollectionModal,
+    filters,
+    projectId,
+  ]);
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedTrialIds(rowKeys), []);
-  const handleTableChange = useCallback((pageSize) => setPageSize(pageSize), []);
+  // const handleTableChange = useCallback((pageSize) => setPageSize(pageSize), []);
 
   const clearSelected = useCallback(() => {
     setSelectedTrialIds([]);
@@ -156,17 +156,25 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const fetchTrials = useCallback(async () => {
     try {
-      const response = await queryTrials(
-        { filters: encodeFilters(filters, sorter), limit: pageSize},
-      );
-      settrialData((prev) =>
-        response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialData))
-       ?? prev);
+      const response = await queryTrials({
+        filters: encodeFilters(filters, sorter),
+        // limit: pageSize,
+        sorter: encodeTrialSorter(sorter),
+      });
+
+      settrialData((prev) => {
+        const d: TrialsWithMetadata = response.trials
+          ?.reduce(
+            aggregrateTrialsMetadata,
+            clone(defaultTrialData),
+          ) ?? prev;
+        return d;
+      });
 
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
-  }, [ filters, sorter, pageSize ]);
+  }, [ filters, sorter ]);
 
   useEffect(() => {
     fetchTrials();
@@ -231,8 +239,6 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     fetchSeriesData();
   }, [ fetchSeriesData ]);
 
-  const hasLoaded = !!trialData.trialIds.length;
-
   const chartData = view?.metric
     && metricToKey(view.metric)
     && seriesData?.metrics?.[metricToKey(view.metric)];
@@ -248,79 +254,58 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   );
 
   return (
-    <Page
-      bodyNoPadding
-      containerRef={pageRef}
-      headerComponent={(
-        <ComparisonHeader />
-      )}
-      stickyHeader
-      title="Compare Experiments">
-      <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
-        <div className={css.base}>
-          <Tabs
-            activeKey="X"
-            destroyInactiveTabPane
-            type="card">
-            <Tabs.TabPane
-              key="X"
-              tab="Learning Curve">
-              <Page className={css.base} containerRef={containerRef}>
-                <Section
-                  bodyBorder
-                  bodyScroll
-                  filters={metricsViewSelect}>
-                  <div className={css.container}>
-                    <div className={css.chart}>
-                      {view?.metric && chartData && (
-                        <LearningCurveChart
-                          data={chartData}
-                          focusedTrialId={highlight.id}
-                          selectedMetric={view.metric}
-                          selectedScale={view.scale}
-                          selectedTrialIds={selectedTrialIds}
-                          trialIds={trialData.trialIds}
-                          xValues={seriesData.batches}
-                          onTrialFocus={highlight.focus}
-                        />
-                      )}
-                    </div>
-                    <TableBatch
-                      actions={batchActions}
-                      selectAllMatching={selectAllMatching}
-                      selectedRowCount={selectedTrialIds.length}
-                      onAction={(action) => submitBatchAction(action as TrialAction)}
-                      onChangeSelectionMode={handleChangeSelectionMode}
-                      onClear={clearSelected}
-                    />
-                    <TrialsTable
-                      containerRef={containerRef}
-                      filters={filters}
-                      handleTableRowSelect={handleTableRowSelect}
-                      handleTableChange={handleTableChange}
-                      pageSize={pageSize}
-                      highlightedTrialId={highlight.id}
-                      hpVals={trialData.hpVals}
-                      metrics={trialData.metrics}
-                      selectAllMatching={selectAllMatching}
-                      selectedTrialIds={selectedTrialIds}
-                      selection={true}
-                      setFilters={setFilters}
-                      trialIds={trialData.trialIds}
-                      trials={trialData.trials}
-                      onMouseEnter={highlight.mouseEnter}
-                      onMouseLeave={highlight.mouseLeave}
-                    />
-                  </div>
-                </Section>
-                {modalTrialTagContextHolder}
-                {modalTrialCollectionContextHolder}
-              </Page>
-            </Tabs.TabPane>
-          </Tabs>
+    <Page className={css.base} containerRef={containerRef}>
+      <Section
+        bodyBorder
+        bodyScroll
+        filters={metricsViewSelect}>
+        <div className={css.container}>
+          <div className={css.chart}>
+            {view?.metric && chartData && (
+              <LearningCurveChart
+                data={chartData}
+                focusedTrialId={highlight.id}
+                selectedMetric={view.metric}
+                selectedScale={view.scale}
+                selectedTrialIds={selectedTrialIds}
+                trialIds={trialData.trialIds}
+                xValues={seriesData.batches}
+                onTrialFocus={highlight.focus}
+              />
+            )}
+          </div>
+          <TableBatch
+            actions={batchActions}
+            selectAllMatching={selectAllMatching}
+            selectedRowCount={selectedTrialIds.length}
+            onAction={(action) => submitBatchAction(action as TrialAction)}
+            onChangeSelectionMode={handleChangeSelectionMode}
+            onClear={clearSelected}
+          />
+          <TrialTable
+            containerRef={containerRef}
+            filters={filters}
+            handleTableRowSelect={handleTableRowSelect}
+            // handleTableChange={handleTableChange}
+            // pageSize={pageSize}
+            highlightedTrialId={highlight.id}
+            hpVals={trialData.hpVals}
+            metrics={trialData.metrics}
+            selectAllMatching={selectAllMatching}
+            selectedTrialIds={selectedTrialIds}
+            selection={true}
+            setFilters={setFilters}
+            trialIds={trialData.trialIds}
+            trials={trialData.trials}
+            onMouseEnter={highlight.mouseEnter}
+            onMouseLeave={highlight.mouseLeave}
+          />
         </div>
-      </React.Suspense>
+      </Section>
+      {modalTrialTagContextHolder}
+      {modalTrialCollectionContextHolder}
     </Page>
+
   );
 };
 

@@ -1,4 +1,4 @@
-import { Button, Input } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -20,8 +20,8 @@ const TableFilterRange: React.FC<Props> = ({
   max,
   visible,
 }: Props) => {
-  const inputMinRef = useRef<Input>(null);
-  const inputMaxRef = useRef<Input>(null);
+  const inputMinRef = useRef<InputRef>(null);
+  const inputMaxRef = useRef<InputRef>(null);
   const [ inputMin, setInputMin ] = useState(min);
   const [ inputMax, setInputMax ] = useState(max);
 

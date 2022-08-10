@@ -17,7 +17,7 @@ import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
-import ExperimentComparison from 'pages/TrialsComparison';
+// import ExperimentComparison from 'pages/TrialsComparison';
 import Wait from 'pages/Wait';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
@@ -30,7 +30,7 @@ const routeComponentMap: Record<string, FC> = {
   clusterHistorical: Deprecated,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
-  experimentComparison: ExperimentComparison,
+  // experimentComparison: ExperimentComparison,
   experimentDetails: ExperimentDetails,
   interactive: InteractiveTask,
   jobs: Deprecated,

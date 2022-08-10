@@ -7,13 +7,26 @@ import {
   MetricType,
 } from 'types';
 
-function mergeLists<T>(A: Array<T>, B: Array<T>, equalFn = (x: T, y: T) => x === y): Array<T> {
-  return [ ...A, ...B.filter((b) => !A.some((a) => equalFn(a, b))) ];
+function log<T>(x: T, annotation?: string): T {
+  if (annotation) console.log(annotation, x);
+  return x;
 }
 
 const metricEquals = (A: Metric, B: Metric) => {
-  return A.type === B.type && A.name === B.name;
+  return (A.type === B.type) && (A.name === B.name);
 };
+
+export function mergeLists<T>(
+  A: Array<T>,
+  B: Array<T>,
+  equalFn?: (a: T, b: T) => boolean,
+): Array<T> {
+  const e = (a: T, b: T) => a === b;
+  const eq = equalFn ?? e;
+  const res = [ ...A, ...B.filter((b) => A.every((a) => !eq(a, b))) ];
+  if (equalFn) console.log({ A, B, eq, res });
+  return res;
+}
 
 const valMapForHParams = (hparams: RawJson): HpValsMap =>
   Object.entries(flattenObject(hparams || {}))
@@ -29,7 +42,7 @@ const mergeHpValMaps = (A: HpValsMap, B: HpValsMap): HpValsMap => {
 const aggregateHpVals = (agg: HpValsMap, hparams: RawJson) =>
   mergeHpValMaps(agg, valMapForHParams(hparams));
 
-const namesForMetrics = (trainingMetrics: RawJson, validationMetrics: RawJson): Metric[] =>
+const metricsToList = (trainingMetrics: RawJson, validationMetrics: RawJson): Metric[] =>
   [ ...Object.keys(trainingMetrics)
     .map((name) => ({ name, type: MetricType.Training } as Metric)),
   ...Object.keys(validationMetrics)
@@ -48,13 +61,14 @@ export interface TrialsWithMetadata {
 
 export const aggregrateTrialsMetadata =
 (agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
+
   hpVals: aggregateHpVals(agg.hpVals, trial.hparams),
   maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
-  metrics: mergeLists(
-    agg.metrics,
-    namesForMetrics(trial.trainingMetrics, trial.validationMetrics),
+  metrics: log(mergeLists(
+    log(agg.metrics, ''),
+    log(metricsToList(trial.trainingMetrics, trial.validationMetrics), ''),
     metricEquals,
-  ),
+  ), ''),
   trialIds: [ ...agg.trialIds, trial.trialId ],
   trials: [ ...agg.trials, trial ],
 });

@@ -2,7 +2,7 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import EditableTagList from 'components/TagList';
-import { TrialFilters } from 'pages/TrialsComparison/types';
+import { TrialFilters } from 'pages/TrialsComparison/utils/filters';
 import { patchBulkTrials, patchTrials } from 'services/api';
 import { V1TrialFilters, V1TrialTag } from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';

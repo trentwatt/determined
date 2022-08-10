@@ -62,9 +62,9 @@ const MetricsView: React.FC<Props> = ({
 }: Props) => {
   const [ localView, dispatch ] = useReducer(reducer, view);
 
-  const handleLayoutChange = useCallback((layout: SelectValue) => {
-    dispatch({ type: ActionType.SetLayout, value: layout as Layout });
-  }, []);
+  // const handleLayoutChange = useCallback((layout: SelectValue) => {
+  //   dispatch({ type: ActionType.SetLayout, value: layout as Layout });
+  // }, []);
 
   const handleScaleChange = useCallback((scale: Scale) => {
     dispatch({ type: ActionType.SetScale, value: scale });

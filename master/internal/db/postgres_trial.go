@@ -468,39 +468,17 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 		ProjectId:             t.ProjectId,
 		WorkspaceId:           t.WorkspaceId,
 		TotalBatches:          t.TotalBatches,
-
-		// RankWithinExp:         t.RankWithinExp,
+		RankWithinExp:         t.RankWithinExp,
 	}
 }
 
-type TrialsAugmented struct {
-	bun.BaseModel `bun:"table:trials_augmented_view,alias:trials_augmented_view"`
-
-	TrialID               int32              `bun:"trial_id"`
-	State                 string             `bun:"state"`
-	Hparams               model.JSONObj      `bun:"hparams"`
-	TrainingMetrics       map[string]float64 `bun:"training_metrics,json_use_number"`
-	ValidationMetrics     map[string]float64 `bun:"validation_metrics,json_use_number"`
-	Tags                  map[string]string  `bun:"tags"`
-	StartTime             time.Time          `bun:"start_time"`
-	EndTime               time.Time          `bun:"end_time"`
-	SearcherType          string             `bun:"searcher_type"`
-	ExperimentId          int32              `bun:"experiment_id"`
-	ExperimentName        string             `bun:"experiment_name"`
-	ExperimentDescription string             `bun:"experiment_description"`
-	ExperimentLabels      []string           `bun:"experiment_labels"`
-	UserId                int32              `bun:"user_id"`
-	ProjectId             int32              `bun:"project_id"`
-	WorkspaceId           int32              `bun:"workspace_id"`
-	TotalBatches          int32              `bun:"total_batches"`
-	// RankWithinExp         int32              `bun:"RankWithinExp"`
-}
 type TrialsCollection struct {
 	ID        int32               `bun:"id,pk,autoincrement"`
 	UserId    int32               `bun:"user_id"`
 	ProjectId int32               `bun:"project_id"`
 	Name      string              `bun:"name"`
 	Filters   *apiv1.TrialFilters `bun:"filters,type:jsonb"`
+	Sorter    *apiv1.TrialSorter  `bun:"filters,type:jsonb"`
 }
 
 func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
@@ -510,6 +488,7 @@ func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
 		ProjectId: tc.ProjectId,
 		Name:      tc.Name,
 		Filters:   tc.Filters,
+		Sorter:    tc.Sorter,
 	}
 }
 
@@ -582,17 +561,41 @@ func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleVa
 
 }
 
-func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*bun.SelectQuery, error) {
+type TrialsAugmented struct {
+	bun.BaseModel         `bun:"table:trials_augmented_view,alias:trials_augmented_view"`
+	TrialID               int32              `bun:"trial_id"`
+	State                 string             `bun:"state"`
+	Hparams               model.JSONObj      `bun:"hparams"`
+	TrainingMetrics       map[string]float64 `bun:"training_metrics,json_use_number"`
+	ValidationMetrics     map[string]float64 `bun:"validation_metrics,json_use_number"`
+	Tags                  map[string]string  `bun:"tags"`
+	StartTime             time.Time          `bun:"start_time"`
+	EndTime               time.Time          `bun:"end_time"`
+	SearcherType          string             `bun:"searcher_type"`
+	ExperimentId          int32              `bun:"experiment_id"`
+	ExperimentName        string             `bun:"experiment_name"`
+	ExperimentDescription string             `bun:"experiment_description"`
+	ExperimentLabels      []string           `bun:"experiment_labels"`
+	UserId                int32              `bun:"user_id"`
+	ProjectId             int32              `bun:"project_id"`
+	WorkspaceId           int32              `bun:"workspace_id"`
+	TotalBatches          int32              `bun:"total_batches"`
+
+	RankWithinExp int32 `bun:"n,scanonly"`
+}
+
+func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters, selectAll bool) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
 
-	if filters.RankWithinExp != nil && filters.RankWithinExp.Rank != 0 {
+	rankFilterApplied := filters.RankWithinExp != nil && filters.RankWithinExp.Rank != 0
+
+	if rankFilterApplied || selectAll {
 		r := filters.RankWithinExp
 
 		columnExpr, err := db.TrialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
 		if err != nil {
 			return nil, fmt.Errorf("possible unsafe filters, %f", err)
 		}
-
 		rankExpr := fmt.Sprintf(
 			`ROW_NUMBER() OVER(PARTITION BY experiment_id ORDER BY %s  %s) as n`,
 			columnExpr,
@@ -603,28 +606,34 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 			ColumnExpr("trial_id as t_id").
 			ColumnExpr(rankExpr)
 
-		q = q.With("rank", rankQ).
-			Join("join rank on rank.t_id = trials_augmented_view.trial_id").
-			Where("rank.n <= ?", r.Rank)
+		q.With("rank", rankQ).
+			Join("join rank on rank.t_id = trials_augmented_view.trial_id")
+
+		if rankFilterApplied {
+			q.Where("rank.n <= ?", r.Rank)
+		}
+		if selectAll {
+			q.ColumnExpr("trials_augmented_view.*, rank.n")
+		}
 
 	}
 
 	if len(filters.Tags) > 0 {
-		tagExprKeyVals := ""
+		tagExprKeyVals := []string{}
 		for _, tag := range filters.Tags {
 			if !safeString.MatchString(tag.Key + tag.Value) {
 				return nil, fmt.Errorf("tag filter {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
 			}
-			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
+			tagExprKeyVals = append(tagExprKeyVals, fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value))
 		}
-		q = q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
+		q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", strings.Join(tagExprKeyVals, ",")))
 	}
 
 	if len(filters.ExperimentIds) > 0 {
-		q = q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
+		q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
 	if len(filters.ProjectIds) > 0 {
-		q = q.Where("project_id IN (?)", bun.In(filters.ProjectIds))
+		q.Where("project_id IN (?)", bun.In(filters.ProjectIds))
 	}
 	if len(filters.WorkspaceIds) > 0 {
 		q.Where("workspace_id IN (?)", bun.In(filters.WorkspaceIds))
@@ -636,7 +645,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 		}
 		conditional := conditionalForNumberRange(f.Min, f.Max)
 		wherePhrase := fmt.Sprintf("(validation_metrics->>'%s')::float8 %s", f.Name, conditional)
-		q = q.Where(wherePhrase)
+		q.Where(wherePhrase)
 	}
 
 	for _, f := range filters.TrainingMetrics {
@@ -645,7 +654,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 		}
 		conditional := conditionalForNumberRange(f.Min, f.Max)
 		wherePhrase := fmt.Sprintf("(training_metrics->>'%s')::float8 %s", f.Name, conditional)
-		q = q.Where(wherePhrase)
+		q.Where(wherePhrase)
 	}
 
 	for _, f := range filters.Hparams {
@@ -654,14 +663,14 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters) (*
 		// this will fail for non-coerceable strings
 		// a request where you ask for string hps in a range is a "Bad Request"
 		wherePhrase := fmt.Sprintf("(%s)::float8 %s", hParamAccessor(f.Name), conditional)
-		q = q.Where(wherePhrase)
+		q.Where(wherePhrase)
 	}
 
 	if filters.Searcher != "" {
-		q = q.Where("searcher_type = ?", filters.Searcher)
+		q.Where("searcher_type = ?", filters.Searcher)
 	}
 	if len(filters.UserIds) > 0 {
-		q = q.Where("user_id IN (?)", bun.In(filters.UserIds))
+		q.Where("user_id IN (?)", bun.In(filters.UserIds))
 	}
 
 	return q, nil

@@ -1,7 +1,5 @@
-import { Button, Input } from 'antd';
-import type { InputRef } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import { filter } from 'fp-ts/lib/Filterable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
@@ -97,7 +95,7 @@ const TableFilterDropdown: React.FC<Props> = ({
 
   const handlePressEnter = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (validatorRegex) {
-      const validatedInput = inputRef.current?.input.value?.replace(validatorRegex, '');
+      const validatedInput = inputRef.current?.input?.value?.replace(validatorRegex, '');
       if (validatedInput) {
         onAddFilter?.(validatedInput);
         setSelectedMap((m) => ({ ...m, [validatedInput]: true }));
@@ -119,7 +117,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   const handleFilter = useCallback(() => {
     const filters = Object.keys(selectedMap);
     if (validatorRegex) {
-      const validatedInput = inputRef.current?.input.value?.replace(validatorRegex, '');
+      const validatedInput = inputRef.current?.input?.value?.replace(validatorRegex, '');
       if (validatedInput) {
         onAddFilter?.(validatedInput);
         filters.push(validatedInput);

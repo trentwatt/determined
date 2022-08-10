@@ -1,5 +1,4 @@
-import { Button, Input } from 'antd';
-import type { InputRef } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -21,7 +20,7 @@ const TableFilterSearch: React.FC<Props> = ({
   value,
   visible,
 }: Props) => {
-  const inputRef = useRef<InputRef>(null);
+  const inputRef = useRef<InputRefRef>(null);
   const [ search, setSearch ] = useState(value);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

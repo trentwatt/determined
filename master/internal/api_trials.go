@@ -413,7 +413,7 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 	trials := []db.TrialsAugmented{}
 
 	q := db.Bun().NewSelect().Model(&trials)
-	q, err = a.m.db.FilterTrials(q, req.Filters)
+	q, err = a.m.db.FilterTrials(q, req.Filters, true)
 
 	if err != nil {
 		return nil, fmt.Errorf("error querying for trials %w", err)
@@ -514,9 +514,9 @@ func (a *apiServer) BulkPatchTrials(ctx context.Context, req *apiv1.BulkPatchTri
 	}
 
 	q := db.Bun().NewUpdate().Table("trials")
-	subQ := db.Bun().NewSelect().Column("trial_id").Table("trials_augmented_view")
+	subQ := db.Bun().NewSelect().Table("trials_augmented_view").Column("trial_id")
 
-	subQ, err = a.m.db.FilterTrials(subQ, req.Filters)
+	subQ, err = a.m.db.FilterTrials(subQ, req.Filters, false)
 	if err != nil {
 		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
 	}

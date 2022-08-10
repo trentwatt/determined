@@ -56,12 +56,12 @@ const routes: RouteConfig[] = [
     path: '/experiments/:experimentId/:tab',
     title: 'Experiment',
   },
-  {
-    id: 'experimentComparison',
-    needAuth: true,
-    path: '/experiment-compare',
-    title: 'Experiment Comparison',
-  },
+  // {
+  //   id: 'experimentComparison',
+  //   needAuth: true,
+  //   path: '/experiment-compare',
+  //   title: 'Experiment Comparison',
+  // },
   {
     id: 'experimentDetails',
     needAuth: true,

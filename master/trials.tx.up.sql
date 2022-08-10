@@ -12,6 +12,7 @@ CREATE TABLE trials_collections (
     project_id integer REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
 	  name text NOT NULL,
 	  filters jsonb,
+    sorter  jsonb,
   CONSTRAINT user_project_filter_name_uniq UNIQUE (user_id, project_id, name)
 );
 

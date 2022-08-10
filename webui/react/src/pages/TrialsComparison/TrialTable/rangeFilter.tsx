@@ -2,14 +2,24 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React from 'react';
 
 import TableFilterRange from 'components/TableFilterRange';
+import { isNullOrUndefined } from 'shared/utils/data';
 
-import { FilterSetter, TrialFilters } from '../types';
+import { SetFilters, TrialFilters } from '../utils/filters';
 
 type FilterPrefix = 'hparams' | 'trainingMetrics' | 'validationMetrics'
 
+export const rangeFilterIsActive = (
+  filters: TrialFilters,
+  filterPrefix: FilterPrefix,
+  key: string,
+) :boolean => {
+  const f = filters[filterPrefix]?.[key];
+  return !isNullOrUndefined(f?.min) || !isNullOrUndefined(f?.max);
+};
+
 const rangeFilterForPrefix =
-  (filterPrefix: FilterPrefix, filters?: TrialFilters, setFilters?: FilterSetter) =>
-    (key: string) => (filterProps: FilterDropdownProps) => {
+  (filterPrefix: FilterPrefix, filters?: TrialFilters, setFilters?: SetFilters) =>
+    (key: string): React.FC<FilterDropdownProps> => (filterProps) => {
 
       const handleRangeApply = (min?: string, max?: string) => {
         setFilters?.(

@@ -1,36 +1,49 @@
-import { Input } from 'antd';
+import { selectAll } from '@testing-library/user-event/dist/types/utils';
+import { Input, InputRef } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { TrialFilters } from 'pages/TrialsComparison/types';
-import { createTrialCollection,patchBulkTrials, patchTrials  } from 'services/api';
-import { TrialSorterNamespace, V1TrialFilters, V1TrialSorter, V1TrialTag  } from 'services/api-ts-sdk';
+import { TrialFilters } from 'pages/TrialsComparison/utils/filters';
+import { createTrialCollection, patchBulkTrials, patchTrials } from 'services/api';
+import {
+  TrialSorterNamespace,
+  V1TrialFilters,
+  V1TrialSorter,
+  V1TrialTag,
+} from 'services/api-ts-sdk';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
 import css from './useModalTrialCollection.module.scss';
 
 interface Props {
+  filters: TrialFilters
   onClose?: () => void;
-  trialIds?: number[];
-  filters: TrialFilters;
-  projectId: number;
+  projectId: string;
   selectAllMatching: boolean;
+  trialIds?: number[];
 }
 
 export interface ShowModalProps {
-  trialIds?: number[];
-  initialModalProps?: ModalFuncProps;
   filters?: TrialFilters
-  projectId: number;
+  initialModalProps?: ModalFuncProps;
+  projectId: string;
   selectAllMatching: boolean;
+  trialIds?: number[];
+
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalTrialCollection = ({ onClose, trialIds, filters, projectId, selectAllMatching }: Props): ModalHooks => {
-  const inputRef = useRef<Input>(null);
+const useModalTrialCollection = ({
+  onClose,
+  trialIds,
+  filters,
+  projectId,
+  selectAllMatching,
+}: Props): ModalHooks => {
+  const inputRef = useRef<InputRef>(null);
   const [ name, setName ] = useState('');
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,56 +75,59 @@ const useModalTrialCollection = ({ onClose, trialIds, filters, projectId, select
       namespace: TrialSorterNamespace.TRIALS,
     };
     try {
-      await createTrialCollection({ filters: requestFilters, name, projectId, sorter })
-      const trialTags: V1TrialTag[] = [{ key: name, value: name }];
-      if (selectAllMatching){
+      await createTrialCollection({
+        filters: requestFilters,
+        name,
+        projectId: parseInt(projectId),
+        sorter,
+      });
+      const trialTags: V1TrialTag[] = [ { key: name, value: name } ];
+      if (selectAllMatching) {
         const requestTrialFilters = filters as V1TrialFilters;
-        patchBulkTrials(
-          {
-            filters: requestTrialFilters,
-            patch: { tags: trialTags },
-          },
-        ).then((response) => console.log(response))
+        patchBulkTrials({
+          filters: requestTrialFilters,
+          patch: { tags: trialTags },
+        })
+          .then((response) => console.log(response))
           .catch((err) => console.log(err));
       } else {
-        patchTrials(
-          {
-            patch: { tags: trialTags },
-            trialIds: trialIds ?? [],
-          },
-        ).then((response) => console.log(response))
+        patchTrials({
+          patch: { tags: trialTags },
+          trialIds: trialIds ?? [],
+        })
+          .then((response) => console.log(response))
           .catch((err) => console.log(err));
       }
-    } catch (err){
-      console.log(err)
+    } catch (err) {
+      console.log(err);
     }
-  }, [ name, filters, projectId ]);
+  }, [ name, filters, projectId, selectAllMatching, trialIds ]);
 
-  const getModalProps = useCallback((trialIds: number[]): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okText: 'Create Collection',
-      onOk: handleOk,
-      title: trialIds.length > 1 ? `Create Collection for ${trialIds.length} Trials` : `Create Collection for Trial ID: ${trialIds[0]}`,
-    };
-  }, [ handleOk, modalContent ]);
+  const getModalProps = useCallback(
+    (trialIds: number[]): ModalFuncProps => {
+      return {
+        closable: true,
+        content: modalContent,
+        icon: null,
+        okText: 'Create Collection',
+        onOk: handleOk,
+        title:
+          trialIds.length > 1
+            ? `Create Collection for ${trialIds.length} Trials`
+            : `Create Collection for Trial ID: ${trialIds[0]}`,
+      };
+    },
+    [ handleOk, modalContent ],
+  );
 
   const modalOpen = useCallback(
-    ({
-      initialModalProps,
-      trialIds,
-    }: ShowModalProps) => {
+    ({ initialModalProps, trialIds }: ShowModalProps) => {
       openOrUpdate({
         ...getModalProps(trialIds || []),
         ...initialModalProps,
       });
     },
-    [
-      getModalProps,
-      openOrUpdate,
-    ],
+    [ getModalProps, openOrUpdate ],
   );
 
   /**
