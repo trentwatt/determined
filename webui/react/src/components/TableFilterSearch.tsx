@@ -20,7 +20,7 @@ const TableFilterSearch: React.FC<Props> = ({
   value,
   visible,
 }: Props) => {
-  const inputRef = useRef<InputRefRef>(null);
+  const inputRef = useRef<InputRef>(null);
   const [ search, setSearch ] = useState(value);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

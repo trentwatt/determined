@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import useModalTrialCollection from 'hooks/useModal/Trial/useModalTrialCollection';
 import useModalTrialTag from 'hooks/useModal/Trial/useModalTrialTag';
@@ -35,7 +34,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './TrialsComparison.module.scss';
 import useHighlight from './TrialsComparison/hooks/useHighlight';
