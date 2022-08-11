@@ -1,6 +1,8 @@
 import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
+import { decodeTrialsCollection } from 'pages/TrialsComparison/utils/api';
+import { TrialsCollection } from 'pages/TrialsComparison/utils/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -283,28 +285,23 @@ export const patchBulkTrials: DetApi<
     return { rowsAffected: response.rowsAffected };
   },
   request: (params: Api.V1BulkPatchTrialsRequest) => {
-    return detApi.TrialsComparison.bulkPatchTrials(
-      { filters: params.filters, patch: params.patch },
-    );
+    return detApi.TrialsComparison.bulkPatchTrials(params);
+
   },
 };
+
+decodeTrialsCollection;
 
 export const createTrialCollection: DetApi<
   Api.V1CreateTrialsCollectionRequest,
   Api.V1CreateTrialsCollectionResponse,
-  Api.V1CreateTrialsCollectionResponse
+  TrialsCollection | undefined
 > = {
   name: 'createTrialsCollection',
-  postProcess: (response: Api.V1CreateTrialsCollectionResponse) => {
-    return { collection: response.collection };
-  },
+  postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
   request: (params: Api.V1CreateTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.createTrialsCollection({
-      filters: params.filters,
-      name: params.name,
-      projectId: params.projectId,
-      sorter: params.sorter,
-    });
+    return detApi.TrialsComparison.createTrialsCollection(params);
   },
 };
 

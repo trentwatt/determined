@@ -311,14 +311,6 @@ export enum ExperimentAction {
   ViewLogs = 'View Logs',
 }
 
-/* Trial */
-
-export enum TrialAction {
-  AddTags = 'Add Tags',
-  CreateCollection = 'Create Collection',
-  OpenTensorBoard = 'View in TensorBoard',
-}
-
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }

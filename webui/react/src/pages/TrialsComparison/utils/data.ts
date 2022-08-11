@@ -53,31 +53,31 @@ const metricsToList = (trainingMetrics: RawJson, validationMetrics: RawJson): Me
 export type HpValsMap = Record<string, Set<Primitive>>
 
 export interface TrialsWithMetadata {
+  data: V1AugmentedTrial[];
   hpVals: HpValsMap;
+  ids: number[];
   maxBatch: number;
   metrics: Metric[];
-  trialIds: number[];
-  trials: V1AugmentedTrial[];
 }
 
 export const aggregrateTrialsMetadata =
 (agg: TrialsWithMetadata, trial: V1AugmentedTrial): TrialsWithMetadata => ({
 
+  data: [ ...agg.data, trial ],
   hpVals: aggregateHpVals(agg.hpVals, trial.hparams),
+  ids: [ ...agg.ids, trial.trialId ],
   maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
   metrics: log(mergeLists(
     log(agg.metrics, ''),
     log(metricsToList(trial.trainingMetrics, trial.validationMetrics), ''),
     metricEquals,
   ), ''),
-  trialIds: [ ...agg.trialIds, trial.trialId ],
-  trials: [ ...agg.trials, trial ],
 });
 
 export const defaultTrialData: TrialsWithMetadata = {
+  data: [],
   hpVals: {},
+  ids: [],
   maxBatch: 1,
   metrics: [],
-  trialIds: [],
-  trials: [],
 };

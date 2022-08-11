@@ -1,4 +1,5 @@
 import { terminalCommandStates } from 'constants/states';
+import { TrialsCollection } from 'pages/TrialsComparison/utils/collections';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
@@ -129,7 +130,7 @@ export const patchBulkTrials = generateDetApi<
 export const createTrialCollection = generateDetApi<
   Api.V1CreateTrialsCollectionRequest,
   Api.V1CreateTrialsCollectionResponse,
-  Api.V1CreateTrialsCollectionResponse
+  TrialsCollection | undefined
 >(Config.createTrialCollection);
 
 export const getTrialCollection = generateDetApi<

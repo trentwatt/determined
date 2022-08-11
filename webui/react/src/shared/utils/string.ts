@@ -13,6 +13,13 @@ export const snakeCaseToTitleCase = (text: string): string => {
   return capitalizedWords.join(' ');
 };
 
+export const snakeCaseToCamelCase = (text: string): string => {
+  const words = text.split('_');
+  return words.map((word, index) => {
+    return index === 0 ? word.toLowerCase() : capitalizeWord(word);
+  }).join('');
+};
+
 export const camelCaseToKebab = (text: string): string => {
   return text.trim().split('').map((char, index) => {
     return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;

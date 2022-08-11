@@ -386,7 +386,8 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 		len(f.ValidationMetrics) +
 		len(f.TrainingMetrics) +
 		len(f.Hparams) +
-		len(f.UserIds)
+		len(f.UserIds) +
+		len(f.Tags)
 
 	if filtersLength == 0 {
 		return emptyFilters
@@ -583,6 +584,7 @@ func (a *apiServer) CreateTrialsCollection(
 		return nil, fmt.Errorf("couldnt create trials collection %w", err)
 	}
 
+	fmt.Println("here are the filters", req.Filters)
 	err = checkTrialFiltersEmpty(req.Filters)
 
 	if err != nil {
@@ -598,6 +600,7 @@ func (a *apiServer) CreateTrialsCollection(
 		Name:      req.Name,
 		ProjectId: req.ProjectId,
 		Filters:   req.Filters,
+		Sorter:    req.Sorter,
 	}
 
 	_, err = db.Bun().NewInsert().
@@ -606,7 +609,7 @@ func (a *apiServer) CreateTrialsCollection(
 		Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %w", err)
+		return nil, fmt.Errorf("error in creating collection %w", err)
 	}
 
 	resp := &apiv1.CreateTrialsCollectionResponse{Collection: collection.Proto()}
@@ -622,23 +625,22 @@ func (a *apiServer) PatchTrialsCollection(
 	}
 
 	collection := db.TrialsCollection{
-		ID:      req.Collection.Id,
-		Name:    req.Collection.Name,
-		Filters: req.Collection.Filters,
+		ID:      req.Id,
+		Name:    req.Name,
+		Filters: req.Filters,
 	}
 
 	q := db.Bun().NewUpdate().
 		Model(&collection).
 		Returning("*").
 		WherePK().
-		Where("user_id = ?", user.ID).
-		WhereOr("?", user.Admin)
+		Where("user_id = ? OR ?", user.ID, user.Admin)
 
-	if req.Collection.Name != "" {
+	if req.Name != "" {
 		q.Column("name")
 	}
 
-	if req.Collection.Filters != nil {
+	if req.Filters != nil {
 		q.Column("filters")
 	}
 
@@ -664,14 +666,13 @@ func (a *apiServer) DeleteTrialsCollection(
 	}
 
 	collection := db.TrialsCollection{
-		ID: req.Collection.Id,
+		ID: req.Id,
 	}
 
 	q := db.Bun().NewDelete().
 		Model(&collection).
 		WherePK().
-		Where("user_id = ?", user.ID).
-		WhereOr("?", user.Admin)
+		Where("user_id = ? OR ?", user.ID, user.Admin)
 
 	_, err = q.Exec(context.TODO())
 

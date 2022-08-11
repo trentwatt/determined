@@ -3,13 +3,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import TagList from 'components/TagList';
 import {
-  encodeFilters,
   getDescriptionText,
   isTrialsCollection,
   TrialsSelectionOrCollection,
-} from 'pages/TrialsComparison/utils/filters';
+} from 'pages/TrialsComparison/utils/collections';
 import { patchBulkTrials, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+
+import { encodeFilters } from '../utils/api';
 
 import css from './useModalTrialTag.module.scss';
 

@@ -10,8 +10,8 @@ import { defaultRowClassName, getPaginationConfig } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { TrialFilters } from 'pages/TrialsComparison/utils/collections';
 import { HpValsMap } from 'pages/TrialsComparison/utils/data';
-import { TrialFilters } from 'pages/TrialsComparison/utils/filters';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RecordKey } from 'shared/types';
@@ -20,14 +20,14 @@ import { isNumber } from 'shared/utils/data';
 import { Metric, MetricType } from 'types';
 import { metricKeyToName, metricToKey } from 'utils/metric';
 
-import { SetFilters } from '../utils/filters';
+import { SetFilters } from '../utils/collections';
 
 import rangeFilterForPrefix, { rangeFilterIsActive } from './rangeFilter';
-import Tags, { addTagFunc, removeTagFunc } from './Tags';
 import css from './TrialTable.module.scss';
 import settingsConfig, {
   CompareTableSettings,
 } from './TrialTable.settings';
+import Tags, { addTagFunc, removeTagFunc } from './TrialTags';
 
 interface Props {
   colorScale?: ColorScale[];

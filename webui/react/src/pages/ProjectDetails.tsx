@@ -40,11 +40,9 @@ import {
   getExperimentLabels, getExperiments, getProject, killExperiment, openOrCreateTensorBoard,
   patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
 } from 'services/api';
-import { getTrialCollection } from 'services/api';
 import {
   Determinedexperimentv1State,
   V1GetExperimentsRequestSortBy,
-  V1TrialsCollection,
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
@@ -88,7 +86,7 @@ interface Params {
 }
 
 const batchActions = [
-  Action.CompareExperiments,
+  // Action.CompareExperiments,
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
@@ -110,7 +108,6 @@ const ProjectDetails: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
-  const [ collections, setCollections ] = useState<V1TrialsCollection[]>();
   const pageRef = useRef<HTMLElement>(null);
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -121,12 +118,6 @@ const ProjectDetails: React.FC = () => {
   }, [ updateDestinationSettings, project?.workspaceId ]);
 
   const id = parseInt(projectId);
-
-  const fetchTrialsCollections = useCallback(async () => {
-    const response = await getTrialCollection(id);
-    setCollections(response.collections);
-
-  }, [ id ]);
 
   const {
     settings,
@@ -220,8 +211,8 @@ const ProjectDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels(), fetchTrialsCollections() ]);
-  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels, fetchTrialsCollections ]);
+      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -829,22 +820,6 @@ const ProjectDetails: React.FC = () => {
             onChange={switchShowArchived}
           />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
-          <Dropdown
-            overlay={(
-              <Menu>
-                {collections?.map((collection) => (
-                  <Menu.Item
-                    key={`collection-${collection.id}`}>
-                    {collection.name}
-                  </Menu.Item>
-                ))}
-              </Menu>
-            )}
-            trigger={[ 'click' ]}>
-            <div>
-              <Button>Collections</Button>
-            </div>
-          </Dropdown>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
@@ -879,12 +854,11 @@ const ProjectDetails: React.FC = () => {
     resetFilters,
     settings.archived,
     switchShowArchived,
-    collections,
   ]);
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([
-      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
+
       {
         body: (
           <div className={css.experimentTab}>
@@ -927,6 +901,7 @@ const ProjectDetails: React.FC = () => {
         options: ExperimentTabOptions,
         title: 'Experiments',
       },
+      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
       {
         body: (
           <PaginatedNotesCard
@@ -936,7 +911,7 @@ const ProjectDetails: React.FC = () => {
             onNewPage={handleNewNotesPage}
             onSave={handleSaveNotes}
           />),
-        key: 'trials',
+        key: 'notes',
         options: (
           <div className={css.tabOptions}>
             <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>

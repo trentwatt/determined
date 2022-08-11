@@ -18,6 +18,7 @@ const config: SettingsConfig = {
     {
       defaultValue: [],
       key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: {
         baseType: BaseType.String,

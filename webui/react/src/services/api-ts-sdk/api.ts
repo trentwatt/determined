@@ -1886,10 +1886,10 @@ export interface V1DeleteTemplateResponse {
 export interface V1DeleteTrialsCollectionRequest {
     /**
      * 
-     * @type {V1TrialsCollection}
+     * @type {number}
      * @memberof V1DeleteTrialsCollectionRequest
      */
-    collection?: V1TrialsCollection;
+    id?: number;
 }
 
 /**
@@ -4908,10 +4908,34 @@ export interface V1PatchProjectResponse {
 export interface V1PatchTrialsCollectionRequest {
     /**
      * 
-     * @type {V1TrialsCollection}
+     * @type {number}
      * @memberof V1PatchTrialsCollectionRequest
      */
-    collection?: V1TrialsCollection;
+    id: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    projectId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {V1TrialFilters}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    filters?: V1TrialFilters;
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    sorter?: V1TrialSorter;
 }
 
 /**
@@ -7387,37 +7411,37 @@ export interface V1TrialsCollection {
      * @type {number}
      * @memberof V1TrialsCollection
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {number}
      * @memberof V1TrialsCollection
      */
-    userId?: number;
+    userId: number;
     /**
      * 
      * @type {number}
      * @memberof V1TrialsCollection
      */
-    projectId?: number;
+    projectId: number;
     /**
      * 
      * @type {string}
      * @memberof V1TrialsCollection
      */
-    name?: string;
+    name: string;
     /**
      * 
      * @type {V1TrialFilters}
      * @memberof V1TrialsCollection
      */
-    filters?: V1TrialFilters;
+    filters: V1TrialFilters;
     /**
      * 
      * @type {V1TrialSorter}
      * @memberof V1TrialsCollection
      */
-    sorter?: V1TrialSorter;
+    sorter: V1TrialSorter;
 }
 
 /**

@@ -94,9 +94,6 @@ const MetricsView: React.FC<Props> = ({
         onChange={handleMetricChange}
       />
       <ScaleSelectFilter value={localView.scale} onChange={handleScaleChange} />
-      <div className={css.buttons}>
-        <IconButton icon="reset" label="Reset" onClick={handleReset} />
-      </div>
     </>
   );
 };

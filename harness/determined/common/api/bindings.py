@@ -1186,7 +1186,7 @@ class v1CreateTrialsCollectionRequest:
         filters: "v1TrialFilters",
         name: str,
         projectId: int,
-        sorter: "v1TrialSorter",
+        sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
         self.name = name
         self.projectId = projectId
@@ -1199,7 +1199,7 @@ class v1CreateTrialsCollectionRequest:
             name=obj["name"],
             projectId=obj["projectId"],
             filters=v1TrialFilters.from_json(obj["filters"]),
-            sorter=v1TrialSorter.from_json(obj["sorter"]),
+            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1207,7 +1207,7 @@ class v1CreateTrialsCollectionRequest:
             "name": self.name,
             "projectId": self.projectId,
             "filters": self.filters.to_json(),
-            "sorter": self.sorter.to_json(),
+            "sorter": self.sorter.to_json() if self.sorter is not None else None,
         }
 
 class v1CreateTrialsCollectionResponse:
@@ -1289,19 +1289,19 @@ class v1DeleteCheckpointsRequest:
 class v1DeleteTrialsCollectionRequest:
     def __init__(
         self,
-        collection: "typing.Optional[v1TrialsCollection]" = None,
+        id: "typing.Optional[int]" = None,
     ):
-        self.collection = collection
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeleteTrialsCollectionRequest":
         return cls(
-            collection=v1TrialsCollection.from_json(obj["collection"]) if obj.get("collection", None) is not None else None,
+            id=obj.get("id", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "collection": self.collection.to_json() if self.collection is not None else None,
+            "id": self.id if self.id is not None else None,
         }
 
 class v1Device:
@@ -4187,19 +4187,35 @@ class v1PatchProjectResponse:
 class v1PatchTrialsCollectionRequest:
     def __init__(
         self,
-        collection: "typing.Optional[v1TrialsCollection]" = None,
+        id: int,
+        filters: "typing.Optional[v1TrialFilters]" = None,
+        name: "typing.Optional[str]" = None,
+        projectId: "typing.Optional[int]" = None,
+        sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
-        self.collection = collection
+        self.id = id
+        self.projectId = projectId
+        self.name = name
+        self.filters = filters
+        self.sorter = sorter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchTrialsCollectionRequest":
         return cls(
-            collection=v1TrialsCollection.from_json(obj["collection"]) if obj.get("collection", None) is not None else None,
+            id=obj["id"],
+            projectId=obj.get("projectId", None),
+            name=obj.get("name", None),
+            filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "collection": self.collection.to_json() if self.collection is not None else None,
+            "id": self.id,
+            "projectId": self.projectId if self.projectId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "filters": self.filters.to_json() if self.filters is not None else None,
+            "sorter": self.sorter.to_json() if self.sorter is not None else None,
         }
 
 class v1PatchTrialsCollectionResponse:
@@ -6431,12 +6447,12 @@ class v1TrialTag:
 class v1TrialsCollection:
     def __init__(
         self,
-        filters: "typing.Optional[v1TrialFilters]" = None,
-        id: "typing.Optional[int]" = None,
-        name: "typing.Optional[str]" = None,
-        projectId: "typing.Optional[int]" = None,
-        sorter: "typing.Optional[v1TrialSorter]" = None,
-        userId: "typing.Optional[int]" = None,
+        filters: "v1TrialFilters",
+        id: int,
+        name: str,
+        projectId: int,
+        sorter: "v1TrialSorter",
+        userId: int,
     ):
         self.id = id
         self.userId = userId
@@ -6448,22 +6464,22 @@ class v1TrialsCollection:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsCollection":
         return cls(
-            id=obj.get("id", None),
-            userId=obj.get("userId", None),
-            projectId=obj.get("projectId", None),
-            name=obj.get("name", None),
-            filters=v1TrialFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
-            sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
+            id=obj["id"],
+            userId=obj["userId"],
+            projectId=obj["projectId"],
+            name=obj["name"],
+            filters=v1TrialFilters.from_json(obj["filters"]),
+            sorter=v1TrialSorter.from_json(obj["sorter"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
-            "userId": self.userId if self.userId is not None else None,
-            "projectId": self.projectId if self.projectId is not None else None,
-            "name": self.name if self.name is not None else None,
-            "filters": self.filters.to_json() if self.filters is not None else None,
-            "sorter": self.sorter.to_json() if self.sorter is not None else None,
+            "id": self.id,
+            "userId": self.userId,
+            "projectId": self.projectId,
+            "name": self.name,
+            "filters": self.filters.to_json(),
+            "sorter": self.sorter.to_json(),
         }
 
 class v1TrialsSampleResponse:

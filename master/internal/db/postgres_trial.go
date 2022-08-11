@@ -478,7 +478,7 @@ type TrialsCollection struct {
 	ProjectId int32               `bun:"project_id"`
 	Name      string              `bun:"name"`
 	Filters   *apiv1.TrialFilters `bun:"filters,type:jsonb"`
-	Sorter    *apiv1.TrialSorter  `bun:"filters,type:jsonb"`
+	Sorter    *apiv1.TrialSorter  `bun:"sorter,type:jsonb"`
 }
 
 func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {

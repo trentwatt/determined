@@ -1,20 +1,23 @@
 import { Input, InputRef } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  encodeFilters,
   getDescriptionText,
   isTrialsSelection,
+  TrialsCollection,
   TrialsSelectionOrCollection,
-} from 'pages/TrialsComparison/utils/filters';
-import { createTrialCollection, patchBulkTrials, patchTrials } from 'services/api';
+} from 'pages/TrialsComparison/utils/collections';
+import { createTrialCollection, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+
+import { encodeFilters, encodeTrialSorter } from '../utils/api';
 
 import css from './useModalTrialCollection.module.scss';
 
 interface Props {
   onClose?: () => void;
+  onConfirm?: (newCollection?: TrialsCollection) => void;
   projectId: string;
 
 }
@@ -31,15 +34,14 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 const useModalTrialCollection = ({
   onClose,
   projectId,
-
+  onConfirm,
 }: Props): ModalHooks => {
   const inputRef = useRef<InputRef>(null);
-  const [ name, setName ] = useState('');
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    setName(newName);
-  }, []);
+  const [ name, setName ] = useState('');
+  const [ trials, setTrials ] = useState<TrialsSelectionOrCollection>();
+  const handleChange = useCallback((e) => setName(e.target.value), []);
+
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const modalContent = useMemo(() => {
@@ -57,64 +59,76 @@ const useModalTrialCollection = ({
     );
   }, [ name, handleChange ]);
 
-  // clean this up
   const handleOk = useCallback(
     async (name: string, target: TrialsSelectionOrCollection) => {
+      let newCollection: TrialsCollection | undefined;
       try {
-        await createTrialCollection({
-          filters: encodeFilters({ tags: [ 'name' ] }),
-          name,
-          projectId: parseInt(projectId),
-        });
-        const patch = { tags: [ { key: name, value: '1' } ] };
-
-        if (isTrialsSelection(target))
+        if (isTrialsSelection(target)) {
           await patchTrials({
-            patch,
+            patch: { tags: [ { key: name, value: '1' } ] },
             trialIds: target.trialIds,
           });
+          newCollection = await createTrialCollection({
+            filters: encodeFilters({ tags: [ name ] }),
+            name,
+            projectId: parseInt(projectId),
+            sorter: encodeTrialSorter(target.sorter),
+          });
 
-        else {
-          await patchBulkTrials({
+        } else {
+          newCollection = await createTrialCollection({
             filters: encodeFilters(target.filters),
-            patch,
+            name,
+            projectId: parseInt(projectId),
+            sorter: encodeTrialSorter(target.sorter),
           });
         }
+
       } catch (error) {
         // duly noted
       }
+      setName('');
+      onConfirm?.(newCollection);
+
     },
-    [ projectId ],
+    [ projectId, onConfirm ],
   );
 
   const getModalProps = useCallback(
-    (trials): ModalFuncProps => {
-      return {
+    (name, trials): ModalFuncProps => {
+      const props = {
         closable: true,
         content: modalContent,
         icon: null,
+        okButtonProps: { disabled: !name },
         okText: 'Create Collection',
-        onOk: handleOk,
-        title: `Create Collection for ${getDescriptionText(trials)}`,
+        onOk: () => handleOk(name, trials),
+        title: trials && `Create Collection for ${getDescriptionText(trials)}`,
       };
+      return props;
     },
     [ handleOk, modalContent ],
   );
 
   const modalOpen = useCallback(
     ({ initialModalProps, trials }: ShowModalProps) => {
-      openOrUpdate({
-        ...getModalProps(trials),
+      setTrials(trials);
+      const newProps = {
         ...initialModalProps,
-      });
+        ...getModalProps(name, trials),
+      };
+      openOrUpdate(newProps);
     },
-    [ getModalProps, openOrUpdate ],
+    [ getModalProps, openOrUpdate, name ],
   );
 
   /**
    * When modal props changes are detected, such as modal content
    * title, and buttons, update the modal.
    */
+  useEffect(() => {
+    if (modalRef.current) openOrUpdate(getModalProps(name, trials));
+  }, [ getModalProps, modalRef, name, trials, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

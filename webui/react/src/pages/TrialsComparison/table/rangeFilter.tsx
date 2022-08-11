@@ -4,7 +4,7 @@ import React from 'react';
 import TableFilterRange from 'components/TableFilterRange';
 import { isNullOrUndefined } from 'shared/utils/data';
 
-import { SetFilters, TrialFilters } from '../utils/filters';
+import { SetFilters, TrialFilters } from '../utils/collections';
 
 type FilterPrefix = 'hparams' | 'trainingMetrics' | 'validationMetrics'
 

@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
-interface Action {
+export interface Action {
   bulk?: boolean;
   disabled?: boolean;
   label: string;
