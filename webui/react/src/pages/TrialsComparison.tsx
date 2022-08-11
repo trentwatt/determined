@@ -60,9 +60,9 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const {
     filters,
     setFilters,
-    collectionId,
+    collection,
     fetchCollections,
-    setCollectionId,
+    setCollection,
     sorter,
     setSorter,
     collections,
@@ -87,8 +87,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const handleCollectionConfirm = useCallback((newCollection?: TrialsCollection) => {
     fetchCollections();
-    if (newCollection) setCollectionId(newCollection.id);
-  }, [ fetchCollections, setCollectionId ]);
+    if (newCollection) setCollection(newCollection.name);
+  }, [ fetchCollections, setCollection ]);
 
   const {
     contextHolder: modalTrialCollectionContextHolder,
@@ -188,16 +188,17 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const collectionsControls = (
     <>
       <Button onClick={createCollectionFromFilters}>New Collection</Button>
+      {/* <Button onClick={patchCollectionFromFilters}>Save Collection</Button> */}
       <Select
         placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
-        value={collectionId}
-        onChange={(value) => setCollectionId(value)}>
+        value={collection}
+        onChange={(value) => setCollection(value)}>
         {[
           <Option key="" value="">
             No Collection Selected
           </Option>,
           ...collections?.map((collection) => (
-            <Option key={collection.id} value={collection.id}>
+            <Option key={collection.name} value={collection.name}>
               {collection.name}
             </Option>
           )) ?? [],
