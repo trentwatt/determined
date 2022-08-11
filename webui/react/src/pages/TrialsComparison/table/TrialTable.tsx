@@ -13,7 +13,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { TrialFilters } from 'pages/TrialsComparison/utils/collections';
 import { HpValsMap } from 'pages/TrialsComparison/utils/data';
 import { paths } from 'routes/utils';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial, V1TrialSorter } from 'services/api-ts-sdk';
 import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
@@ -128,24 +128,39 @@ const TrialTable: React.FC<Props> = ({
     title: 'Exp ID',
   }), [ filters.experimentIds, setFilters ]);
 
-  const expRankColumn = useMemo(() => ({
-    dataIndex: 'rank',
-    defaultWidth: 60,
-    filterDropdown: (filterProps: FilterDropdownProps) => (
-      <TableFilterSearch
-        {...filterProps}
-        value={filters.ranker?.rank || ''}
-        onReset={() => setFilters?.((filters) => ({ ...filters, rankWithinExp: '' }))}
-        onSearch={(r) => setFilters?.((filters) => ({ ...filters, rankWithinExp: r }))}
-      />
-    ),
-    isFiltered: () => !!filters.ranker?.rank,
-    key: 'rank',
-    render: (_: string, record: V1AugmentedTrial) => (
-      <div className={css.idLayout}>{record.rankWithinExp}</div>
-    ),
-    title: 'Rank in Exp',
-  }), [ filters.ranker?.rank, setFilters ]);
+  const expRankColumn = useMemo(
+    () => ({
+      dataIndex: 'rank',
+      defaultWidth: 60,
+      filterDropdown: (filterProps: FilterDropdownProps) => (
+        <TableFilterSearch
+          {...filterProps}
+          value={filters.ranker?.rank || ''}
+          onReset={() =>
+            setFilters?.((filters) => ({
+              ...filters,
+              // TODO handle invalid type assertion below
+              ranker: { rank: '', sorter: filters.ranker?.sorter as V1TrialSorter },
+            }))
+          }
+          onSearch={(r) =>
+            setFilters?.((filters) => ({
+              ...filters,
+              // TODO handle invalid type assertion below
+              ranker: { rank: r, sorter: filters.ranker?.sorter as V1TrialSorter },
+            }))
+          }
+        />
+      ),
+      isFiltered: () => !!filters.ranker?.rank,
+      key: 'rank',
+      render: (_: string, record: V1AugmentedTrial) => (
+        <div className={css.idLayout}>{record.rankWithinExp}</div>
+      ),
+      title: 'Rank in Exp',
+    }),
+    [ filters.ranker?.rank, setFilters ],
+  );
 
   const hpColumns = useMemo(() => Object
     .keys(hpVals || {})

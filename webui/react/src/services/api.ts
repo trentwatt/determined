@@ -127,17 +127,23 @@ export const patchBulkTrials = generateDetApi<
   Api.V1BulkPatchTrialsResponse
 >(Config.patchBulkTrials);
 
-export const createTrialCollection = generateDetApi<
+export const createTrialsCollection = generateDetApi<
   Api.V1CreateTrialsCollectionRequest,
   Api.V1CreateTrialsCollectionResponse,
   TrialsCollection | undefined
 >(Config.createTrialCollection);
 
-export const getTrialCollection = generateDetApi<
+export const getTrialsCollections = generateDetApi<
   number,
   Api.V1GetTrialsCollectionsResponse,
   Api.V1GetTrialsCollectionsResponse
->(Config.getTrialCollection);
+>(Config.getTrialsCollections);
+
+export const patchTrialsCollection = generateDetApi<
+Api.V1PatchTrialsCollectionRequest,
+Api.V1PatchTrialsCollectionResponse,
+TrialsCollection | undefined
+>(Config.patchTrialCollection);
 
 /* Experiments */
 

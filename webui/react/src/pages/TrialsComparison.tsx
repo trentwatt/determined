@@ -21,7 +21,6 @@ import {
 } from 'services/api';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { clone } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { noOp } from 'shared/utils/service';
 import {
   MetricType,
@@ -62,6 +61,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     setFilters,
     collection,
     fetchCollections,
+    saveCollection,
     setCollection,
     sorter,
     setSorter,
@@ -186,17 +186,14 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   );
 
   const collectionsControls = (
-    <>
+    <div style={{ position: 'fixed', right: '30px' }}>
       <Button onClick={createCollectionFromFilters}>New Collection</Button>
-      {/* <Button onClick={patchCollectionFromFilters}>Save Collection</Button> */}
+      <Button onClick={saveCollection}>Save Collection</Button>
       <Select
         placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
         value={collection}
         onChange={(value) => setCollection(value)}>
         {[
-          <Option key="" value="">
-            No Collection Selected
-          </Option>,
           ...collections?.map((collection) => (
             <Option key={collection.name} value={collection.name}>
               {collection.name}
@@ -204,7 +201,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
           )) ?? [],
         ]}
       </Select>
-    </>
+    </div>
   );
 
   return (

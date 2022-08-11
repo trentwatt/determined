@@ -858,7 +858,7 @@ const ProjectDetails: React.FC = () => {
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([
-
+      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
       {
         body: (
           <div className={css.experimentTab}>
@@ -901,7 +901,6 @@ const ProjectDetails: React.FC = () => {
         options: ExperimentTabOptions,
         title: 'Experiments',
       },
-      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
       {
         body: (
           <PaginatedNotesCard

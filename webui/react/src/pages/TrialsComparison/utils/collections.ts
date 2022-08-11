@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
-import { getTrialCollection } from 'services/api';
+import { getTrialsCollections, patchTrialsCollection } from 'services/api';
 import {
   TrialSorterNamespace,
   V1OrderBy,
@@ -10,7 +10,7 @@ import {
 } from 'services/api-ts-sdk';
 import { isNumber } from 'shared/utils/data';
 
-import { decodeTrialsCollection } from './api';
+import { decodeTrialsCollection, encodeTrialsCollection } from './api';
 
 export interface NumberRange {
   max?: string;
@@ -80,6 +80,7 @@ interface TrialsCollectionInterface {
   fetchCollections: () => Promise<void>;
   filters: TrialFilters;
   resetFilters: () => void;
+  saveCollection: () => Promise<void>;
   setCollection: (name: string) => void;
   setFilters: SetFilters;
   setSorter :Dispatch<SetStateAction<V1TrialSorter>>
@@ -128,10 +129,6 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     });
   }, [ filterStorage ]);
 
-  const saveCollection = useCallback(() => {
-
-  }, []);
-
   const resetFilters = useCallback(() => {
     filterStorage.remove('filters');
   }, [ filterStorage ]);
@@ -154,25 +151,16 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
   );
 
   const setCollection = useCallback((name: string) => {
-    const collection = collections.find((c) => c.name === name);
-    if (collection?.name != null) {
-      updateSettings({ collection: collection.name });
+    const _collection = collections.find((c) => c.name === name);
+    if (_collection?.name != null) {
+      updateSettings({ collection: _collection.name });
     }
   }, [ collections, updateSettings ]);
-
-  useEffect(() => {
-    const collection = collections.find((c) => c.name === settings?.collection);
-    const previousCollection = getPreviousCollection();
-    if (collection && (JSON.stringify(collection) !== JSON.stringify(previousCollection))) {
-      _setFilters(collection.filters);
-      setPreviousCollection(collection);
-    }
-  }, [ settings?.collection, collections, getPreviousCollection, setPreviousCollection ]);
 
   const fetchCollections = useCallback(async () => {
     const id = parseInt(projectId);
     if (isNumber(id)) {
-      const response = await getTrialCollection(id);
+      const response = await getTrialsCollections(id);
       setCollections(
         response.collections?.map(decodeTrialsCollection) ?? [],
       );
@@ -183,12 +171,30 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     fetchCollections();
   }, [ fetchCollections ]);
 
+  const saveCollection = useCallback(async () => {
+    const _collection = collections.find((c) => c.name === settings?.collection);
+    const newCollection = { ..._collection, filters, sorter } as TrialsCollection;
+    await patchTrialsCollection(encodeTrialsCollection(newCollection));
+    fetchCollections();
+
+  }, [ collections, filters, settings?.collection, sorter, fetchCollections ]);
+
+  useEffect(() => {
+    const _collection = collections.find((c) => c.name === settings?.collection);
+    const previousCollection = getPreviousCollection();
+    if (_collection && (JSON.stringify(_collection) !== JSON.stringify(previousCollection))) {
+      _setFilters(_collection.filters);
+      setPreviousCollection(_collection);
+    }
+  }, [ settings?.collection, collections, getPreviousCollection, setPreviousCollection ]);
+
   return {
     collection: settings.collection,
     collections,
     fetchCollections,
     filters,
     resetFilters,
+    saveCollection,
     setCollection,
     setFilters,
     setSorter,

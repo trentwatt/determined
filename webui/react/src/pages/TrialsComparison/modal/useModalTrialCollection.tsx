@@ -8,7 +8,7 @@ import {
   TrialsCollection,
   TrialsSelectionOrCollection,
 } from 'pages/TrialsComparison/utils/collections';
-import { createTrialCollection, patchTrials } from 'services/api';
+import { createTrialsCollection, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
 import { encodeFilters, encodeTrialSorter } from '../utils/api';
@@ -68,7 +68,7 @@ const useModalTrialCollection = ({
             patch: { tags: [ { key: name, value: '1' } ] },
             trialIds: target.trialIds,
           });
-          newCollection = await createTrialCollection({
+          newCollection = await createTrialsCollection({
             filters: encodeFilters({ tags: [ name ] }),
             name,
             projectId: parseInt(projectId),
@@ -76,7 +76,7 @@ const useModalTrialCollection = ({
           });
 
         } else {
-          newCollection = await createTrialCollection({
+          newCollection = await createTrialsCollection({
             filters: encodeFilters(target.filters),
             name,
             projectId: parseInt(projectId),

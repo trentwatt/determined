@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useReducer } from 'react';
 
-import IconButton from 'components/IconButton';
+// import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { Scale } from 'types';
 import { Metric } from 'types';
 
-import css from './MetricsView.module.scss';
+// import css from './MetricsView.module.scss';
 
 export enum Layout {
   Grid = 'grid',
@@ -57,7 +57,7 @@ const MetricsView: React.FC<Props> = ({
   view,
   metrics,
   onChange,
-  onReset,
+  // onReset,
 }: Props) => {
   const [ localView, dispatch ] = useReducer(reducer, view);
 
@@ -73,10 +73,10 @@ const MetricsView: React.FC<Props> = ({
     dispatch({ type: ActionType.SetMetric, value: metric });
   }, [ ]);
 
-  const handleReset = useCallback(() => {
-    dispatch({ type: ActionType.Set, value: view });
-    if (onReset) onReset();
-  }, [ onReset, view ]);
+  // const handleReset = useCallback(() => {
+  //   dispatch({ type: ActionType.Set, value: view });
+  //   if (onReset) onReset();
+  // }, [ onReset, view ]);
 
   useEffect(() => {
     if (onChange) onChange(localView);

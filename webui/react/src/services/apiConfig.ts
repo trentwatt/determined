@@ -305,7 +305,7 @@ export const createTrialCollection: DetApi<
   },
 };
 
-export const getTrialCollection: DetApi<
+export const getTrialsCollections: DetApi<
   number, Api.V1GetTrialsCollectionsResponse, Api.V1GetTrialsCollectionsResponse
 > = {
   name: 'getTrialsCollection',
@@ -316,6 +316,19 @@ export const getTrialCollection: DetApi<
     return detApi.TrialsComparison.getTrialsCollections(
       projectId,
     );
+  },
+};
+
+export const patchTrialCollection: DetApi<
+Api.V1PatchTrialsCollectionRequest,
+Api.V1PatchTrialsCollectionResponse,
+TrialsCollection | undefined
+> = {
+  name: 'getTrialsCollection',
+  postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
+  request: (params: Api.V1PatchTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.patchTrialsCollection(params);
   },
 };
 
