@@ -591,6 +591,17 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters, se
 	if rankFilterApplied || selectAll {
 		r := filters.RankWithinExp
 
+		if r == nil {
+			r = &apiv1.TrialFilters_RankWithinExp{
+				Rank: 0,
+				Sorter: &apiv1.TrialSorter{
+					Namespace: apiv1.TrialSorter_TRIALS,
+					Field:     "trial_id",
+					OrderBy:   apiv1.OrderBy_ORDER_BY_ASC,
+				},
+			}
+		}
+
 		columnExpr, err := db.TrialsColumnForNamespace(r.Sorter.Namespace, r.Sorter.Field)
 		if err != nil {
 			return nil, fmt.Errorf("possible unsafe filters, %f", err)

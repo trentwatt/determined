@@ -48,11 +48,11 @@ export type TrialsSelectionOrCollection = TrialsSelection | TrialsCollectionSpec
 export const isTrialsSelection = (t: TrialsSelectionOrCollection): t is TrialsSelection =>
   ('trialIds' in t);
 
-export const isTrialsCollectionSpec = (t: TrialsSelectionOrCollection): t is TrialsCollectionSpec =>
+export const isTrialsCollection = (t: TrialsSelectionOrCollection): t is TrialsCollectionSpec =>
   ('filters' in t);
 
 export const getDescriptionText = (t: TrialsSelectionOrCollection): string =>
-  isTrialsCollectionSpec(t)
+  isTrialsCollection(t)
     ? 'filtered trials'
     : t.trialIds.length === 1
       ? `trial ${t.trialIds[0]}`

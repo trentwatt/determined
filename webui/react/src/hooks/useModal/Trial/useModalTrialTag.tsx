@@ -5,7 +5,7 @@ import TagList from 'components/TagList';
 import {
   encodeFilters,
   getDescriptionText,
-  isTrialsCollectionSpec,
+  isTrialsCollection,
   TrialsSelectionOrCollection,
 } from 'pages/TrialsComparison/utils/filters';
 import { patchBulkTrials, patchTrials } from 'services/api';
@@ -15,7 +15,6 @@ import css from './useModalTrialTag.module.scss';
 
 interface Props {
   onClose?: () => void;
-  // trials: TrialsSelectionOrCollection;
 }
 
 export interface ShowModalProps {
@@ -50,7 +49,7 @@ const useModalTrialTag = ({ onClose }: Props): ModalHooks => {
   const handleOk = useCallback(async (trials) => {
     const patch = { tags: tags.map((tag) => { return { key: tag, value: '1' }; }) };
     try {
-      if (isTrialsCollectionSpec(trials)){
+      if (isTrialsCollection(trials)){
         await patchBulkTrials({
           filters: encodeFilters(trials.filters),
           patch,
