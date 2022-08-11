@@ -240,27 +240,27 @@ const TrialTable: React.FC<Props> = ({
       };
     }), [ filters, metrics, setFilters ]);
 
-  // const validationMetricColumns = useMemo(() => metrics
-  //   .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
-  //     const key = metricToKey(metric);
-  //     return {
-  //       dataIndex: key,
-  //       defaultWidth: 100,
-  //       filterDropdown: rangeFilterForPrefix(
-  //         'validationMetrics',
-  //         filters,
-  //         setFilters,
-  //       )(metric.name),
-  //       isFiltered: () => rangeFilterIsActive(filters, 'validationMetrics', metric.name),
-  //       key,
-  //       render: (_: string, record: V1AugmentedTrial) => {
-  //         const value = record.validationMetrics?.[metricKeyToName(key)];
-  //         return isNumber(value) ? <HumanReadableNumber num={value} /> : '-';
-  //       },
-  //       sorter: true,
-  //       title: <MetricBadgeTag metric={metric} />,
-  //     };
-  //   }), [ filters, metrics, setFilters ]);
+  const validationMetricColumns = useMemo(() => metrics
+    .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
+      const key = metricToKey(metric);
+      return {
+        dataIndex: key,
+        defaultWidth: 100,
+        filterDropdown: rangeFilterForPrefix(
+          'validationMetrics',
+          filters,
+          setFilters,
+        )(metric.name),
+        isFiltered: () => rangeFilterIsActive(filters, 'validationMetrics', metric.name),
+        key,
+        render: (_: string, record: V1AugmentedTrial) => {
+          const value = record.validationMetrics?.[metricKeyToName(key)];
+          return isNumber(value) ? <HumanReadableNumber num={value} /> : '-';
+        },
+        sorter: true,
+        title: <MetricBadgeTag metric={metric} />,
+      };
+    }), [ filters, metrics, setFilters ]);
 
   // console.log(metrics);
 
@@ -271,7 +271,7 @@ const TrialTable: React.FC<Props> = ({
     tagColumn,
     ...hpColumns,
     ...trainingMetricColumns,
-    // ...validationMetricColumns,
+    ...validationMetricColumns,
   ], [
     idColumn,
     experimentIdColumn,
@@ -279,7 +279,7 @@ const TrialTable: React.FC<Props> = ({
     tagColumn,
     hpColumns,
     trainingMetricColumns,
-    // validationMetricColumns,
+    validationMetricColumns,
   ]);
 
   useEffect(() => {
@@ -300,6 +300,7 @@ const TrialTable: React.FC<Props> = ({
   //   // console.log(tableFilters, tableSorter);
   //   // handleTableChange(paginationConfig.pageSize);
   // }, []);
+
   const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
     onMouseEnter: (event: React.MouseEvent) => {
       if (onMouseEnter) onMouseEnter(event, record);
