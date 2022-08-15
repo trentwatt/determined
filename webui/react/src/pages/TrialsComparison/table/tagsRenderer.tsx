@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 
 import TagList, { TagAction } from 'components/TagList';
 import { patchTrials } from 'services/api';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
 
 export const addTagFunc = (trialId: number) =>
   async (tag: string): Promise<unknown> => await patchTrials({
@@ -11,7 +12,7 @@ export const addTagFunc = (trialId: number) =>
 
 export const removeTagFunc = (trialId: number) =>
   async (tag: string): Promise<unknown> => await patchTrials({
-    patch: { tags: [ { key: tag, value: '1' } ] },
+    patch: { tags: [ { key: tag, value: '' } ] },
     trialIds: [ trialId ],
   });
 
@@ -20,6 +21,7 @@ interface Props {
   onRemove: (tag: string) => Promise<unknown>
   tags: string[];
 }
+
 const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
   const [ tags, setTags ] = useState(_tags);
   const handleTagAction = async (action: TagAction, tag: string) => {
@@ -44,4 +46,12 @@ const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
   );
 };
 
-export default Tags;
+const trialTagsRenderer = (value: string, record: V1AugmentedTrial): ReactNode => (
+  <Tags
+    tags={Object.keys(record.tags)}
+    onAdd={addTagFunc(record.trialId)}
+    onRemove={removeTagFunc(record.trialId)}
+  />
+);
+
+export default trialTagsRenderer;

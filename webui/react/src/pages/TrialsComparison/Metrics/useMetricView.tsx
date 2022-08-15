@@ -1,12 +1,8 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { ReactNode, useCallback, useEffect, useReducer, useState } from 'react';
 
-// import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
-import { Scale } from 'types';
-import { Metric } from 'types';
-
-// import css from './MetricsView.module.scss';
+import { Metric, MetricType, Scale } from 'types';
 
 export enum Layout {
   Grid = 'grid',
@@ -19,7 +15,7 @@ export interface MetricView {
   scale: Scale;
 }
 
-interface Props {
+interface MetricViewSelectProps {
   metrics: Metric[];
   onChange?: (view: MetricView) => void;
   onReset?: () => void;
@@ -38,8 +34,6 @@ type Action =
 | { type: ActionType.SetLayout; value: Layout }
 | { type: ActionType.SetScale; value: Scale }
 
-export const MAX_HPARAM_COUNT = 10;
-
 const reducer = (state: MetricView, action: Action) => {
   switch (action.type) {
     case ActionType.SetMetric:
@@ -53,17 +47,12 @@ const reducer = (state: MetricView, action: Action) => {
   }
 };
 
-const MetricsView: React.FC<Props> = ({
+export const MetricViewSelect: React.FC<MetricViewSelectProps> = ({
   view,
   metrics,
   onChange,
-  // onReset,
-}: Props) => {
+}) => {
   const [ localView, dispatch ] = useReducer(reducer, view);
-
-  // const handleLayoutChange = useCallback((layout: SelectValue) => {
-  //   dispatch({ type: ActionType.SetLayout, value: layout as Layout });
-  // }, []);
 
   const handleScaleChange = useCallback((scale: Scale) => {
     dispatch({ type: ActionType.SetScale, value: scale });
@@ -71,12 +60,7 @@ const MetricsView: React.FC<Props> = ({
 
   const handleMetricChange = useCallback((metric: Metric) => {
     dispatch({ type: ActionType.SetMetric, value: metric });
-  }, [ ]);
-
-  // const handleReset = useCallback(() => {
-  //   dispatch({ type: ActionType.Set, value: view });
-  //   if (onReset) onReset();
-  // }, [ onReset, view ]);
+  }, []);
 
   useEffect(() => {
     if (onChange) onChange(localView);
@@ -98,4 +82,40 @@ const MetricsView: React.FC<Props> = ({
   );
 };
 
-export default MetricsView;
+interface MetricViewInterface {
+  controls: ReactNode;
+  view?: MetricView;
+
+}
+
+const useMetricView = (metrics: Metric[]): MetricViewInterface => {
+
+  const [ view, setView ] = useState<MetricView>();
+
+  const handleViewChange = useCallback((view: MetricView) => {
+    setView(view);
+  }, []);
+
+  useEffect(() => {
+    if (!view && metrics.length) {
+      const defaultMetric = metrics
+        .filter((m) => m.type === MetricType.Validation)[0]
+        ?? metrics[0];
+      setView({ layout: Layout.Grid, metric: defaultMetric, scale: Scale.Linear });
+    }
+  }, [ view, metrics ]);
+
+  const controls = (
+    view && (
+      <MetricViewSelect
+        metrics={metrics}
+        view={view}
+        onChange={handleViewChange}
+      />
+    )
+  );
+
+  return { controls, view };
+};
+
+export default useMetricView;

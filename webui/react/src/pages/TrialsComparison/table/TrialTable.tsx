@@ -1,55 +1,42 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { MutableRefObject, useCallback, useEffect, useMemo } from 'react';
+import React, { MutableRefObject, useEffect, useMemo } from 'react';
 
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { defaultRowClassName, getPaginationConfig } from 'components/Table';
+import { getPaginationConfig } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
+import { Highlights } from 'hooks/useHighlight';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { TrialFilters } from 'pages/TrialsComparison/utils/collections';
-import { HpValsMap } from 'pages/TrialsComparison/utils/data';
+import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial, V1TrialSorter } from 'services/api-ts-sdk';
 import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
-import { Metric, MetricType } from 'types';
+import { MetricType } from 'types';
 import { metricKeyToName, metricToKey } from 'utils/metric';
 
-import { SetFilters } from '../utils/collections';
+import { TrialActionsInterface } from '../Actions/useTrialActions';
+import { TrialsCollectionInterface } from '../Collections/useTrialCollections';
 
 import rangeFilterForPrefix, { rangeFilterIsActive } from './rangeFilter';
-import css from './TrialTable.module.scss';
 import settingsConfig, {
-  CompareTableSettings,
-} from './TrialTable.settings';
-import Tags, { addTagFunc, removeTagFunc } from './TrialTags';
+  TrialTableSettings,
+} from './settings';
+import trialTagsRenderer from './tagsRenderer';
+import css from './TrialTable.module.scss';
 
 interface Props {
+  actionsInterface: TrialActionsInterface
+  collectionsInterface: TrialsCollectionInterface;
   colorScale?: ColorScale[];
-  containerRef: MutableRefObject<HTMLElement | null>,
-  filteredTrialIdMap?: Record<number, boolean>;
-  filters: TrialFilters;
-  // handleTableChange : (pageSize: any) => void;
-
-  handleTableRowSelect?: (rowKeys: unknown) => void;
-  highlightedTrialId?: number;
-  hpVals: HpValsMap
-  metrics: Metric[];
-  onMouseEnter?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
-  onMouseLeave?: (event: React.MouseEvent, record: V1AugmentedTrial) => void;
-  // pageSize: number;
-
-  selectAllMatching: boolean;
-  selectedTrialIds?: number[];
-  selection?: boolean;
-  setFilters?: SetFilters;
-  trialIds: number[];
-  trials: V1AugmentedTrial[];
+  containerRef : MutableRefObject<HTMLElement | null>,
+  highlights: Highlights<V1AugmentedTrial>;
+  trialsWithMetadata: TrialsWithMetadata;
 }
 
 const hpTitle = (hp: string) => <BadgeTag label={hp} tooltip="Hyperparameter">H</BadgeTag>;
@@ -60,25 +47,15 @@ export interface TrialMetrics {
 }
 
 const TrialTable: React.FC<Props> = ({
-  filters,
-  highlightedTrialId,
-  hpVals,
-  onMouseEnter,
-  onMouseLeave,
-  trials,
-  selection,
-  handleTableRowSelect,
-  // handleTableChange,
-  // pageSize,
-  setFilters,
-  selectedTrialIds,
-  selectAllMatching,
-  metrics,
-  trialIds,
+  // colorScale,
+  collectionsInterface: C,
+  actionsInterface: A,
+  trialsWithMetadata: trials,
   containerRef,
+  highlights,
 }: Props) => {
 
-  const { settings, updateSettings } = useSettings<CompareTableSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<TrialTableSettings>(settingsConfig);
 
   const idColumn = useMemo(() => ({
     dataIndex: 'id',
@@ -99,34 +76,34 @@ const TrialTable: React.FC<Props> = ({
     title: 'Trial ID',
   }), []);
 
-  const experimentIdColumn = useMemo(() => ({
-    dataIndex: 'experimentId',
-    defaultWidth: 60,
-    filterDropdown: (filterProps: FilterDropdownProps) => (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        searchable
-        validatorRegex={/\D/}
-        values={filters.experimentIds}
-        onAddFilter={(experimentId: string) => setFilters?.((filters) =>
-          ({
-            ...filters,
-            experimentIds: [ experimentId, ...(filters.experimentIds ?? []) ],
-          }))}
-        onReset={() => setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
-      />
-    ),
-    isFiltered: () => !!filters.experimentIds?.length,
-    key: 'experimentId',
-    render: (_: string, record: V1AugmentedTrial) => (
-      <Link path={paths.experimentDetails(record.experimentId)}>
-        {record.experimentId}
-      </Link>
-    ),
-    sorter: true,
-    title: 'Exp ID',
-  }), [ filters.experimentIds, setFilters ]);
+  const experimentIdColumn = useMemo(
+    () => ({
+      dataIndex: 'experimentId',
+      defaultWidth: 130,
+      filterDropdown: (filterProps: FilterDropdownProps) => (
+        <TableFilterDropdown
+          {...filterProps}
+          multiple
+          searchable
+          validatorRegex={/\D/}
+          values={C.filters.experimentIds}
+          onFilter={(experimentIds: string[]) =>
+            C.setFilters?.((filters) => ({ ...filters, experimentIds }))
+          }
+
+          onReset={() => C.setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
+        />
+      ),
+      isFiltered: () => !!C.filters.experimentIds?.length,
+      key: 'experimentId',
+      render: (_: string, record: V1AugmentedTrial) => (
+        <Link path={paths.experimentDetails(record.experimentId)}>{record.experimentId}</Link>
+      ),
+      sorter: true,
+      title: 'Exp ID',
+    }),
+    [ C.filters.experimentIds, C.setFilters ],
+  );
 
   const expRankColumn = useMemo(
     () => ({
@@ -135,16 +112,16 @@ const TrialTable: React.FC<Props> = ({
       filterDropdown: (filterProps: FilterDropdownProps) => (
         <TableFilterSearch
           {...filterProps}
-          value={filters.ranker?.rank || ''}
+          value={C.filters.ranker?.rank || ''}
           onReset={() =>
-            setFilters?.((filters) => ({
+            C.setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
               ranker: { rank: '', sorter: filters.ranker?.sorter as V1TrialSorter },
             }))
           }
           onSearch={(r) =>
-            setFilters?.((filters) => ({
+            C.setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
               ranker: { rank: r, sorter: filters.ranker?.sorter as V1TrialSorter },
@@ -152,25 +129,25 @@ const TrialTable: React.FC<Props> = ({
           }
         />
       ),
-      isFiltered: () => !!filters.ranker?.rank,
+      isFiltered: () => !!C.filters.ranker?.rank,
       key: 'rank',
       render: (_: string, record: V1AugmentedTrial) => (
         <div className={css.idLayout}>{record.rankWithinExp}</div>
       ),
       title: 'Rank in Exp',
     }),
-    [ filters.ranker?.rank, setFilters ],
+    [ C.filters.ranker?.rank, C.setFilters ],
   );
 
   const hpColumns = useMemo(() => Object
-    .keys(hpVals || {})
-    .filter((hpParam) => hpVals[hpParam]?.size > 1)
+    .keys(trials.hparams || {})
+    .filter((hp) => trials.hparams[hp]?.size > 1)
     .map((key) => {
       return {
         dataIndex: key,
         defaultWidth: 130,
-        filterDropdown: rangeFilterForPrefix('hparams', filters, setFilters)(key),
-        isFiltered: () => rangeFilterIsActive(filters, 'hparams', key),
+        filterDropdown: rangeFilterForPrefix('hparams', C.filters, C.setFilters)(key),
+        isFiltered: () => rangeFilterIsActive(C.filters, 'hparams', key),
         key,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.hparams[key];
@@ -184,7 +161,7 @@ const TrialTable: React.FC<Props> = ({
         sorter: true,
         title: hpTitle(key),
       };
-    }), [ filters, hpVals, setFilters ]);
+    }), [ C.filters, trials.hparams, C.setFilters ]);
 
   const tagColumn = useMemo(() => ({
     dataIndex: 'tags',
@@ -194,30 +171,19 @@ const TrialTable: React.FC<Props> = ({
         {...filterProps}
         multiple
         searchable
-        validatorRegex={/[^a-zA-Z0-9]+$/} // need fix ?
-        values={filters.tags}
-        onAddFilter={(tag: string) => setFilters?.((filters) =>
-          ({
-            ...filters,
-            tags: [ tag, ...(filters.tags ?? []) ],
-          }))}
-        onReset={() => setFilters?.((filters) => ({ ...filters, tags: [] }))}
+        validatorRegex={/[^a-zA-Z0-9]+$/} // TODO need fix ?
+        values={C.filters.tags}
+        onReset={() => C.setFilters?.((filters) => ({ ...filters, tags: [] }))}
       />
     ),
-    isFiltered: () => !!filters.tags?.length,
+    isFiltered: () => !!C.filters.tags?.length,
     key: 'labels',
-    render: (value: string, record: V1AugmentedTrial) => (
-      <Tags
-        tags={Object.keys(record.tags)}
-        onAdd={addTagFunc(record.trialId)}
-        onRemove={removeTagFunc(record.trialId)}
-      />
-    ),
+    render: trialTagsRenderer,
     sorter: true,
     title: 'Tags',
-  }), [ filters.tags, setFilters ]);
+  }), [ C.filters.tags, C.setFilters ]);
 
-  const trainingMetricColumns = useMemo(() => metrics
+  const trainingMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Training).map((metric) => {
       const key = metricToKey(metric);
       return {
@@ -225,10 +191,10 @@ const TrialTable: React.FC<Props> = ({
         defaultWidth: 100,
         filterDropdown: rangeFilterForPrefix(
           'trainingMetrics',
-          filters,
-          setFilters,
+          C.filters,
+          C.setFilters,
         )(metric.name),
-        isFiltered: () => rangeFilterIsActive(filters, 'trainingMetrics', metric.name),
+        isFiltered: () => rangeFilterIsActive(C.filters, 'trainingMetrics', metric.name),
         key,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.trainingMetrics?.[metricKeyToName(key)];
@@ -238,9 +204,9 @@ const TrialTable: React.FC<Props> = ({
         title: <MetricBadgeTag metric={metric} />,
 
       };
-    }), [ filters, metrics, setFilters ]);
+    }), [ C.filters, trials.metrics, C.setFilters ]);
 
-  const validationMetricColumns = useMemo(() => metrics
+  const validationMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
       const key = metricToKey(metric);
       return {
@@ -248,10 +214,10 @@ const TrialTable: React.FC<Props> = ({
         defaultWidth: 100,
         filterDropdown: rangeFilterForPrefix(
           'validationMetrics',
-          filters,
-          setFilters,
+          C.filters,
+          C.setFilters,
         )(metric.name),
-        isFiltered: () => rangeFilterIsActive(filters, 'validationMetrics', metric.name),
+        isFiltered: () => rangeFilterIsActive(C.filters, 'validationMetrics', metric.name),
         key,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.validationMetrics?.[metricKeyToName(key)];
@@ -260,7 +226,7 @@ const TrialTable: React.FC<Props> = ({
         sorter: true,
         title: <MetricBadgeTag metric={metric} />,
       };
-    }), [ filters, metrics, setFilters ]);
+    }), [ C.filters, trials.metrics, C.setFilters ]);
 
   // console.log(metrics);
 
@@ -286,14 +252,14 @@ const TrialTable: React.FC<Props> = ({
     // const newColumns = [
     //   ...settings.columns.filter((c) => columns.some((_c) => _c.dataIndex === c)),
     //   ...columns.filter((c) => !settings.columns
-    //        .some((_c) => _c === c.dataIndex))
-    //        .map((c) => c.dataIndex),
+    //     .some((_c) => _c === c.dataIndex))
+    //     .map((c) => c.dataIndex),
 
     // ];
-    // updateSettings({
-    //   columns: columns.map((c) => c.dataIndex),
-    //   columnWidths: columns.map((c) => c.defaultWidth),
-    // });
+    updateSettings({
+      columns: columns.map((c) => c.dataIndex),
+      columnWidths: columns.map((c) => c.defaultWidth),
+    });
   }, [ columns.length ]);
 
   // const handleTableChange = useCallback((paginationConfig, tableFilters, tableSorter) => {
@@ -301,37 +267,19 @@ const TrialTable: React.FC<Props> = ({
   //   // handleTableChange(paginationConfig.pageSize);
   // }, []);
 
-  const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
-    onMouseEnter: (event: React.MouseEvent) => {
-      if (onMouseEnter) onMouseEnter(event, record);
-    },
-    onMouseLeave: (event: React.MouseEvent) => {
-      if (onMouseLeave) onMouseLeave(event, record);
-    },
-  }), [ onMouseEnter, onMouseLeave ]);
-
-  const rowClassName = useCallback((record: V1AugmentedTrial) => {
-    return defaultRowClassName({
-      clickable: false,
-      highlighted: record.trialId === highlightedTrialId,
-    });
-  }, [ highlightedTrialId ]);
-
   return (
     <InteractiveTable<V1AugmentedTrial>
       columns={columns}
       containerRef={containerRef}
-      dataSource={trials}
-      pagination={getPaginationConfig(trials.length, 10)}
-      rowClassName={rowClassName}
+      dataSource={trials.data}
+      pagination={getPaginationConfig(trials.data.length, 10)}
+      rowClassName={highlights.rowClassName}
       rowKey="trialId"
-      rowSelection={selection ? {
-        getCheckboxProps: () => {
-          return { disabled: selectAllMatching };
-        },
-        onChange: handleTableRowSelect,
+      rowSelection={A.selectedTrials.length ? {
+        getCheckboxProps: () => ({ disabled: A.selectAllMatching }),
+        onChange: A.selectTrial,
         preserveSelectedRowKeys: true,
-        selectedRowKeys: selectAllMatching ? trialIds : selectedTrialIds,
+        selectedRowKeys: (A.selectAllMatching ? trials.ids : A.selectedTrials) as number[],
       } : undefined}
       scroll={{ x: 1000 }}
       settings={settings as InteractiveTableSettings}
@@ -340,7 +288,7 @@ const TrialTable: React.FC<Props> = ({
       sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       // onChange={handleTableChange}
-      onRow={handleTableRow}
+      onRow={highlights.onTableRow}
     />
   );
 };

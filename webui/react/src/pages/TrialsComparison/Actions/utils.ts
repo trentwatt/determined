@@ -1,15 +1,16 @@
 import { Action } from 'components/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
+import { isNullOrUndefined } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandTask } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
 
-import { TrialsSelectionOrCollection } from './collections';
+import { TrialsSelectionOrCollection } from '../Collections/useTrialCollections';
 
 export enum TrialAction {
   AddTags = 'Add Tags',
-  CreateCollection = 'Create Collection',
+  TagAndCollect = 'Tag and Collect',
   OpenTensorBoard = 'View in TensorBoard',
 }
 
@@ -38,11 +39,10 @@ export const trialActionDefs: Record<TrialAction, TrialActionDef> = {
     label: TrialAction.AddTags,
     value: TrialAction.AddTags,
   },
-  [TrialAction.CreateCollection]: {
-    bulk: true,
-    // key: TrialAction.CreateCollection,
-    label: TrialAction.CreateCollection,
-    value: TrialAction.CreateCollection,
+  [TrialAction.TagAndCollect]: {
+    // key: TrialAction.TagAndCollect,
+    label: TrialAction.TagAndCollect,
+    value: TrialAction.TagAndCollect,
   },
   [TrialAction.OpenTensorBoard]: {
     bulk: false,

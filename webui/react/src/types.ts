@@ -651,7 +651,7 @@ export interface ExperimentFilters {
   users?: string[];
 }
 
-export interface TrialFilters {
+export interface ExperimentTrialFilters {
   states?: string[];
 }
 

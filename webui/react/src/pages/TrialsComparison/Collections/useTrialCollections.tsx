@@ -1,4 +1,6 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { Button, Select } from 'antd';
+import React, { ReactNode } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
@@ -10,39 +12,16 @@ import {
 } from 'services/api-ts-sdk';
 import { isNumber } from 'shared/utils/data';
 
-import { decodeTrialsCollection, encodeTrialsCollection } from './api';
+import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
-export interface NumberRange {
-  max?: string;
-  min?: string;
-}
-
-export type NumberRangeDict = Record<string, NumberRange>
-
-interface ranker {
-  rank?: string;
-  sorter: V1TrialSorter;
-}
-
-export interface TrialFilters {
-  experimentIds?: string[];
-  hparams?: NumberRangeDict;
-  projectIds?: string[];
-  ranker?: ranker;
-  searcher?: string;
-  tags?: string[];
-  trainingMetrics?: NumberRangeDict;
-  userIds?: string[];
-  validationMetrics?:NumberRangeDict;
-  workspaceIds?: string[];
-}
-
-export type FilterSetter = (prev: TrialFilters) => TrialFilters
+import { FilterSetter, SetFilters, TrialFilters } from './filters';
+import useModalTrialCollection, { CollectionModalProps } from './useModalCreateCollection';
 
 export interface TrialsSelection {
   sorter?: V1TrialSorter;
   trialIds: number[];
 }
+
 export interface TrialsCollectionSpec {
   filters: TrialFilters;
   sorter?: V1TrialSorter;
@@ -67,29 +46,31 @@ export const isTrialsCollection = (t: TrialsSelectionOrCollection): t is TrialsC
 
 export const getDescriptionText = (t: TrialsSelectionOrCollection): string =>
   isTrialsCollection(t)
-    ? 'filtered trials'
+    ? 'Filtered Trials'
     : t.trialIds.length === 1
-      ? `trial ${t.trialIds[0]}`
-      : `${t.trialIds.length} trials`;
+      ? `Trial ${t.trialIds[0]}`
+      : `${t.trialIds.length} Trials`;
 
-export type SetFilters = (fs: FilterSetter) => void;
-
-interface TrialsCollectionInterface {
+export interface TrialsCollectionInterface {
   collection: string;
   collections: TrialsCollection[];
-  fetchCollections: () => Promise<void>;
+  controls: ReactNode;
+  fetchCollections: () => Promise<TrialsCollection[] | undefined>;
   filters: TrialFilters;
+  modalContextHolders: React.ReactElement[];
+  openCreateModal: (p: CollectionModalProps) => void;
   resetFilters: () => void;
   saveCollection: () => Promise<void>;
   setCollection: (name: string) => void;
   setFilters: SetFilters;
+  setNewCollection: (c: TrialsCollection) => Promise<void>;
   setSorter :Dispatch<SetStateAction<V1TrialSorter>>
   sorter: V1TrialSorter;
 }
 
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
-const config = (projectId: string): SettingsConfig => ({
+const configForProject = (projectId: string): SettingsConfig => ({
   applicableRoutespace: '/trials',
   settings: [
     {
@@ -135,8 +116,9 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
 
   const [ collections, setCollections ] = useState<TrialsCollection[]>([]);
 
+  const settingsConfig = useMemo(() => configForProject(projectId), [ projectId ]);
   const { settings, updateSettings } =
-  useSettings<{collection: string}>(config(projectId));
+  useSettings<{collection: string}>(settingsConfig);
 
   const previousCollectionStorage = useStorage(`previous-collection/${projectId}`);
 
@@ -161,9 +143,9 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     const id = parseInt(projectId);
     if (isNumber(id)) {
       const response = await getTrialsCollections(id);
-      setCollections(
-        response.collections?.map(decodeTrialsCollection) ?? [],
-      );
+      const collections = response.collections?.map(decodeTrialsCollection) ?? [];
+      setCollections(collections);
+      return collections;
     }
   }, [ projectId ]);
 
@@ -188,15 +170,63 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     }
   }, [ settings?.collection, collections, getPreviousCollection, setPreviousCollection ]);
 
+  const setNewCollection = useCallback(async (newCollection?: TrialsCollection) => {
+    if (!newCollection) return;
+    try {
+      const newCollections = await fetchCollections();
+      const _collection = newCollections?.find((c) => c.name === newCollection.name);
+      if (_collection?.name != null) {
+        updateSettings({ collection: _collection.name });
+      }
+      if (newCollection) setCollection(newCollection.name);
+    } catch {
+      // duly noted
+    }
+  }, [ fetchCollections, setCollection, updateSettings ]);
+
+  const { modalOpen, contextHolder } = useModalTrialCollection({
+    onConfirm: setNewCollection,
+    projectId,
+  });
+
+  const createCollectionFromFilters = useCallback(() => {
+    modalOpen({ trials: { filters, sorter } });
+  }, [ filters, modalOpen, sorter ]);
+
+  const modalContextHolders = useMemo (() => [ contextHolder ], [ contextHolder ]);
+
+  const controls = (
+    <div style={{ position: 'fixed', right: '30px' }}>
+      <Button onClick={createCollectionFromFilters}>New Collection</Button>
+      <Button onClick={saveCollection}>Save Collection</Button>
+      <Select
+        placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
+        value={settings.collection}
+        onChange={(value) => setCollection(value)}>
+        {[
+          ...collections?.map((collection) => (
+            <Select.Option key={collection.name} value={collection.name}>
+              {collection.name}
+            </Select.Option>
+          )) ?? [],
+        ]}
+      </Select>
+    </div>
+  );
+
   return {
     collection: settings.collection,
     collections,
+    controls,
     fetchCollections,
     filters,
+    modalContextHolders,
+    openCreateModal: modalOpen,
     resetFilters,
     saveCollection,
     setCollection,
     setFilters,
+    setNewCollection,
     setSorter,
     sorter,
   };

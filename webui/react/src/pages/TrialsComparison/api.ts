@@ -2,8 +2,7 @@ import {
   NumberRange,
   NumberRangeDict,
   TrialFilters,
-  TrialsCollection,
-} from 'pages/TrialsComparison/utils/collections';
+} from 'pages/TrialsComparison/Collections/filters';
 import {
   TrialSorterNamespace,
   V1NumberRangeFilter,
@@ -19,13 +18,15 @@ import {
 } from 'shared/utils/data';
 import { camelCaseToSnake, snakeCaseToCamelCase } from 'shared/utils/string';
 
+import { TrialsCollection } from './Collections/useTrialCollections';
+
 export const encodeTrialSorter = (s?: V1TrialSorter): V1TrialSorter =>
   s ? ({
     field: camelCaseToSnake(s.field),
     namespace: s.namespace,
     orderBy: s.orderBy,
   }) : {
-    field: 'trialId',
+    field: 'trial_id',
     namespace: TrialSorterNamespace.TRIALS,
     orderBy: V1OrderBy.ASC,
   };
@@ -42,7 +43,7 @@ export const decodeTrialSorter = (s?: V1TrialSorter): V1TrialSorter =>
       orderBy: V1OrderBy.ASC,
     };
 
-const encodeIdList = (l?: string[]): number[] | undefined =>
+export const encodeIdList = (l?: string[]): number[] | undefined =>
   l?.map((i) => parseInt(i)).filter((i) => isNumber(i));
 
 const encodeNumberRangeDict = (d: NumberRangeDict): Array<V1NumberRangeFilter> =>

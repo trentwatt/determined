@@ -12,9 +12,7 @@ export const nonDigits = /\D/;
 
 interface Props extends FilterDropdownProps {
   multiple?: boolean;
-  onAddFilter?: (key: string) => void;
   onFilter?: (keys: string[]) => void;
-  onRemoveFilter?: (key: string) => void;
   onReset?: () => void;
   searchable?: boolean;
   validatorRegex?: RegExp;
@@ -37,7 +35,6 @@ const TableFilterDropdown: React.FC<Props> = ({
   onFilter,
   onReset,
   searchable,
-  onAddFilter,
   validatorRegex,
   values = [],
   visible,
@@ -49,13 +46,16 @@ const TableFilterDropdown: React.FC<Props> = ({
   const prevVisible = usePrevious(visible, undefined);
 
   const filteredOptions = useMemo(() => {
-    if (validatorRegex) return values.map((v) => ({ text: v, value: v }));
-    const searchString = search.toLocaleLowerCase();
+    if (validatorRegex) {
+      // we are not searching when we supply a regex
+      // instead, return the currently active filters
+      return Object.keys(selectedMap).map((v) => ({ text: v, value: v }));
+    } const searchString = search.toLocaleLowerCase();
     return (filters || []).filter((filter) => {
       return filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
         filter.text?.toString().toLocaleLowerCase().includes(searchString);
     });
-  }, [ filters, search, validatorRegex, values ]);
+  }, [ filters, search, validatorRegex, selectedMap ]);
 
   const listHeight = useMemo(() => {
     if (filteredOptions.length < 10) return ITEM_HEIGHT * filteredOptions.length;
@@ -89,14 +89,26 @@ const TableFilterDropdown: React.FC<Props> = ({
   const handleOptionClick = useCallback((e: React.MouseEvent) => {
     const value = (e.target as HTMLDivElement).getAttribute('data-value');
     if (value) handleOptionSelect(value, e.metaKey);
-
   }, [ handleOptionSelect ]);
 
+  const handleReset = useCallback(() => {
+    setSelectedMap({});
+    if (onReset) onReset();
+    if (clearFilters) clearFilters();
+  }, [ clearFilters, onReset ]);
+
+  const handleConfirm = useCallback(() => {
+    const filters = Object.keys(selectedMap);
+    onFilter?.(filters);
+    confirm();
+  }, [ confirm, onFilter, selectedMap ]);
+
   const handlePressEnter = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (!inputRef.current?.input?.value) handleConfirm();
     if (validatorRegex) {
       const validatedInput = inputRef.current?.input?.value?.replace(validatorRegex, '');
       if (validatedInput) {
-        onAddFilter?.(validatedInput);
         setSelectedMap((m) => ({ ...m, [validatedInput]: true }));
         setSearch('');
       }
@@ -105,27 +117,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         handleOptionSelect(filteredOptions[0].value as string, e.metaKey);
       }
     }
-  }, [ validatorRegex, filteredOptions, onAddFilter, handleOptionSelect ]);
-
-  const handleReset = useCallback(() => {
-    setSelectedMap({});
-    if (onReset) onReset();
-    if (clearFilters) clearFilters();
-  }, [ clearFilters, onReset ]);
-
-  const handleFilter = useCallback(() => {
-    const filters = Object.keys(selectedMap);
-    if (validatorRegex) {
-      const validatedInput = inputRef.current?.input?.value?.replace(validatorRegex, '');
-      if (validatedInput) {
-        onAddFilter?.(validatedInput);
-        filters.push(validatedInput);
-        setSelectedMap((m) => ({ ...m, [validatedInput]: true }));
-      }
-    }
-    onFilter?.(filters);
-    confirm();
-  }, [ confirm, onFilter, selectedMap, validatorRegex, onAddFilter ]);
+  }, [ validatorRegex, filteredOptions, handleOptionSelect, handleConfirm ]);
 
   const OptionRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
     const classes = [ css.option ];
@@ -173,7 +165,7 @@ const TableFilterDropdown: React.FC<Props> = ({
             allowClear
             aria-label={ARIA_LABEL_INPUT}
             bordered={false}
-            placeholder={validatorRegex ? 'search filters' : 'enter a number'}
+            placeholder={validatorRegex ? 'enter a filter' : 'search filters'}
             prefix={<Icon name="search" size="tiny" />}
             ref={inputRef}
             value={search}
@@ -203,7 +195,7 @@ const TableFilterDropdown: React.FC<Props> = ({
           aria-label={ARIA_LABEL_APPLY}
           size="small"
           type="primary"
-          onClick={handleFilter}>
+          onClick={handleConfirm}>
           Ok
         </Button>
       </div>

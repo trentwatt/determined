@@ -6,13 +6,13 @@ import {
   getDescriptionText,
   isTrialsCollection,
   TrialsSelectionOrCollection,
-} from 'pages/TrialsComparison/utils/collections';
+} from 'pages/TrialsComparison/Collections/useTrialCollections';
 import { patchBulkTrials, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
-import { encodeFilters } from '../utils/api';
+import { encodeFilters } from '../api';
 
-import css from './useModalTrialTag.module.scss';
+import css from './useModalTagTrials.module.scss';
 
 interface Props {
   onClose?: () => void;

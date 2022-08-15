@@ -1,5 +1,5 @@
 import { Button, Select } from 'antd';
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
@@ -26,7 +26,7 @@ const defaultProps = {
 };
 
 const TableBatch: React.FC<Props> = ({
-  actions,
+  actions: _actions,
   selectedRowCount,
   selectAllMatching,
   onAction,
@@ -42,7 +42,12 @@ const TableBatch: React.FC<Props> = ({
     : `Apply batch operations to ${selectCount}` +
     ` item${selectCount === 1 ? '' : 's'}`;
 
-  if (selectCount > 0) classes.push(css.show);
+  const actions = useMemo(() => _actions?.map((a) => ({
+    ...a,
+    disabled: a.disabled || selectedRowCount === 0 || (!a.bulk && selectAllMatching),
+  })), [ _actions, selectAllMatching, selectedRowCount ]);
+
+  if (selectCount > 0 || onChangeSelectionMode) classes.push(css.show);
 
   const handleAction = useCallback((action?: string) => {
     /*

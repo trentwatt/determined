@@ -4,7 +4,7 @@ import React from 'react';
 import TableFilterRange from 'components/TableFilterRange';
 import { isNullOrUndefined } from 'shared/utils/data';
 
-import { SetFilters, TrialFilters } from '../utils/collections';
+import { SetFilters, TrialFilters } from '../Collections/filters';
 
 type FilterPrefix = 'hparams' | 'trainingMetrics' | 'validationMetrics'
 
@@ -17,6 +17,13 @@ export const rangeFilterIsActive = (
   return !isNullOrUndefined(f?.min) || !isNullOrUndefined(f?.max);
 };
 
+/**
+ *
+ * @param filterPrefix hparams | validation_metrics | training_metrics
+ * @param filters passed down from top
+ * @param setFilters passed down from top
+ * @returns dropdown filter component
+ */
 const rangeFilterForPrefix =
   (filterPrefix: FilterPrefix, filters?: TrialFilters, setFilters?: SetFilters) =>
     (key: string): React.FC<FilterDropdownProps> => (filterProps) => {

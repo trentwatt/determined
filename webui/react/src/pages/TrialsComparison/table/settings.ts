@@ -1,7 +1,7 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export interface CompareTableSettings extends InteractiveTableSettings {
+export interface TrialTableSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: string[];
   label?: string[];
@@ -14,7 +14,6 @@ export interface CompareTableSettings extends InteractiveTableSettings {
 const config: SettingsConfig = {
   applicableRoutespace: '/trials',
   settings: [
-
     {
       defaultValue: [],
       key: 'columns',
