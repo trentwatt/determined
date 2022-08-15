@@ -21,8 +21,7 @@ export interface TrialActionsInterface {
   dispatcher: ReactNode;
   modalContextHolders: React.ReactElement[];
   selectAllMatching: boolean;
-
-  selectTrial: (ids: number[]) => void;
+  selectTrial: (ids: unknown) => void;
   selectedTrials: number[];
 }
 
