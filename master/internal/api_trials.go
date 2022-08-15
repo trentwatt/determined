@@ -379,17 +379,18 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 	if f == nil {
 		return emptyFilters
 	}
-
-	filtersLength := len(f.WorkspaceIds) +
-		len(f.ExperimentIds) +
-		len(f.ProjectIds) +
+	
+	filtersLength := len(f.ExperimentIds) +
+	len(f.ProjectIds) +
+	len(f.WorkspaceIds) +
 		len(f.ValidationMetrics) +
 		len(f.TrainingMetrics) +
 		len(f.Hparams) +
+		len(f.Searcher) + 
 		len(f.UserIds) +
 		len(f.Tags)
 
-	if filtersLength == 0 {
+	if filtersLength == 0 && f.RankWithinExp == nil{
 		return emptyFilters
 	}
 	return nil
