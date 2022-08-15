@@ -19,7 +19,7 @@ import {
 
 export interface TrialActionsInterface {
   dispatcher: ReactNode;
-  modalContextHolders: React.ReactElement[];
+  modalContextHolder: React.ReactElement;
   selectAllMatching: boolean;
   selectTrial: (ids: unknown) => void;
   selectedTrials: number[];
@@ -91,7 +91,7 @@ const useTrialActions = ({ filters, sorter, openCreateModal }: Props): TrialActi
 
   return {
     dispatcher,
-    modalContextHolders: [ contextHolder ],
+    modalContextHolder: contextHolder,
     selectAllMatching,
     selectedTrials,
     selectTrial,

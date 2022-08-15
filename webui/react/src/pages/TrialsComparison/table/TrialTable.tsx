@@ -13,7 +13,7 @@ import { Highlights } from 'hooks/useHighlight';
 import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
-import { V1AugmentedTrial, V1TrialSorter } from 'services/api-ts-sdk';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { MetricType } from 'types';

@@ -22,7 +22,7 @@ export interface TrialsCollectionInterface {
   controls: ReactNode;
   fetchCollections: () => Promise<TrialsCollection[] | undefined>;
   filters: TrialFilters;
-  modalContextHolders: React.ReactElement[];
+  modalContextHolder: React.ReactElement;
   openCreateModal: (p: CollectionModalProps) => void;
   resetFilters: () => void;
   saveCollection: () => Promise<void>;
@@ -157,8 +157,6 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     modalOpen({ trials: { filters, sorter } });
   }, [ filters, modalOpen, sorter ]);
 
-  const modalContextHolders = useMemo (() => [ contextHolder ], [ contextHolder ]);
-
   const controls = (
     <div style={{ position: 'fixed', right: '30px' }}>
       <Button onClick={createCollectionFromFilters}>New Collection</Button>
@@ -184,7 +182,7 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     controls,
     fetchCollections,
     filters,
-    modalContextHolders,
+    modalContextHolder: contextHolder,
     openCreateModal: modalOpen,
     resetFilters,
     saveCollection,

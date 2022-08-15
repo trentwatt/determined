@@ -65,7 +65,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
       <Section
         bodyBorder
         bodyScroll
-        filters={[ M.controls, C.controls ]}>
+        filters={M.controls}>
         <div className={css.container}>
           <div className={css.chart}>
             {M.view?.metric && chartData && (
@@ -94,8 +94,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
           />
         </div>
       </Section>
-      {A.modalContextHolders}
-      {C.modalContextHolders}
+      {A.modalContextHolder}
+      {C.modalContextHolder}
     </Page>
 
   );
