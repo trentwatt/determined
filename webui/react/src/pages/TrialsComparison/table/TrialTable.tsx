@@ -267,6 +267,15 @@ const TrialTable: React.FC<Props> = ({
   //   // handleTableChange(paginationConfig.pageSize);
   // }, []);
 
+  const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
+    onMouseEnter: (event: React.MouseEvent) => {
+      highlights.onMouseEnter(event, record);
+    },
+    onMouseLeave: (event: React.MouseEvent) => {
+      highlights.onMouseLeave(event, record);
+    },
+  }), [ highlights.onMouseEnter, highlights.onMouseLeave ]);
+
   return (
     <InteractiveTable<V1AugmentedTrial>
       columns={columns}
