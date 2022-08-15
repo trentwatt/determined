@@ -6,50 +6,15 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { getTrialsCollections, patchTrialsCollection } from 'services/api';
 import {
-  TrialSorterNamespace,
   V1OrderBy,
-  V1TrialSorter,
 } from 'services/api-ts-sdk';
 import { isNumber } from 'shared/utils/data';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
-import { FilterSetter, SetFilters, TrialFilters } from './filters';
+import { TrialsCollection } from './collections';
+import { FilterSetter, SetFilters, TrialFilters, TrialSorter } from './filters';
 import useModalTrialCollection, { CollectionModalProps } from './useModalCreateCollection';
-
-export interface TrialsSelection {
-  sorter?: V1TrialSorter;
-  trialIds: number[];
-}
-
-export interface TrialsCollectionSpec {
-  filters: TrialFilters;
-  sorter?: V1TrialSorter;
-}
-
-export interface TrialsCollection {
-  filters: TrialFilters;
-  id: string;
-  name: string;
-  projectId: string;
-  sorter: V1TrialSorter;
-  userId: string;
-}
-
-export type TrialsSelectionOrCollection = TrialsSelection | TrialsCollectionSpec
-
-export const isTrialsSelection = (t: TrialsSelectionOrCollection): t is TrialsSelection =>
-  ('trialIds' in t);
-
-export const isTrialsCollection = (t: TrialsSelectionOrCollection): t is TrialsCollectionSpec =>
-  ('filters' in t);
-
-export const getDescriptionText = (t: TrialsSelectionOrCollection): string =>
-  isTrialsCollection(t)
-    ? 'Filtered Trials'
-    : t.trialIds.length === 1
-      ? `Trial ${t.trialIds[0]}`
-      : `${t.trialIds.length} Trials`;
 
 export interface TrialsCollectionInterface {
   collection: string;
@@ -64,8 +29,8 @@ export interface TrialsCollectionInterface {
   setCollection: (name: string) => void;
   setFilters: SetFilters;
   setNewCollection: (c: TrialsCollection) => Promise<void>;
-  setSorter :Dispatch<SetStateAction<V1TrialSorter>>
-  sorter: V1TrialSorter;
+  setSorter: Dispatch<SetStateAction<TrialSorter>>
+  sorter: TrialSorter;
 }
 
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
@@ -93,10 +58,9 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
     getDefaultFilters(projectId),
   );
 
-  const [ sorter, setSorter ] = useState<V1TrialSorter>({
-    field: 'trialId',
-    namespace: TrialSorterNamespace.TRIALS,
+  const [ sorter, setSorter ] = useState<TrialSorter>({
     orderBy: V1OrderBy.ASC,
+    sortKey: 'trialId',
   });
 
   const [ filters, _setFilters ] = useState<TrialFilters>(initFilters);

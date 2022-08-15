@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
+import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { metricToKey } from 'utils/metric';
@@ -15,6 +17,7 @@ import {
 } from './Collections/useTrialCollections';
 import useLearningCurveData from './Metrics/useLearningCurveData';
 import useMetricView from './Metrics/useMetricView';
+import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
 
@@ -24,9 +27,17 @@ interface Props {
 
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
+  const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
+  const { settings: tableSettings, updateSettings } = tableSettingsHook;
+
   const C = useTrialCollections(projectId);
 
-  const trials = useFetchTrials({ filters: C.filters, sorter: C.sorter });
+  const trials = useFetchTrials({
+    filters: C.filters,
+    limit: tableSettings.tableLimit,
+    offset: tableSettings.tableOffset,
+    sorter: C.sorter,
+  });
 
   const M = useMetricView(trials.metrics);
 
@@ -76,6 +87,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
             collectionsInterface={C}
             containerRef={containerRef}
             highlights={highlights}
+            tableSettingsHook={tableSettingsHook}
             trialsWithMetadata={trials}
             // handleTableChange={handleTableChange}
             // pageSize={pageSize}

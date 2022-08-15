@@ -4,15 +4,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   getDescriptionText,
-  isTrialsSelection,
-  TrialsCollection,
-  TrialsSelectionOrCollection,
-} from 'pages/TrialsComparison/Collections/useTrialCollections';
+} from 'pages/TrialsComparison/Collections/collections';
 import { createTrialsCollection, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 
-import { encodeFilters, encodeIdList, encodeTrialSorter } from '../api';
+import { encodeFilters, encodeTrialSorter } from '../api';
 
+import { isTrialsSelection, TrialsCollection, TrialsSelectionOrCollection } from './collections';
 import css from './useModalCreateCollection.module.scss';
 
 interface Props {

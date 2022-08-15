@@ -2,6 +2,7 @@ import {
   NumberRange,
   NumberRangeDict,
   TrialFilters,
+  TrialSorter,
 } from 'pages/TrialsComparison/Collections/filters';
 import {
   TrialSorterNamespace,
@@ -16,32 +17,57 @@ import {
   isNumber,
   numberElseUndefined,
 } from 'shared/utils/data';
-import { camelCaseToSnake, snakeCaseToCamelCase } from 'shared/utils/string';
+import { camelCaseToSnake } from 'shared/utils/string';
 
-import { TrialsCollection } from './Collections/useTrialCollections';
+import { TrialsCollection } from './Collections/collections';
 
-export const encodeTrialSorter = (s?: V1TrialSorter): V1TrialSorter =>
-  s ? ({
-    field: camelCaseToSnake(s.field),
-    namespace: s.namespace,
-    orderBy: s.orderBy,
-  }) : {
+export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
+  if (!s?.sortKey) return {
     field: 'trial_id',
     namespace: TrialSorterNamespace.TRIALS,
-    orderBy: V1OrderBy.ASC,
+    orderBy: V1OrderBy.DESC,
   };
 
-export const decodeTrialSorter = (s?: V1TrialSorter): V1TrialSorter =>
-  s ? ({
-    field: snakeCaseToCamelCase(s.field),
-    namespace: s.namespace,
+  const prefix = s.sortKey.split('.')[0];
+  const namespace = (
+    prefix === 'hparams'
+      ? TrialSorterNamespace.TRIALS
+      : prefix === 'validation_metrics'
+        ? TrialSorterNamespace.VALIDATIONMETRICS
+        : prefix === 'training_metrics'
+          ? TrialSorterNamespace.TRAININGMETRICS
+          : TrialSorterNamespace.TRIALS);
+  const field = namespace === TrialSorterNamespace.TRIALS
+    ? s.sortKey
+    : s.sortKey.split('.').slice(1).join('.');
+
+  return {
+    field: camelCaseToSnake(field),
+    namespace: namespace,
     orderBy: s.orderBy,
-  })
-    : {
-      field: 'trialId',
-      namespace: TrialSorterNamespace.TRIALS,
-      orderBy: V1OrderBy.ASC,
-    };
+  };
+};
+
+const prefixForNamespace: Record<TrialSorterNamespace, string> = {
+  [TrialSorterNamespace.HPARAMS]: 'hparams',
+  [TrialSorterNamespace.TRIALS]: '',
+  [TrialSorterNamespace.TRAININGMETRICS]: 'training_metrics',
+  [TrialSorterNamespace.VALIDATIONMETRICS]: 'validation_metrics',
+};
+
+export const decodeTrialSorter = (s?: V1TrialSorter): TrialSorter => {
+  if (!s) return {
+    orderBy: V1OrderBy.DESC,
+    sortKey: 'trialId',
+  };
+
+  const prefix = prefixForNamespace[s.namespace];
+
+  return {
+    orderBy: s.orderBy ?? V1OrderBy.DESC,
+    sortKey: prefix ? [ prefix, s.field ].join('.') : s.field,
+  };
+};
 
 export const encodeIdList = (l?: string[]): number[] | undefined =>
   l?.map((i) => parseInt(i)).filter((i) => isNumber(i));
@@ -68,7 +94,10 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
     hparams: encodeNumberRangeDict(f.hparams ?? {}),
     projectIds: encodeIdList(f.projectIds),
     rankWithinExp: f.ranker?.rank
-      ? { rank: numberElseUndefined(f.ranker.rank), sorter: encodeTrialSorter(f.ranker.sorter) }
+      ? {
+        rank: numberElseUndefined(f.ranker.rank),
+        sorter: encodeTrialSorter(f.ranker.sorter),
+      }
       : undefined,
     searcher: f.searcher,
     tags: f.tags?.map((tag: string) => ({ key: tag, value: '1' })),

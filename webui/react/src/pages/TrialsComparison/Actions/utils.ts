@@ -1,12 +1,11 @@
 import { Action } from 'components/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
-import { isNullOrUndefined } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandTask } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
 
-import { TrialsSelectionOrCollection } from '../Collections/useTrialCollections';
+import { TrialsSelectionOrCollection } from '../Collections/collections';
 
 export enum TrialAction {
   AddTags = 'Add Tags',
@@ -18,13 +17,6 @@ type trials = { trials: TrialsSelectionOrCollection }
 
 export type TrialsActionHandler = (t: trials) => Promise<void> | void;
 
-interface TrialActionDef extends Action{
-  // bulk?: boolean
-  // label: string;
-  // value: string;
-  handler?: TrialsActionHandler;
-}
-
 export const openTensorBoard = async ({ trials } : trials): Promise<void> => {
   if ('trialIds' in trials) {
     const result = await openOrCreateTensorBoard({ trialIds: trials.trialIds });
@@ -32,21 +24,19 @@ export const openTensorBoard = async ({ trials } : trials): Promise<void> => {
   }
 };
 
-export const trialActionDefs: Record<TrialAction, TrialActionDef> = {
+export const trialActionDefs: Record<TrialAction, Action> = {
   [TrialAction.AddTags]: {
     bulk: true,
-    // key: TrialAction.AddTags,
     label: TrialAction.AddTags,
     value: TrialAction.AddTags,
   },
   [TrialAction.TagAndCollect]: {
-    // key: TrialAction.TagAndCollect,
+    bulk: false,
     label: TrialAction.TagAndCollect,
     value: TrialAction.TagAndCollect,
   },
   [TrialAction.OpenTensorBoard]: {
     bulk: false,
-    // key: TrialAction.OpenTensorBoard,
     label: TrialAction.OpenTensorBoard,
     value: TrialAction.OpenTensorBoard,
   },

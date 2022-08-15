@@ -6,7 +6,7 @@ import {
   getDescriptionText,
   isTrialsCollection,
   TrialsSelectionOrCollection,
-} from 'pages/TrialsComparison/Collections/useTrialCollections';
+} from 'pages/TrialsComparison/Collections/collections';
 import { patchBulkTrials, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 

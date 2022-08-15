@@ -10,23 +10,20 @@ import { getPaginationConfig } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import { Highlights } from 'hooks/useHighlight';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { V1AugmentedTrial, V1TrialSorter } from 'services/api-ts-sdk';
-import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { MetricType } from 'types';
 import { metricKeyToName, metricToKey } from 'utils/metric';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
+import { TrialSorter } from '../Collections/filters';
 import { TrialsCollectionInterface } from '../Collections/useTrialCollections';
 
 import rangeFilterForPrefix, { rangeFilterIsActive } from './rangeFilter';
-import settingsConfig, {
-  TrialTableSettings,
-} from './settings';
 import trialTagsRenderer from './tagsRenderer';
 import css from './TrialTable.module.scss';
 
@@ -36,15 +33,11 @@ interface Props {
   colorScale?: ColorScale[];
   containerRef : MutableRefObject<HTMLElement | null>,
   highlights: Highlights<V1AugmentedTrial>;
+  tableSettingsHook: SettingsHook<InteractiveTableSettings>;
   trialsWithMetadata: TrialsWithMetadata;
 }
 
 const hpTitle = (hp: string) => <BadgeTag label={hp} tooltip="Hyperparameter">H</BadgeTag>;
-
-export interface TrialMetrics {
-  id: number;
-  metrics: Record<RecordKey, Primitive>;
-}
 
 const TrialTable: React.FC<Props> = ({
   // colorScale,
@@ -53,9 +46,10 @@ const TrialTable: React.FC<Props> = ({
   trialsWithMetadata: trials,
   containerRef,
   highlights,
+  tableSettingsHook,
 }: Props) => {
 
-  const { settings, updateSettings } = useSettings<TrialTableSettings>(settingsConfig);
+  const { settings, updateSettings } = tableSettingsHook;
 
   const idColumn = useMemo(() => ({
     dataIndex: 'id',
@@ -117,14 +111,14 @@ const TrialTable: React.FC<Props> = ({
             C.setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
-              ranker: { rank: '', sorter: filters.ranker?.sorter as V1TrialSorter },
+              ranker: { rank: '', sorter: filters.ranker?.sorter as TrialSorter },
             }))
           }
           onSearch={(r) =>
             C.setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
-              ranker: { rank: r, sorter: filters.ranker?.sorter as V1TrialSorter },
+              ranker: { rank: r, sorter: filters.ranker?.sorter as TrialSorter },
             }))
           }
         />
@@ -249,32 +243,12 @@ const TrialTable: React.FC<Props> = ({
   ]);
 
   useEffect(() => {
-    // const newColumns = [
-    //   ...settings.columns.filter((c) => columns.some((_c) => _c.dataIndex === c)),
-    //   ...columns.filter((c) => !settings.columns
-    //     .some((_c) => _c === c.dataIndex))
-    //     .map((c) => c.dataIndex),
 
-    // ];
-    updateSettings({
-      columns: columns.map((c) => c.dataIndex),
-      columnWidths: columns.map((c) => c.defaultWidth),
-    });
+    // updateSettings({
+    //   columns: columns.map((c) => c.dataIndex),
+    //   columnWidths: columns.map((c) => c.defaultWidth),
+    // });
   }, [ columns.length ]);
-
-  // const handleTableChange = useCallback((paginationConfig, tableFilters, tableSorter) => {
-  //   // console.log(tableFilters, tableSorter);
-  //   // handleTableChange(paginationConfig.pageSize);
-  // }, []);
-
-  const handleTableRow = useCallback((record: V1AugmentedTrial) => ({
-    onMouseEnter: (event: React.MouseEvent) => {
-      highlights.onMouseEnter(event, record);
-    },
-    onMouseLeave: (event: React.MouseEvent) => {
-      highlights.onMouseLeave(event, record);
-    },
-  }), [ highlights.onMouseEnter, highlights.onMouseLeave ]);
 
   return (
     <InteractiveTable<V1AugmentedTrial>
@@ -291,13 +265,12 @@ const TrialTable: React.FC<Props> = ({
         selectedRowKeys: (A.selectAllMatching ? trials.ids : A.selectedTrials) as number[],
       } : undefined}
       scroll={{ x: 1000 }}
-      settings={settings as InteractiveTableSettings}
+      settings={settings}
       showSorterTooltip={false}
       size="small"
       sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      // onChange={handleTableChange}
-      onRow={highlights.onTableRow}
+      onRow={highlights.onRow}
     />
   );
 };

@@ -1,4 +1,4 @@
-import { V1TrialSorter } from 'services/api-ts-sdk';
+import { V1OrderBy } from 'services/api-ts-sdk';
 
 export interface NumberRange {
   max?: string;
@@ -7,9 +7,15 @@ export interface NumberRange {
 
 export type NumberRangeDict = Record<string, NumberRange>
 
+export interface TrialSorter {
+  orderBy: V1OrderBy;
+  // `${namespace}.${field}`
+  sortKey: string;
+}
+
 export interface ranker {
   rank?: string;
-  sorter: V1TrialSorter;
+  sorter: TrialSorter
 }
 
 export interface TrialFilters {

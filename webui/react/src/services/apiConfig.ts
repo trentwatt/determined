@@ -2,7 +2,7 @@ import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
 import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
-import { TrialsCollection } from 'pages/TrialsComparison/Collections/useTrialCollections';
+import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';

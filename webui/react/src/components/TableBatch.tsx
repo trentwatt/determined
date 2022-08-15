@@ -39,7 +39,8 @@ const TableBatch: React.FC<Props> = ({
 
   const message = selectAllMatching
     ? 'Apply batch operations to all matching items'
-    : `Apply batch operations to ${selectCount}` +
+    : selectCount === 0 ? 'Select Items to Apply Actions' :
+      `Apply batch operations to ${selectCount}` +
     ` item${selectCount === 1 ? '' : 's'}`;
 
   const actions = useMemo(() => _actions?.map((a) => ({

@@ -4,9 +4,9 @@ import TableBatch from 'components/TableBatch';
 import { V1TrialSorter } from 'services/api-ts-sdk';
 
 import { encodeIdList } from '../api';
-import { TrialFilters } from '../Collections/filters';
+import { TrialsCollectionSpec, TrialsSelection } from '../Collections/collections';
+import { TrialFilters, TrialSorter } from '../Collections/filters';
 import { CollectionModalProps } from '../Collections/useModalCreateCollection';
-import { TrialsCollectionSpec, TrialsSelection } from '../Collections/useTrialCollections';
 
 import useModalTrialTag from './useModalTagTrials';
 import {
@@ -28,7 +28,7 @@ export interface TrialActionsInterface {
 interface Props {
   filters: TrialFilters
   openCreateModal: (p: CollectionModalProps) => void;
-  sorter: V1TrialSorter;
+  sorter: TrialSorter;
 }
 
 const useTrialActions = ({ filters, sorter, openCreateModal }: Props): TrialActionsInterface => {

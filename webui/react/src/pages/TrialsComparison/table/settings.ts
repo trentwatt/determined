@@ -1,17 +1,6 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export interface TrialTableSettings extends InteractiveTableSettings {
-  archived?: boolean;
-  columns: string[];
-  label?: string[];
-  row?: number[];
-  search?: string;
-  sortKey: string;
-  user?: string[];
-}
-
-const config: SettingsConfig = {
+export const trialsTableSettingsConfig: SettingsConfig = {
   applicableRoutespace: '/trials',
   settings: [
     {
@@ -33,15 +22,32 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
-
     },
     {
-      key: 'row',
-      type: { baseType: BaseType.Integer, isArray: true },
+      defaultValue: true,
+      key: 'sortDesc',
+      storageKey: 'sortDesc',
+      type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: 'trialId',
+      key: 'sortKey',
+      storageKey: 'sortKey',
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: 20,
+      key: 'tableLimit',
+      storageKey: 'tableLimit',
+      type: { baseType: BaseType.Integer },
+    },
+    {
+      defaultValue: 0,
+      key: 'tableOffset',
+      storageKey: 'tableOffset',
+      type: { baseType: BaseType.Integer },
     },
 
   ],
   storagePath: 'trial-table',
 };
-
-export default config;

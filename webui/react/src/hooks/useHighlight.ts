@@ -2,12 +2,15 @@ import { useCallback, useState } from 'react';
 
 import { defaultRowClassName } from 'components/Table';
 
+type EventDispatcher<RecordType> = (event: React.MouseEvent, record: RecordType) => void;
+
 export interface Highlights<RecordType> {
   focus: (id: number | null) => void;
   id: number | undefined;
-  onMouseEnter: (event: React.MouseEvent, record: RecordType) => void;
-  onMouseLeave: () => void;
-  onTableRow: (record: RecordType) => void;
+  onRow: (record: RecordType) => {
+    onMouseEnter: (event: React.MouseEvent) => void;
+    onMouseLeave: (event: React.MouseEvent) => void;
+  };
   rowClassName: (record: RecordType) => string;
 }
 
@@ -25,14 +28,17 @@ function useHighlights<RecordType>(getId: GetId<RecordType>): Highlights<RecordT
     if (getId(record)) setHighlightedId(getId(record));
   }, [ getId ]);
 
-  const onMouseLeave = useCallback(() => {
+  const onMouseLeave: EventDispatcher<RecordType> = useCallback(() => {
     setHighlightedId(undefined);
   }, []);
 
-  const onTableRow = useCallback((record: RecordType) => ({
-    onMouseEnter: (event: React.MouseEvent) => onMouseEnter(event, record),
-    onMouseLeave: () => onMouseLeave(),
-
+  const onRow = useCallback((record: RecordType) => ({
+    onMouseEnter: (event: React.MouseEvent) => {
+      onMouseEnter(event, record);
+    },
+    onMouseLeave: (event: React.MouseEvent) => {
+      onMouseLeave(event, record);
+    },
   }), [ onMouseEnter, onMouseLeave ]);
 
   const rowClassName = useCallback((record: RecordType) => {
@@ -45,9 +51,7 @@ function useHighlights<RecordType>(getId: GetId<RecordType>): Highlights<RecordT
   return {
     focus: handleFocus,
     id: highlightedId,
-    onMouseEnter,
-    onMouseLeave,
-    onTableRow,
+    onRow,
     rowClassName,
   };
 }
