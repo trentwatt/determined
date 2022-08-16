@@ -3,9 +3,7 @@
   flex-direction: column;
 
   .search {
-    border: var(--theme-float-border);
     padding: 6px 0;
-    width: 150px;
   }
   .search :global(.ant-input-prefix) {
     color: var(--theme-float);

@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { Metric } from 'types';
+import { MetricName } from 'types';
 
 import BadgeTag from './BadgeTag';
 
 interface Props {
-  metric: Metric;
+  metric: MetricName;
 }
 
 const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {

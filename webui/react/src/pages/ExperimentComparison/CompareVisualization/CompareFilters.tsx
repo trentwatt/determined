@@ -8,9 +8,10 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, HpImportance, MetricName, Scale } from 'types';
+import { Scale } from 'types';
+import { ExperimentVisualizationType, MetricName } from 'types';
 
-import css from './ExperimentVisualizationFilters.module.scss';
+import css from './CompareFilters.module.scss';
 
 const { Option } = Select;
 
@@ -19,7 +20,7 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: MetricName;
+  metric?: MetricName;
   scale: Scale;
   view: ViewType;
 }
@@ -38,7 +39,6 @@ interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
-  hpImportance?: HpImportance;
   metrics: MetricName[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
@@ -56,7 +56,6 @@ enum ActionType {
   SetView,
   SetScale,
 }
-
 type Action =
 | { type: ActionType.Set; value: VisualizationFilters }
 | { type: ActionType.SetBatch; value: number }
@@ -95,11 +94,10 @@ const reducer = (state: VisualizationFilters, action: Action) => {
   }
 };
 
-const ExperimentVisualizationFilters: React.FC<Props> = ({
+const CompareFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
-  hpImportance,
   metrics,
   onChange,
   onMetricChange,
@@ -172,10 +170,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     dispatch({ type: ActionType.SetScale, value: scale });
   }, []);
 
-  useEffect(() => {
-    if (onChange) onChange(localFilters);
-  }, [ localFilters, onChange ]);
-
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
     if (onReset) onReset();
@@ -186,6 +180,10 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     if (batches.includes(localFilters.batch)) return;
     dispatch({ type: ActionType.SetBatch, value: batches.first() });
   }, [ batches, localFilters.batch ]);
+
+  useEffect(() => {
+    if (onChange) onChange(localFilters);
+  }, [ localFilters, onChange ]);
 
   return (
     <>
@@ -227,7 +225,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       {showHParams && (
         <HpSelectFilter
           fullHParams={fullHParams}
-          hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
           onChange={handleHParamChange}
@@ -263,4 +260,4 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   );
 };
 
-export default ExperimentVisualizationFilters;
+export default CompareFilters;

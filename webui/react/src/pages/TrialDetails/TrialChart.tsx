@@ -12,28 +12,28 @@ import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
-import { Metric, MetricType, Scale, WorkloadGroup } from 'types';
+import { MetricName, MetricType, Scale, WorkloadGroup } from 'types';
 
 interface Props {
-  defaultMetrics: Metric[];
+  defaultMetricNames: MetricName[];
   id?: string;
-  metrics: Metric[];
-  onMetricChange: (value: Metric[]) => void;
-  selectedMetrics: Metric[];
+  metricNames: MetricName[];
+  metrics: MetricName[];
+  onMetricChange: (value: MetricName[]) => void;
   trialId?: number;
   workloads?: WorkloadGroup[];
 }
 
-const getChartMetricLabel = (metric: Metric): string => {
+const getChartMetricLabel = (metric: MetricName): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
 };
 
 const TrialChart: React.FC<Props> = ({
-  defaultMetrics,
+  defaultMetricNames,
+  metricNames,
   metrics,
-  selectedMetrics,
   onMetricChange,
   workloads,
   trialId,
@@ -98,10 +98,10 @@ const TrialChart: React.FC<Props> = ({
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetrics={defaultMetrics}
-        metrics={metrics}
+        defaultMetricNames={defaultMetricNames}
+        metricNames={metricNames}
         multiple
-        value={selectedMetrics}
+        value={metrics}
         onChange={onMetricChange}
       />
       <ScaleSelectFilter value={scale} onChange={setScale} />

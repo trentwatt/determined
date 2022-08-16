@@ -1,8 +1,6 @@
 import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
-import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
-import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -42,7 +40,6 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
-    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
     Workspaces: new Api.WorkspacesApi(config),
   };
@@ -245,90 +242,6 @@ export const getResourceAllocationAggregated: DetApi<
       params.period,
       options,
     );
-  },
-};
-
-/* Trials */
-export const queryTrials: DetApi<
-  Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, Api.V1QueryTrialsResponse
-> = {
-  name: 'queryTrials',
-  postProcess: (response: Api.V1QueryTrialsResponse) => {
-    return { trials: response.trials };
-  },
-  request: (params: Api.V1QueryTrialsRequest) => {
-    return detApi.TrialsComparison.queryTrials(
-      { filters: params.filters, limit: params.limit },
-    );
-  },
-};
-
-export const patchTrials: DetApi<
-  Api.V1PatchTrialsRequest, Api.V1PatchTrialsResponse, Api.V1PatchTrialsResponse
-> = {
-  name: 'patchTrials',
-  postProcess: (response: Api.V1PatchTrialsResponse) => {
-    return { trialIds: response.trialIds };
-  },
-  request: (params: Api.V1PatchTrialsRequest) => {
-    return detApi.TrialsComparison.patchTrials(
-      { patch: params.patch, trialIds: params.trialIds },
-    );
-  },
-};
-
-export const patchBulkTrials: DetApi<
-  Api.V1BulkPatchTrialsRequest, Api.V1BulkPatchTrialsResponse, Api.V1BulkPatchTrialsResponse
-> = {
-  name: 'patchBulkTrials',
-  postProcess: (response: Api.V1BulkPatchTrialsResponse) => {
-    return { rowsAffected: response.rowsAffected };
-  },
-  request: (params: Api.V1BulkPatchTrialsRequest) => {
-    return detApi.TrialsComparison.bulkPatchTrials(params);
-
-  },
-};
-
-decodeTrialsCollection;
-
-export const createTrialCollection: DetApi<
-  Api.V1CreateTrialsCollectionRequest,
-  Api.V1CreateTrialsCollectionResponse,
-  TrialsCollection | undefined
-> = {
-  name: 'createTrialsCollection',
-  postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
-    response.collection ? decodeTrialsCollection(response.collection) : undefined,
-  request: (params: Api.V1CreateTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.createTrialsCollection(params);
-  },
-};
-
-export const getTrialsCollections: DetApi<
-  number, Api.V1GetTrialsCollectionsResponse, Api.V1GetTrialsCollectionsResponse
-> = {
-  name: 'getTrialsCollection',
-  postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
-    return { collections: response.collections };
-  },
-  request: (projectId: number) => {
-    return detApi.TrialsComparison.getTrialsCollections(
-      projectId,
-    );
-  },
-};
-
-export const patchTrialCollection: DetApi<
-Api.V1PatchTrialsCollectionRequest,
-Api.V1PatchTrialsCollectionResponse,
-TrialsCollection | undefined
-> = {
-  name: 'getTrialsCollection',
-  postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
-    response.collection ? decodeTrialsCollection(response.collection) : undefined,
-  request: (params: Api.V1PatchTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.patchTrialsCollection(params);
   },
 };
 
@@ -573,7 +486,7 @@ export const compareTrials: DetApi<
   postProcess: (response: Api.V1CompareTrialsResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
-  request: (params: Service.CompareTrialsParams) => detApi.TrialsComparison.compareTrials(
+  request: (params: Service.CompareTrialsParams) => detApi.Experiments.compareTrials(
     params.trialIds,
     params.maxDatapoints,
     params.metricNames.map((m) => m.name),

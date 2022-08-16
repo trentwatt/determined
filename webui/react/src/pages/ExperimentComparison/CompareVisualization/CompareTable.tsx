@@ -15,14 +15,16 @@ import {
   HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
 
-import css from './HpTrialTable.module.scss';
+import { HpValsMap } from '../CompareVisualization';
+
+import css from './CompareTable.module.scss';
 
 interface Props {
   colorScale?: ColorScale[];
-  experimentId: number;
   filteredTrialIdMap?: Record<number, boolean>;
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
+  hpVals: HpValsMap
   hyperparameters: HyperparametersFlattened;
   metric: MetricName;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
@@ -34,6 +36,7 @@ interface Props {
 }
 
 export interface TrialHParams {
+  experimentId: number,
   hparams: Record<RecordKey, Primitive>;
   id: number;
   metric: number | null;
@@ -44,18 +47,17 @@ const HpTrialTable: React.FC<Props> = ({
   filteredTrialIdMap,
   hyperparameters,
   highlightedTrialId,
+  hpVals,
   metric,
   onMouseEnter,
   onMouseLeave,
   trialHps,
   trialIds,
-  experimentId,
   selection,
   handleTableRowSelect,
   selectedRowKeys,
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
-
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap) return trialHps;
     return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
@@ -75,13 +77,15 @@ const HpTrialTable: React.FC<Props> = ({
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
-          <Link path={paths.trialDetails(record.id, experimentId)}>
-            <div>{record.id}</div>
+          <Link path={paths.trialDetails(record.id, record.experimentId)}>
+            {record.id}
           </Link>
         </div>
       );
     };
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.id, b.id);
+    const experimentIdSorter = (a: TrialHParams, b: TrialHParams): number =>
+      alphaNumericSorter(a.experimentId, b.experimentId);
     const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const metricRenderer = (_: string, record: TrialHParams) => {
@@ -90,12 +94,25 @@ const HpTrialTable: React.FC<Props> = ({
     const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
       return numericSorter(recordA.metric ?? undefined, recordB.metric ?? undefined);
     };
+
     const metricColumn = {
       dataIndex: 'metric',
       key: 'metric',
       render: metricRenderer,
       sorter: metricSorter,
       title: <MetricBadgeTag metric={metric} />,
+    };
+
+    const experimentIdColumn = {
+      dataIndex: 'experimentId',
+      key: 'experimentId',
+      render: (_: string, record: TrialHParams) => (
+        <Link path={paths.experimentDetails(record.experimentId)}>
+          {record.experimentId}
+        </Link>
+      ),
+      sorter: experimentIdSorter,
+      title: 'Exp ID',
     };
 
     const hpRenderer = (key: string) => {
@@ -110,6 +127,8 @@ const HpTrialTable: React.FC<Props> = ({
         ].includes(type);
         if (isNumber(value) && isValidType) {
           return <HumanReadableNumber num={value} />;
+        } else if (!value) {
+          return '-';
         }
         return value + '';
       };
@@ -121,8 +140,10 @@ const HpTrialTable: React.FC<Props> = ({
         return primitiveSorter(a, b);
       };
     };
+
     const hpColumns = Object
       .keys(hyperparameters || {})
+      .filter((hpParam) => hpVals[hpParam]?.size > 1)
       .map((key) => {
         return {
           key,
@@ -132,8 +153,8 @@ const HpTrialTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, metricColumn, ...hpColumns ];
-  }, [ colorScale, hyperparameters, metric, trialIds, experimentId ]);
+    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
+  }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
@@ -170,6 +191,7 @@ const HpTrialTable: React.FC<Props> = ({
       scroll={{ x: 1000 }}
       showSorterTooltip={false}
       size="small"
+      sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       onChange={handleTableChange}
       onRow={handleTableRow}
     />

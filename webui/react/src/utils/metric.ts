@@ -1,5 +1,5 @@
 import { RecordKey } from 'shared/types';
-import { Metric, MetricType, WorkloadGroup } from 'types';
+import { MetricName, MetricType, WorkloadGroup } from 'types';
 
 import { alphaNumericSorter } from '../shared/utils/sort';
 
@@ -8,15 +8,14 @@ import { alphaNumericSorter } from '../shared/utils/sort';
  * Within each type of metric, sort in the order they appear in the `MetricNames` array.
  * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
  */
-export const metricSorter = (a: Metric, b: Metric): number => {
+export const metricNameSorter = (a: MetricName, b: MetricName): number => {
   const isAValidation = a.type === MetricType.Validation;
   const isBValidation = b.type === MetricType.Validation;
   if (isAValidation && !isBValidation) return -1;
   if (isBValidation && !isAValidation) return 1;
   return alphaNumericSorter(a.name, b.name);
 };
-
-export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
+export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads
     .filter((workload) => workload.training?.metrics)
     .reduce((acc, workload) => {
@@ -26,7 +25,7 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
       return acc;
     }, new Set<string>());
 
-  const trainingMetrics: Metric[] = Array.from(trainingNames).map((name) => {
+  const trainingMetrics: MetricName[] = Array.from(trainingNames).map((name) => {
     return { name, type: MetricType.Training };
   });
 
@@ -39,54 +38,43 @@ export const extractMetrics = (workloads: WorkloadGroup[]): Metric[] => {
       return acc;
     }, new Set<string>()) as Set<string>;
 
-  const validationMetrics: Metric[] = Array.from(validationNames).map((name) => {
+  const validationMetrics: MetricName[] = Array.from(validationNames).map((name) => {
     return { name, type: MetricType.Validation };
   });
 
-  return [ ...validationMetrics, ...trainingMetrics ].sort(metricSorter);
+  return [ ...validationMetrics, ...trainingMetrics ].sort(metricNameSorter);
 };
 
 export const extractMetricValue = (
   workload: WorkloadGroup,
-  metric: Metric,
+  metricName: MetricName,
 ): number | undefined => {
-  const source = workload[metric.type]?.metrics ?? {};
-  return source[metric.name];
+  const source = workload[metricName.type]?.metrics ?? {};
+  return source[metricName.name];
 };
 
 export const getMetricValue = (
   workload?: { metrics?: Record<RecordKey, number> },
-  metric?: string,
+  metricName?: string,
 ): number | undefined => {
-  if (!metric || !workload?.metrics) return undefined;
-  return workload?.metrics[metric];
+  if (!metricName || !workload?.metrics) return undefined;
+  return workload?.metrics[metricName];
 };
 
-export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
-  const type = metric.type === MetricType.Training ? 'T' : 'V';
-  const name = metric.name.length > truncateLimit ?
-    metric.name.substr(0, truncateLimit) + '...' : metric.name;
+export const metricNameToStr = (metricName: MetricName, truncateLimit = 30): string => {
+  const type = metricName.type === MetricType.Training ? 'T' : 'V';
+  const name = metricName.name.length > truncateLimit ?
+    metricName.name.substr(0, truncateLimit) + '...' : metricName.name;
   return `[${type}] ${name}`;
 };
 
-export const metricToKey = (metric: Metric): string => {
-  return `${metric.type}|${metric.name}`;
+export const metricNameToValue = (metricName: MetricName): string => {
+  return `${metricName.type}|${metricName.name}`;
 };
 
-export const metricKeyToMetric = (value: string): Metric | undefined => {
+export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length !== 2) return;
   if (![ MetricType.Training, MetricType.Validation ].includes(parts[0] as MetricType)) return;
   return { name: parts[1], type: parts[0] as MetricType };
-};
-
-export const metricKeyToName = (key: string): string =>
-  metricKeyToMetric(key)?.name ?? '';
-
-export const metricKeyToType = (key: string): MetricType | undefined =>
-  metricKeyToMetric(key)?.type;
-
-export const metricKeyToStr = (key: string): string => {
-  const metric = metricKeyToMetric(key);
-  return metric ? metricToStr(metric) : '';
 };

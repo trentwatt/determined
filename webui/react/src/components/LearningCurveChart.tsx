@@ -4,16 +4,15 @@ import { AlignedData } from 'uplot';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { glasbeyColor } from 'shared/utils/color';
-import { Metric, Scale } from 'types';
-import { metricToStr } from 'utils/metric';
+import { MetricName, Scale } from 'types';
+import { metricNameToStr } from 'utils/metric';
 
 interface Props {
-  colorMap?: Record<number, string>;
   data: (number | null)[][];
   focusedTrialId?: number;
   onTrialClick?: (event: MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
-  selectedMetric: Metric;
+  selectedMetric: MetricName;
   selectedScale: Scale
   selectedTrialIds: number[];
   trialIds: number[];
@@ -54,7 +53,7 @@ const LearningCurveChart: React.FC<Props> = ({
         },
         {
           grid: { width: 1 },
-          label: metricToStr(selectedMetric),
+          label: metricNameToStr(selectedMetric),
           scale: 'y',
           side: 3,
         },
@@ -80,12 +79,13 @@ const LearningCurveChart: React.FC<Props> = ({
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'batches' },
-        ...trialIds.map((trialId) => ({
+        ...trialIds.map((trialId, index) => ({
           label: `trial ${trialId}`,
+
           scale: 'y',
           show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
           spanGaps: true,
-          stroke: glasbeyColor(trialId),
+          stroke: glasbeyColor(index),
           width: SERIES_WIDTH / window.devicePixelRatio,
         })),
       ],

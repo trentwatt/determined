@@ -19,11 +19,11 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, Metric, MetricType, metricTypeParamMap, Scale,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Scale,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
-import { metricToStr } from 'utils/metric';
+import { metricNameToStr } from 'utils/metric';
 import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -38,7 +38,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric;
+  selectedMetric: MetricName;
   selectedScale: Scale
 }
 
@@ -130,7 +130,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       data: {
         colorScale: {
           colors: colorScale.map((scale) => scale.color),
-          dimensionKey: metricToStr(selectedMetric),
+          dimensionKey: metricNameToStr(selectedMetric),
         },
       },
       dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
@@ -153,7 +153,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
-      const key = metricToStr(selectedMetric);
+      const key = metricNameToStr(selectedMetric);
       newDimensions.push(selectedScale === Scale.Log ? {
         key,
         label: key,
@@ -225,7 +225,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         // Add metric of interest.
-        const metricKey = metricToStr(selectedMetric);
+        const metricKey = metricNameToStr(selectedMetric);
         const metricValues = trialIds.map((id) => trialMetricsMap[id]);
         data[metricKey] = metricValues;
 

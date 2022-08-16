@@ -248,7 +248,7 @@ const HeaderCell = ({
       <div
         className={`${className} ${css.columnDraggingDiv}`}
         ref={drag}
-        title={unusedTitleFromAntd as string}
+        title={columnName}
         onClick={(e) => e.stopPropagation()}
         {...props}
       />
@@ -363,6 +363,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
+
       if (Array.isArray(tableSorter)) return;
 
       const newSettings: Partial<InteractiveTableSettings> = {

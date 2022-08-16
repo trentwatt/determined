@@ -15,10 +15,10 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, Metric, MetricsWorkload, TrialDetails,
+  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetrics } from 'utils/metric';
+import { extractMetricNames } from 'utils/metric';
 import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -67,7 +67,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
   const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
-  const [ selectedMetrics, setSelectedMetrics ] = useState<Metric[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -107,20 +107,20 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     , [ getCheckpointSize, trialsDetails ],
   );
 
-  const metrics = useMemo(() => {
-    const nameSet: Record<string, Metric> = {};
+  const metricNames = useMemo(() => {
+    const nameSet: Record<string, MetricName> = {};
     trials.forEach((trial) => {
-      extractMetrics(trialsDetails[trial]?.workloads || [])
+      extractMetricNames(trialsDetails[trial]?.workloads || [])
         .forEach((item) => nameSet[item.name] = (item));
     });
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
 
   useEffect(() => {
-    setSelectedMetrics(metrics);
-  }, [ metrics ]);
+    setSelectedMetrics(metricNames);
+  }, [ metricNames ]);
 
-  const onMetricSelect = useCallback((selectedMetrics: Metric[]) => {
+  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
     setSelectedMetrics(selectedMetrics);
   }, []);
 
@@ -143,7 +143,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return metricsObj;
   }, []);
 
-  const metricData = useMemo(() => {
+  const metrics = useMemo(() => {
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
@@ -232,16 +232,16 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
               Metrics
               <MetricSelectFilter
-                defaultMetrics={metrics}
+                defaultMetricNames={metricNames}
                 label=""
-                metrics={metrics}
+                metricNames={metricNames}
                 multiple
                 value={selectedMetrics}
                 onChange={onMetricSelect}
               />
             </div>
           </div>
-          {metrics.filter((metric) => selectedMetrics
+          {metricNames.filter((metric) => selectedMetrics
             .map((m) => m.name)
             .includes(metric.name))
             .map((metric) => (
@@ -251,7 +251,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 </div>
                 {trials.map((trialId) => (
                   <div className={css.cell} key={trialId}>
-                    <HumanReadableNumber num={metricData[trialId][metric.name]} />
+                    <HumanReadableNumber num={metrics[trialId][metric.name]} />
                   </div>
                 ))}
               </div>

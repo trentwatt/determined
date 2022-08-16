@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -40,10 +41,7 @@ import {
   getExperimentLabels, getExperiments, getProject, killExperiment, openOrCreateTensorBoard,
   patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
 } from 'services/api';
-import {
-  Determinedexperimentv1State,
-  V1GetExperimentsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
@@ -77,7 +75,6 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
-import TrialsComparison from './TrialsComparison/TrialsComparison';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -86,7 +83,7 @@ interface Params {
 }
 
 const batchActions = [
-  // Action.CompareExperiments,
+  Action.CompareExperiments,
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
@@ -109,6 +106,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
   );
@@ -605,13 +603,6 @@ const ProjectDetails: React.FC = () => {
         openCommand(result as CommandTask);
       }
 
-      if (action === Action.CompareExperiments) {
-        if (settings.row?.length)
-          return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString())),
-          );
-      }
-
       /*
        * Deselect selected rows since their states may have changed where they
        * are no longer part of the filter criteria.
@@ -632,7 +623,7 @@ const ProjectDetails: React.FC = () => {
         silent: false,
       });
     }
-  }, [ fetchExperiments, sendBatchActions, updateSettings, settings.row ]);
+  }, [ fetchExperiments, sendBatchActions, updateSettings ]);
 
   const showConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -648,9 +639,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard
-      || action === Action.Move
-      || action === Action.CompareExperiments) {
+    if (action === Action.OpenTensorBoard || action === Action.Move) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);
@@ -811,6 +800,36 @@ const ProjectDetails: React.FC = () => {
   );
 
   const ExperimentTabOptions = useMemo(() => {
+    const getMenuProps = ():{items: MenuProps['items'], onClick: MenuProps['onClick']} => {
+      enum MenuKey {
+        SWITCH_ARCHIVED = 'switchArchive',
+        COLUMNS = 'columns',
+        RESULT_FILTER = 'resetFilters',
+      }
+
+      const funcs = {
+        [MenuKey.SWITCH_ARCHIVED]: () => { switchShowArchived(!settings.archived); },
+        [MenuKey.COLUMNS]: () => { handleCustomizeColumnsClick(); },
+        [MenuKey.RESULT_FILTER]: () => { resetFilters(); },
+      };
+
+      const onItemClick: MenuProps['onClick'] = (e) => {
+        funcs[e.key as MenuKey]();
+      };
+
+      const menuItems: MenuProps['items'] = [
+        {
+          key: MenuKey.SWITCH_ARCHIVED,
+          label: settings.archived ? 'Hide Archived' : 'Show Archived',
+        },
+        { key: MenuKey.COLUMNS, label: 'Columns' },
+      ];
+      if (filterCount > 0) {
+        menuItems.push({ key: MenuKey.RESULT_FILTER, label: `Clear Filters (${filterCount})` });
+      }
+      return { items: menuItems, onClick: onItemClick };
+    };
+
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -824,21 +843,7 @@ const ProjectDetails: React.FC = () => {
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown
-            overlay={(
-              <Menu>
-                <Menu.Item
-                  key="switchArchive"
-                  onClick={() => switchShowArchived(!settings.archived)}>
-                  {settings.archived ? 'Hide Archived' : 'Show Archived'}
-                </Menu.Item>
-                <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
-                {filterCount > 0 && (
-                  <Menu.Item key="resetFilters" onClick={resetFilters}>
-                    Clear Filters ({filterCount})
-                  </Menu.Item>
-                )}
-              </Menu>
-            )}
+            overlay={<Menu {...getMenuProps()} />}
             placement="bottomRight"
             trigger={[ 'click' ]}>
             <div>
@@ -848,76 +853,68 @@ const ProjectDetails: React.FC = () => {
         </div>
       </div>
     );
-  }, [
-    filterCount,
+  }, [ filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
-    switchShowArchived,
-  ]);
+    switchShowArchived ]);
 
   const tabs: TabInfo[] = useMemo(() => {
-    return ([
-      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
-      {
-        body: (
-          <div className={css.experimentTab}>
-            <TableBatch
-              actions={batchActions.map((action) => ({
-                disabled: !availableBatchActions.includes(action),
-                label: action,
-                value: action,
-              }))}
-              selectedRowCount={(settings.row ?? []).length}
-              onAction={handleBatchAction}
-              onClear={clearSelected}
-            />
-            <InteractiveTable
-              areRowsSelected={!!settings.row}
-              columns={columns}
-              containerRef={pageRef}
-              ContextMenu={ContextMenu}
-              dataSource={experiments}
-              loading={isLoading}
-              pagination={getFullPaginationConfig({
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              }, total)}
-              rowClassName={defaultRowClassName({ clickable: false })}
-              rowKey="id"
-              rowSelection={{
-                onChange: handleTableRowSelect,
-                preserveSelectedRowKeys: true,
-                selectedRowKeys: settings.row ?? [],
-              }}
-              settings={settings as InteractiveTableSettings}
-              showSorterTooltip={false}
-              size="small"
-              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-            />
-          </div>
-        ),
-        key: 'experiments',
-        options: ExperimentTabOptions,
-        title: 'Experiments',
-      },
-      {
-        body: (
-          <PaginatedNotesCard
-            disabled={project?.archived}
-            notes={project?.notes ?? []}
-            onDelete={handleDeleteNote}
-            onNewPage={handleNewNotesPage}
-            onSave={handleSaveNotes}
-          />),
-        key: 'notes',
-        options: (
-          <div className={css.tabOptions}>
-            <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
-          </div>),
-        title: 'Notes',
-      },
-    ]);
+    return ([ {
+      body: (
+        <div className={css.experimentTab}>
+          <TableBatch
+            actions={batchActions.map((action) => ({
+              disabled: !availableBatchActions.includes(action),
+              label: action,
+              value: action,
+            }))}
+            selectedRowCount={(settings.row ?? []).length}
+            onAction={handleBatchAction}
+            onClear={clearSelected}
+          />
+          <InteractiveTable
+            areRowsSelected={!!settings.row}
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ContextMenu}
+            dataSource={experiments}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="id"
+            rowSelection={{
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: true,
+              selectedRowKeys: settings.row ?? [],
+            }}
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          />
+        </div>
+      ),
+      options: ExperimentTabOptions,
+      title: 'Experiments',
+    }, {
+      body: (
+        <PaginatedNotesCard
+          disabled={project?.archived}
+          notes={project?.notes ?? []}
+          onDelete={handleDeleteNote}
+          onNewPage={handleNewNotesPage}
+          onSave={handleSaveNotes}
+        />),
+      options: (
+        <div className={css.tabOptions}>
+          <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+        </div>),
+      title: 'Notes',
+    } ]);
   }, [ ContextMenu,
     ExperimentTabOptions,
     clearSelected,
@@ -934,9 +931,7 @@ const ProjectDetails: React.FC = () => {
     project?.archived,
     settings,
     total,
-    updateSettings,
-    projectId,
-  ]);
+    updateSettings ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;

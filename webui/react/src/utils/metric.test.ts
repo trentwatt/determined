@@ -21,7 +21,7 @@ const workloads: WorkloadGroup[] = [
   },
 ];
 
-const metrics = [
+const metricNames = [
   {
     metric: { name: 'accuracy', type: MetricType.Training },
     str: '[T] accuracy',
@@ -45,7 +45,7 @@ const metrics = [
 ];
 
 describe('Metric Utilities', () => {
-  describe('extractMetrics', () => {
+  describe('extractMetricNames', () => {
     it('should extract metric names from workloads', () => {
       const result = [
         { name: 'accuracy', type: MetricType.Validation },
@@ -53,13 +53,13 @@ describe('Metric Utilities', () => {
         { name: 'accuracy', type: MetricType.Training },
         { name: 'loss', type: MetricType.Training },
       ];
-      expect(utils.extractMetrics(workloads)).toStrictEqual(result);
+      expect(utils.extractMetricNames(workloads)).toStrictEqual(result);
     });
   });
 
   describe('extractMetricValue', () => {
-    const accuracyTraining = metrics[0].metric;
-    const lossValidation = metrics[3].metric;
+    const accuracyTraining = metricNames[0].metric;
+    const lossValidation = metricNames[3].metric;
 
     it('should extract training metric', () => {
       expect(utils.extractMetricValue(workloads[0], accuracyTraining)).toBe(0.9);
@@ -94,40 +94,40 @@ describe('Metric Utilities', () => {
     });
   });
 
-  describe('metricToStr', () => {
+  describe('metricNameToStr', () => {
     it('should convert metric to string', () => {
-      metrics.forEach((metric) => {
-        expect(utils.metricToStr(metric.metric)).toBe(metric.str);
+      metricNames.forEach((metricName) => {
+        expect(utils.metricNameToStr(metricName.metric)).toBe(metricName.str);
       });
     });
 
     it('should truncate metric string to 30 characters', () => {
-      const metric = {
+      const metricName = {
         name: 'very-very-very-very-very-very-long-metric-name',
         type: MetricType.Training,
       };
-      expect(utils.metricToStr(metric, 20)).toBe('[T] very-very-very-very-...');
+      expect(utils.metricNameToStr(metricName, 20)).toBe('[T] very-very-very-very-...');
     });
   });
 
-  describe('metricToKey', () => {
+  describe('metricNameToValue', () => {
     it('should convert metric to value', () => {
-      metrics.forEach((metric) => {
-        expect(utils.metricToKey(metric.metric)).toBe(metric.value);
+      metricNames.forEach((metricName) => {
+        expect(utils.metricNameToValue(metricName.metric)).toBe(metricName.value);
       });
     });
   });
 
-  describe('metricKeyToMetric', () => {
+  describe('valueToMetricName', () => {
     it('should convert value to metric name', () => {
-      metrics.forEach((metric) => {
-        expect(utils.metricKeyToMetric(metric.value)).toStrictEqual(metric.metric);
+      metricNames.forEach((metricName) => {
+        expect(utils.valueToMetricName(metricName.value)).toStrictEqual(metricName.metric);
       });
     });
 
     it('should handle invalid metric name value', () => {
-      expect(utils.metricKeyToMetric('invalidMetricValue')).toBeUndefined();
-      expect(utils.metricKeyToMetric('fauxMetricType|loss')).toBeUndefined();
+      expect(utils.valueToMetricName('invalidMetricValue')).toBeUndefined();
+      expect(utils.valueToMetricName('fauxMetricType|loss')).toBeUndefined();
     });
   });
 });

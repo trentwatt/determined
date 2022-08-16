@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
-import { getUserSetting } from 'services/api';
+import { getUserSetting, updateUserSetting } from 'services/api';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -56,7 +56,6 @@ export interface SettingsConfigProp {
 }
 
 export interface SettingsConfig {
-  applicableRoutespace?: string;
   settings: SettingsConfigProp[];
   storagePath: string;
 }
@@ -232,9 +231,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     }, [] as string[]);
   }, [ config.settings, settings ]);
 
-  const updateSettings = useCallback((partialSettings: Partial<T>, push = false) => {
-    if (!location.pathname.includes(config.applicableRoutespace ?? '')) return;
-
+  const updateSettings = useCallback(async (partialSettings: Partial<T>, push = false) => {
     const changes = Object.keys(partialSettings) as (keyof T)[];
     const { internalSettings, querySettings, updates } = changes.reduce((acc, key) => {
       // Check to make sure the settings key is defined in the config.
@@ -285,7 +282,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     if (updates.length !== 0) {
       try {
         // Persist storage to backend.
-        // await Promise.allSettled(updates.map((update) => updateUserSetting(update)));
+        await Promise.allSettled(updates.map((update) => updateUserSetting(update)));
       } catch (e) {
         handleError(e, {
           isUserTriggered: false,
@@ -305,7 +302,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       querySettings,
       type: push ? PathChangeType.Push : PathChangeType.Replace,
     });
-  }, [ configMap, storage, user, config.applicableRoutespace, location.pathname ]);
+  }, [ configMap, storage, user ]);
 
   const resetSettings = useCallback(async (keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -355,14 +352,11 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   }, [ configMap, storage, user ]);
 
   useEffect(() => {
-    // fetchUserSetting();
+    fetchUserSetting();
   }, [ fetchUserSetting ]);
 
   useEffect(() => {
     if (location.search === prevSearch) return;
-
-    // probably don't need this, we do need in updateSettings though
-    if (!location.pathname.includes(config.applicableRoutespace ?? '')) return;
 
     /*
      * Set the initial query string if:
@@ -389,9 +383,6 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
   useEffect(() => {
     if (pathChange.type === PathChangeType.None) return;
-
-    // probably don't need this, we do need in updateSettings though
-    if (!location.pathname.includes(config.applicableRoutespace ?? '')) return;
 
     // Update path with new and validated settings.
     const query = settingsToQuery(config, { ...clone(settings), ...pathChange.querySettings });

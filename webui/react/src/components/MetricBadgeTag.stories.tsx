@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Metric, MetricType } from 'types';
+import { MetricName, MetricType } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
 
@@ -9,12 +9,12 @@ export default {
   title: 'MetricBadgeTag',
 };
 
-const trainingMetric: Metric = {
+const trainingMetric: MetricName = {
   name: 'training_accuracy',
   type: MetricType.Training,
 };
 
-const validationMetric: Metric = {
+const validationMetric: MetricName = {
   name: 'validation_accuracy',
   type: MetricType.Validation,
 };

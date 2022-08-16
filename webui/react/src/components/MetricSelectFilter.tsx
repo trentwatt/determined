@@ -2,8 +2,8 @@ import { Select } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { Metric, MetricType } from 'types';
-import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
+import { MetricName, MetricType } from 'types';
+import { metricNameSorter, metricNameToValue, valueToMetricName } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
@@ -13,17 +13,17 @@ const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
 
-type SingleHandler = (value: Metric) => void;
-type MultipleHandler = (value: Metric[]) => void;
+type SingleHandler = (value: MetricName) => void;
+type MultipleHandler = (value: MetricName[]) => void;
 
 interface Props {
-  defaultMetrics: Metric[];
+  defaultMetricNames: MetricName[];
   dropdownMatchSelectWidth?: number | boolean;
   label?: string;
-  metrics: Metric[];
+  metricNames: MetricName[];
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
-  value?: Metric | Metric[];
+  value?: MetricName | MetricName[];
   verticalLayout?: boolean;
   width?: number | string;
 }
@@ -33,10 +33,10 @@ const filterFn = (search: string, metricName: string) => {
 };
 
 const MetricSelectFilter: React.FC<Props> = ({
-  defaultMetrics,
+  defaultMetricNames,
   dropdownMatchSelectWidth = 400,
   label = 'Metrics',
-  metrics,
+  metricNames,
   multiple,
   value,
   verticalLayout = false,
@@ -47,75 +47,75 @@ const MetricSelectFilter: React.FC<Props> = ({
   const selectRef = useRef<RefSelectProps>(null);
 
   const metricValues = useMemo(() => {
-    if (multiple && Array.isArray(value)) return value.map((metric) => metricToKey(metric));
-    if (!multiple && !Array.isArray(value) && value) return metricToKey(value);
+    if (multiple && Array.isArray(value)) return value.map((metric) => metricNameToValue(metric));
+    if (!multiple && !Array.isArray(value) && value) return metricNameToValue(value);
     return undefined;
   }, [ multiple, value ]);
 
-  const trainingMetrics = useMemo(() => {
-    return metrics.filter((metric) => metric.type === MetricType.Training);
-  }, [ metrics ]);
+  const trainingMetricNames = useMemo(() => {
+    return metricNames.filter((metric) => metric.type === MetricType.Training);
+  }, [ metricNames ]);
 
-  const validationMetrics = useMemo(() => {
-    return metrics.filter((metric) => metric.type === MetricType.Validation);
-  }, [ metrics ]);
+  const validationMetricNames = useMemo(() => {
+    return metricNames.filter((metric) => metric.type === MetricType.Validation);
+  }, [ metricNames ]);
 
-  const totalNumMetrics = useMemo(() => { return metrics.length; }, [ metrics ]);
+  const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
 
   /*
    * visibleMetrics should always match the list of metrics that antd displays to
    * the user, including any filtering.
    */
   const visibleMetrics = useMemo(() => {
-    return metrics.filter((metric: Metric) => {
-      return filterFn(filterString, metric.name);
+    return metricNames.filter((metricName: MetricName) => {
+      return filterFn(filterString, metricName.name);
     });
-  }, [ metrics, filterString ]);
+  }, [ metricNames, filterString ]);
 
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
 
     if ((newValue as string) === allOptionId) {
-      (onChange as MultipleHandler)(visibleMetrics.sort(metricSorter));
+      (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
       selectRef.current?.blur();
       return;
     }
     if ((newValue as string) === resetOptionId) {
-      (onChange as MultipleHandler)(defaultMetrics.sort(metricSorter));
+      (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
       selectRef.current?.blur();
       return;
     }
 
-    const metric = metricKeyToMetric(newValue as string);
-    if (!metric) return;
+    const metricName = valueToMetricName(newValue as string);
+    if (!metricName) return;
 
     if (multiple) {
       const newMetric = Array.isArray(value) ? [ ...value ] : [];
-      if (newMetric.indexOf(metric) === -1) newMetric.push(metric);
-      (onChange as MultipleHandler)(newMetric.sort(metricSorter));
+      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+      (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
     } else {
-      (onChange as SingleHandler)(metric);
+      (onChange as SingleHandler)(metricName);
     }
-  }, [ multiple, onChange, value, visibleMetrics, defaultMetrics ]);
+  }, [ multiple, onChange, value, visibleMetrics, defaultMetricNames ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
     if (!onChange || !multiple) return;
     if (!Array.isArray(value) || value.length <= 1) return;
 
     const newMetric = Array.isArray(value) ? [ ...value ] : [];
-    const index = newMetric.findIndex((metric) => metricToKey(metric) === newValue);
+    const index = newMetric.findIndex((metric) => metricNameToValue(metric) === newValue);
     if (index !== -1) newMetric.splice(index, 1);
-    (onChange as MultipleHandler)(newMetric.sort(metricSorter));
+    (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
 
   const handleFiltering = useCallback((search: string, option) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
     if (!option.value) return false;
 
-    const metric = metricKeyToMetric(option.value);
-    if (metric === undefined) return false;
+    const metricName = valueToMetricName(option.value);
+    if (metricName === undefined) return false;
 
-    return filterFn(search, metric.name);
+    return filterFn(search, metricName.name);
   }, []);
 
   const handleSearchInputChange = (searchInput: string) => {
@@ -183,10 +183,10 @@ const MetricSelectFilter: React.FC<Props> = ({
         </Option>
       )}
       {multiple && visibleMetrics.length > 1 && allOption}
-      {validationMetrics.length > 0 && (
+      {validationMetricNames.length > 0 && (
         <OptGroup label="Validation Metrics">
-          {validationMetrics.map((key) => {
-            const value = metricToKey(key);
+          {validationMetricNames.map((key) => {
+            const value = metricNameToValue(key);
             return (
               <Option key={value} value={value}>
                 <MetricBadgeTag metric={key} />
@@ -195,10 +195,10 @@ const MetricSelectFilter: React.FC<Props> = ({
           })}
         </OptGroup>
       )}
-      {trainingMetrics.length > 0 && (
+      {trainingMetricNames.length > 0 && (
         <OptGroup label="Training Metrics">
-          {trainingMetrics.map((key) => {
-            const value = metricToKey(key);
+          {trainingMetricNames.map((key) => {
+            const value = metricNameToValue(key);
             return (
               <Option key={value} value={value}>
                 <MetricBadgeTag metric={key} />
