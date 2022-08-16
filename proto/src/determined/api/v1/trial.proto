@@ -54,6 +54,13 @@ message NumberRangeFilter {
   google.protobuf.DoubleValue max   = 3;
 }
 
+message TimeRangeFilter {
+    google.protobuf.Timestamp interval_start    = 1;
+    google.protobuf.Timestamp interval_end      = 2;
+}
+
+
+
 message TrialTag {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "key"] }
@@ -93,6 +100,9 @@ message TrialFilters {
     int32 rank          = 2;
   }
   RankWithinExp rank_within_exp = 10;
+  TimeRangeFilter start_time                    = 11;
+  TimeRangeFilter end_time                      = 12;
+  repeated string state                         = 13;
 }
 
 message QueryTrialsRequest {
