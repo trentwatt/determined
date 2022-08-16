@@ -142,28 +142,6 @@ class TrialFiltersRankWithinExp:
             "rank": self.rank if self.rank is not None else None,
         }
 
-class TrialPatchSetTag:
-    def __init__(
-        self,
-        key: "typing.Optional[str]" = None,
-        value: "typing.Optional[str]" = None,
-    ):
-        self.key = key
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "TrialPatchSetTag":
-        return cls(
-            key=obj.get("key", None),
-            value=obj.get("value", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "key": self.key if self.key is not None else None,
-            "value": self.value if self.value is not None else None,
-        }
-
 class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
     PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
@@ -6277,19 +6255,23 @@ class v1TrialMetrics:
 class v1TrialPatch:
     def __init__(
         self,
-        tags: "typing.Optional[typing.Sequence[TrialPatchSetTag]]" = None,
+        addTag: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
+        removeTag: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
     ):
-        self.tags = tags
+        self.addTag = addTag
+        self.removeTag = removeTag
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialPatch":
         return cls(
-            tags=[TrialPatchSetTag.from_json(x) for x in obj["tags"]] if obj.get("tags", None) is not None else None,
+            addTag=[v1TrialTag.from_json(x) for x in obj["addTag"]] if obj.get("addTag", None) is not None else None,
+            removeTag=[v1TrialTag.from_json(x) for x in obj["removeTag"]] if obj.get("removeTag", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "tags": [x.to_json() for x in self.tags] if self.tags is not None else None,
+            "addTag": [x.to_json() for x in self.addTag] if self.addTag is not None else None,
+            "removeTag": [x.to_json() for x in self.removeTag] if self.removeTag is not None else None,
         }
 
 class v1TrialProfilerMetricLabels:
@@ -6426,22 +6408,18 @@ class v1TrialTag:
     def __init__(
         self,
         key: str,
-        value: "typing.Optional[str]" = None,
     ):
         self.key = key
-        self.value = value
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialTag":
         return cls(
             key=obj["key"],
-            value=obj.get("value", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "key": self.key,
-            "value": self.value if self.value is not None else None,
         }
 
 class v1TrialsCollection:

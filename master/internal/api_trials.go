@@ -379,25 +379,26 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 	if f == nil {
 		return emptyFilters
 	}
-	
+
 	filtersLength := len(f.ExperimentIds) +
-	len(f.ProjectIds) +
-	len(f.WorkspaceIds) +
+		len(f.ProjectIds) +
+		len(f.WorkspaceIds) +
 		len(f.ValidationMetrics) +
 		len(f.TrainingMetrics) +
 		len(f.Hparams) +
-		len(f.Searcher) + 
+		len(f.Searcher) +
 		len(f.UserIds) +
 		len(f.Tags)
 
-	if filtersLength == 0 && f.RankWithinExp == nil{
+	if filtersLength == 0 && f.RankWithinExp == nil {
 		return emptyFilters
 	}
 	return nil
 }
 
 func checkTrialPatchEmpty(p *apiv1.TrialPatch) error {
-	if p == nil || len(p.Tags) == 0 {
+	if p == nil || (len(p.AddTag) == 0 && len(p.RemoveTag) == 0) {
+		fmt.Println("trialpatch", p.AddTag)
 		return status.Errorf(
 			codes.InvalidArgument,
 			"patch payload empty",

@@ -11,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 
@@ -510,22 +511,39 @@ func hParamAccessor(hp string) string {
 	return "hparams->>" + strings.Join(nestingWithQuotes, "->>")
 }
 
+func kv(key string) string {
+	return fmt.Sprintf(`"%s":""`, key)
+}
+
 func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, payload *apiv1.TrialPatch) (*bun.UpdateQuery, error) {
 	// takes an update query and adds the Set clauses for the patch
-	if len(payload.Tags) > 0 {
-		addTagsPhrase := "tags"
-		removeTagsPhrase := ""
-		for _, tag := range payload.Tags {
-			if !safeString.MatchString(tag.Key + tag.Value) {
-				return nil, fmt.Errorf("tag patch {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
+
+	if len(payload.AddTag) > 0 || len(payload.RemoveTag) > 0 {
+		// adding the tags phrases
+		// want to amek tags::jsonb || '{"add", ""}' || '{"these", ""} || -
+		setPhrases := []string{"tags = tags::jsonb"}
+
+		if len(payload.AddTag) > 0 {
+			itemsAdd := []string{}
+			for _, tag := range payload.AddTag {
+				// sanitize tag.Key
+				itemsAdd = append(itemsAdd, kv(tag.Key))
 			}
-			if tag.Value == "" {
-				removeTagsPhrase += fmt.Sprintf(" - '%s' ", tag.Key)
-			} else {
-				addTagsPhrase = fmt.Sprintf(`jsonb_set(%s,  '{%s}', '"%s"')`, addTagsPhrase, tag.Key, tag.Value)
-			}
+			addPhrase := fmt.Sprintf(`|| '{%s}'`, strings.Join(itemsAdd, ","))
+			setPhrases = append(setPhrases, addPhrase)
 		}
-		setPhrase := fmt.Sprintf("tags = %s %s", addTagsPhrase, removeTagsPhrase)
+
+		if len(payload.RemoveTag) > 0 {
+			keysRemove := []string{}
+			for _, tag := range payload.RemoveTag {
+				// sanitize
+				keysRemove = append(keysRemove, tag.Key)
+			}
+			removePhrase := fmt.Sprintf(`- '{%s}'`, strings.Join(keysRemove, ","))
+			setPhrases = append(setPhrases, removePhrase)
+		}
+
+		setPhrase := strings.Join(setPhrases, " ")
 		q = q.Set(setPhrase)
 	}
 	return q, nil
@@ -625,18 +643,16 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery, filters *apiv1.TrialFilters, se
 		if selectAll {
 			q.ColumnExpr("trials_augmented_view.*, rank.n")
 		}
-
 	}
 
 	if len(filters.Tags) > 0 {
-		tagExprKeyVals := []string{}
+		tagKeys := []string{}
 		for _, tag := range filters.Tags {
-			if !safeString.MatchString(tag.Key + tag.Value) {
-				return nil, fmt.Errorf("tag filter {%s : %s} contains possible SQL injection", tag.Key, tag.Value)
-			}
-			tagExprKeyVals = append(tagExprKeyVals, fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value))
+			tagKeys = append(tagKeys, tag.Key)
 		}
-		q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", strings.Join(tagExprKeyVals, ",")))
+		// bun please ignore the first question mark,
+		// it is an operator, not a placeholder
+		q.Where("tags ?| ?", "?", pgdialect.Array(tagKeys))
 	}
 
 	if len(filters.ExperimentIds) > 0 {

@@ -655,6 +655,29 @@ export enum TrialEarlyExitExitedReason {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * 
+ * @export
+ * @interface TrialFiltersRankWithinExp
+ */
+export interface TrialFiltersRankWithinExp {
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    sorter?: V1TrialSorter;
+    /**
+     * 
+     * @type {number}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    rank?: number;
+}
+
+/**
+>>>>>>> c7cc84a59 (wip)
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  * @enum {string}
@@ -6701,6 +6724,29 @@ export interface V1TrialMetrics {
 /**
  * 
  * @export
+<<<<<<< HEAD
+=======
+ * @interface V1TrialPatch
+ */
+export interface V1TrialPatch {
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialPatch
+     */
+    addTag?: Array<V1TrialTag>;
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialPatch
+     */
+    removeTag?: Array<V1TrialTag>;
+}
+
+/**
+ * 
+ * @export
+>>>>>>> c7cc84a59 (wip)
  * @interface V1TrialProfilerMetricLabels
  */
 export interface V1TrialProfilerMetricLabels {
@@ -6805,6 +6851,93 @@ export interface V1TrialSimulation {
 /**
  * 
  * @export
+<<<<<<< HEAD
+=======
+ * @interface V1TrialSorter
+ */
+export interface V1TrialSorter {
+    /**
+     * 
+     * @type {TrialSorterNamespace}
+     * @memberof V1TrialSorter
+     */
+    namespace: TrialSorterNamespace;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialSorter
+     */
+    field: string;
+    /**
+     * 
+     * @type {V1OrderBy}
+     * @memberof V1TrialSorter
+     */
+    orderBy?: V1OrderBy;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialTag
+ */
+export interface V1TrialTag {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialTag
+     */
+    key: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialsCollection
+ */
+export interface V1TrialsCollection {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    id: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    userId: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    projectId: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialsCollection
+     */
+    name: string;
+    /**
+     * 
+     * @type {V1TrialFilters}
+     * @memberof V1TrialsCollection
+     */
+    filters: V1TrialFilters;
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof V1TrialsCollection
+     */
+    sorter: V1TrialSorter;
+}
+
+/**
+ * 
+ * @export
+>>>>>>> c7cc84a59 (wip)
  * @interface V1TrialsSampleResponse
  */
 export interface V1TrialsSampleResponse {

@@ -1,9 +1,9 @@
 -- keeping out of the migration directory for now to avoid having it run
-ALTER table trials ADD COLUMN IF NOT EXISTS tags jsonb;
+ALTER table trials ADD COLUMN IF NOT EXISTS tags jsonb DEFAULT '{}';
 -- if similar data structure were to be used where the actual values of the tags
 -- was considered, index should not use jsonb_path_ops (just remove that part)
 CREATE INDEX trials_tags_index ON trials USING GIN (tags jsonb_path_ops);
-update trials set tags = '{}';
+-- update trials set tags = '{}';
 
 CREATE TABLE trials_collections (
     -- table to store a set of filters as defined in QueryFilters in api/trial.proto
@@ -13,13 +13,14 @@ CREATE TABLE trials_collections (
 	  name text NOT NULL,
 	  filters jsonb NOT NULL,
     sorter  jsonb NOT NULL,
-  CONSTRAINT user_project_filter_name_uniq UNIQUE (user_id, project_id, name)
+  CONSTRAINT project_filter_name_uniq UNIQUE (project_id, name)
 );
 
 -- make analogous modifications to those found in reindex-steps pr
+-- because we are joining validations on (trial_id, total_batches)
 CREATE INDEX validations_archived ON raw_validations(archived);
 ALTER TABLE raw_validations DROP CONSTRAINT validations_trial_id_run_id_total_batches_unique;
-CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_unique ON raw_validations(trial_id, total_batches, trial_run_id);
+CREATE UNIQUE INDEX validations_trial_id_total_batches_run_id_unique ON raw_validations(trial_id, total_batches, trial_run_id);
 
 
 CREATE AGGREGATE jsonb_collect(jsonb) (
