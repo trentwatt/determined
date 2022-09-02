@@ -104,6 +104,8 @@ message GetExperimentsRequest {
   // Limit experiments to those within a specified project, or 0 for all
   // projects.
   int32 project_id = 12;
+  // Limit to the specified experiments.
+  repeated int32 experiment_ids = 13;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {

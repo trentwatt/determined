@@ -390,6 +390,10 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
+	if len(req.ExperimentIds) > 0 {
+		query = query.Where("e.id in (?)", bun.In(req.ExperimentIds))
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)

@@ -91,6 +91,8 @@ interface RowProps {
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
+
+  style: any;
   record: Record<string, unknown>;
 }
 
@@ -129,6 +131,7 @@ const Row = ({
   record,
   ContextMenu,
   areRowsSelected,
+  style,
   ...props
 }: RowProps) => {
   const classes = [ className, css.row ];
@@ -153,6 +156,7 @@ const Row = ({
   if (rowContextMenuTriggerableOrOpen) {
     classes.push('ant-table-row-selected');
   }
+  if (record?.pinned) console.log('it happened');
   return (record && ContextMenu) ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
@@ -160,7 +164,8 @@ const Row = ({
           className={classes.join(' ')}
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
-          {...props}>
+          {...props}
+          style={{ ...style, fontSize: record?.pinned ? '20px' : 'inherit' }}>
           {children}
         </tr>
       </ContextMenu>
@@ -526,11 +531,13 @@ const InteractiveTable: InteractiveTable = ({
             : (
               <Table
                 bordered
+                columns={renderColumns as ColumnsType<any>}
                 /* next one is just so ant doesnt complain */
                 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                columns={renderColumns as ColumnsType<any>}
                 components={components}
                 dataSource={dataSource}
+                scroll={{ y: '60vh' }}
+                sticky={true}
                 tableLayout="fixed"
                 onChange={handleChange}
                 onRow={(record, index) => ({

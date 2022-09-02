@@ -44,6 +44,7 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -161,25 +162,34 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => (
         encodeExperimentState(state as RunState)
       ));
-      const response = await getExperiments(
-        {
-          archived: settings.archived ? undefined : false,
-          labels: settings.label,
-          limit: settings.tableLimit,
-          name: settings.search,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          projectId: id,
-          sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users: settings.user,
-        },
+      const filters = {
+        archived: settings.archived ? undefined : false,
+        labels: settings.label,
+        limit: settings.tableLimit,
+        name: settings.search,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        projectId: id,
+        sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
+        states: validateDetApiEnumList(Determinedexperimentv1State, states),
+        users: settings.user,
+      } as GetExperimentsParams;
+      const allExperimentsResponse = await getExperiments(
+        filters,
         { signal: canceler.signal },
       );
-      setTotal(response.pagination.total ?? 0);
+      const pinnedExperimentsReponse = await getExperiments(
+        { ...filters, experimentIds: settings.pinned, limit: 1000, offset: 0 },
+        { signal: canceler.signal },
+      );
+      setTotal(allExperimentsResponse.pagination.total ?? 0);
+      const experiments = [
+        ...pinnedExperimentsReponse.experiments.map((e) => ({ ...e, pinned: true })),
+        ...allExperimentsResponse.experiments.filter((x) => !settings.pinned.includes(x.id)),
+      ] as ExperimentItem[];
       setExperiments((prev) => {
-        if (isEqual(prev, response.experiments)) return prev;
-        return response.experiments;
+        if (isEqual(prev, experiments)) return prev;
+        return experiments;
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
@@ -188,6 +198,7 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ canceler.signal,
     id,
+    settings.pinned,
     settings.archived,
     settings.label,
     settings.search,
@@ -897,6 +908,7 @@ const ProjectDetails: React.FC = () => {
       </Collapse>
     );
   }, [ experiments, project, settings.pinned ]);
+  console.log(settings.pinned);
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
@@ -918,7 +930,7 @@ const ProjectDetails: React.FC = () => {
             columns={columns}
             containerRef={pageRef}
             ContextMenu={ContextMenu}
-            dataSource={experiments}
+            dataSource={experiments.slice(0, settings.tableLimit)}
             loading={isLoading}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
