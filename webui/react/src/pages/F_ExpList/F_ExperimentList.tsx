@@ -128,6 +128,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             handleScroll={handleScroll}
             initialScrollPositionSet={initialScrollPositionSet}
             page={page}
+            project={project}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
             setSelectAll={setSelectAll}
