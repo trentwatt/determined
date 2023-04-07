@@ -29,7 +29,7 @@ import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
-import { useObservable, WritableObservable } from 'utils/observable';
+import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
 
@@ -110,7 +110,9 @@ export const GlideTable: React.FC<Props> = ({
     y: 0,
   });
 
-  const [contextMenuIsOpen, setContextMenuIsOpen] = useState(false);
+  const [contextMenuOpen] = useState(observable(false));
+  const contextMenuIsOpen = useObservable(contextMenuOpen);
+
   const [contextMenuProps, setContextMenuProps] =
     useState<Omit<TableContextMenuProps, 'open' | 'fetchExperiments'>>();
 
@@ -236,8 +238,7 @@ export const GlideTable: React.FC<Props> = ({
   );
 
   const handleGridSelectionChange = useCallback((cell: Item) => {
-    const [col, row] = cell;
-    if (col !== 0) return;
+    const [, row] = cell;
     if (row === undefined) return;
     setSelection(({ rows }: GridSelection) => ({
       columns: CompactSelection.empty(),
@@ -256,13 +257,18 @@ export const GlideTable: React.FC<Props> = ({
       event.preventDefault();
       setContextMenuProps({
         experiment: getProjectExperimentForExperimentItem(experiment, project),
-        handleClose: () => setContextMenuIsOpen(false),
+        handleClose: (e?: Event) => {
+          if (contextMenuOpen.get()) {
+            e?.stopPropagation();
+          }
+          contextMenuOpen.set(false);
+        },
         x: Math.max(0, event.bounds.x + event.localEventX - 4),
         y: Math.max(0, event.bounds.y + event.localEventY - 4),
       });
-      setContextMenuIsOpen(true);
+      contextMenuOpen.set(true);
     },
-    [data, project, setContextMenuProps, setContextMenuIsOpen],
+    [data, project, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved = useCallback(
